@@ -1,0 +1,37 @@
+# Process management
+.pids/
+*.pid
+
+# Logs
+.logs/
+*.log
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+
+
+# Dependencies
+node_modules/
+
+# Build output
+dist/
+dist-ssr/
+build/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Temporary
+*.tmp
+*.temp
