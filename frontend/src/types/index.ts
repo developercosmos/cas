@@ -64,4 +64,33 @@ export interface AuthState {
   user: User | null;
   isAuthenticated: boolean;
   isLoading: boolean;
+  isAdmin?: boolean;
+}
+
+export interface PluginMetadata {
+  id: string;
+  name: string;
+  version: string;
+  description?: string;
+  author?: string;
+  permissions: string[];
+  entry: string;
+  status: 'active' | 'disabled' | 'error';
+  createdAt: string;
+  updatedAt: string;
+  config?: Record<string, any>;
+  isSystem?: boolean;
+  routes?: Record<string, string>;
+}
+
+export interface PluginInstallRequest {
+  id: string;
+  name: string;
+  version: string;
+  description?: string;
+  author?: string;
+  permissions: string[];
+  entry: string;
+  source?: 'url' | 'file' | 'registry';
+  sourceUrl?: string;
 }

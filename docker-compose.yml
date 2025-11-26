@@ -1,6 +1,23 @@
 version: '3.8'
 
 services:
+  postgres:
+    image: postgres:15
+    container_name: dashboard_postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-dashboard_user}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-dashboard_password}
+      POSTGRES_DB: ${POSTGRES_DB:-dashboard_db}
+    # Note: Use environment variables or secrets management in production
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - dashboard_network
+
   frontend:
     build:
       context: ./frontend
@@ -14,6 +31,8 @@ services:
       - /app/node_modules
     depends_on:
       - backend
+    networks:
+      - dashboard_network
 
   backend:
     build:
@@ -22,10 +41,23 @@ services:
     ports:
       - "4000:4000"
     environment:
-      - PORT=4000
-      - NODE_ENV=development
-      - JWT_SECRET=development-secret-change-in-production
-      - CORS_ORIGIN=http://localhost:3000
+      - PORT=${PORT:-4000}
+      - NODE_ENV=${NODE_ENV:-development}
+      - JWT_SECRET=${JWT_SECRET}
+      - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-dashboard_user}:${POSTGRES_PASSWORD:-dashboard_password}@postgres:5432/${POSTGRES_DB:-dashboard_db}
+    # Note: Use environment variables or secrets management in production
     volumes:
       - ./backend:/app
       - /app/node_modules
+    depends_on:
+      - postgres
+    networks:
+      - dashboard_network
+
+volumes:
+  postgres_data:
+
+networks:
+  dashboard_network:
+    driver: bridge

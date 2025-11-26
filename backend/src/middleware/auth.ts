@@ -10,6 +10,12 @@ export interface AuthRequest extends Request {
   };
 }
 
+// Admin check function
+export const isAdmin = (username: string): boolean => {
+  const adminUsers = process.env.ADMIN_USERS?.split(',') || ['admin'];
+  return adminUsers.includes(username);
+};
+
 export const authenticate = (req: AuthRequest, res: Response, next: NextFunction) => {
   try {
     const authHeader = req.headers.authorization;
@@ -25,3 +31,6 @@ export const authenticate = (req: AuthRequest, res: Response, next: NextFunction
     return res.status(401).json({ error: 'Invalid token' });
   }
 };
+
+// Alias for consistency
+export const AuthService = authenticate;

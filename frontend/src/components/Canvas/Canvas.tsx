@@ -50,7 +50,7 @@ export const Canvas: React.FC = () => {
                 strokeLinecap="round"
               />
             </svg>
-            <h2>Start building your dashboard</h2>
+            <h2>Start building your CAS Platform</h2>
             <p>Add blocks to create a personalized workspace, similar to Notion</p>
             <button className={styles.primaryButton} onClick={addBlock}>
               Add your first block

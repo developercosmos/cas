@@ -1,9 +1,13 @@
 import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
+import { DatabaseService } from './services/DatabaseService.js';
+import { MigrationService } from './services/MigrationService.js';
 import authRouter from './api/auth/routes.js';
 import pluginsRouter from './api/plugins/routes.js';
 import storageRouter from './api/storage/routes.js';
+import adminPluginsRouter from './api/admin/plugins/routes.js';
+import ldapRouter from './api/ldap/routes.js';
 
 dotenv.config();
 
@@ -39,30 +43,101 @@ app.use(cors(corsOptions));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
-app.get('/health', (req, res) => {
-  res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
-
-app.use('/api/auth', authRouter);
-app.use('/api/plugins', pluginsRouter);
-app.use('/api/storage', storageRouter);
-
-app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
-  console.error('Error:', err);
-  res.status(err.status || 500).json({
-    error: err.message || 'Internal server error',
-  });
-});
-
-app.listen(PORT, HOST, () => {
-  console.log(`🚀 Server running on http://${HOST}:${PORT}`);
-  console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
-  console.log(`🌐 Network access: enabled`);
-  
-  // Show network URLs if not localhost
-  if (HOST === '0.0.0.0') {
-    console.log(`\n📱 Access URLs:`);
-    console.log(`   Local:    http://localhost:${PORT}`);
-    console.log(`   Network:  http://<your-ip>:${PORT}`);
+// Constitution: Database health check endpoint
+app.get('/health', async (req, res) => {
+  try {
+    const dbHealth = await DatabaseService.healthCheck();
+    res.json({ 
+      status: 'ok', 
+      timestamp: new Date().toISOString(),
+      database: dbHealth
+    });
+  } catch (error) {
+    res.status(500).json({ 
+      status: 'error', 
+      timestamp: new Date().toISOString(),
+      database: { 
+        status: 'error', 
+        connected: false,
+        error: error instanceof Error ? error.message : 'Unknown error'
+      }
+    });
   }
 });
+
+// Constitution: Apply database migrations before starting routes
+async function initializeApp() {
+  try {
+    console.log('🔄 Initializing database...');
+    await DatabaseService.initialize();
+    
+    console.log('🔄 Applying database migrations...');
+    await MigrationService.initialize();
+    
+    console.log('✅ Database initialized successfully');
+    
+    // Start API routes
+    app.use('/api/auth', authRouter);
+    app.use('/api/plugins', pluginsRouter);
+    app.use('/api/storage', storageRouter);
+    app.use('/api/admin/plugins', adminPluginsRouter);
+    app.use('/api/ldap', ldapRouter);
+
+    // Constitution: Load LDAP plugin routes dynamically
+    (async () => {
+      try {
+        const { plugin: ldapPlugin } = await import('./plugins/ldap/index.js');
+        if (ldapPlugin && ldapPlugin.routes) {
+          app.use('/api/plugins/ldap', ldapPlugin.routes);
+          console.log('🔌 LDAP plugin routes registered: /api/plugins/ldap');
+        }
+      } catch (error) {
+        console.error('❌ Failed to register LDAP plugin routes:', error);
+      }
+    })();
+    
+    // Error handling
+    app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
+      console.error('Error:', err);
+      res.status(err.status || 500).json({
+        error: err.message || 'Internal server error',
+        timestamp: new Date().toISOString()
+      });
+    });
+    
+    // Constitution: Start server only after database is ready
+    app.listen(PORT, HOST, () => {
+      console.log(`🚀 Server running on http://${HOST}:${PORT}`);
+      console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
+      console.log(`🗄️ Database: PostgreSQL (connected)`);
+      console.log(`🌐 Network access: enabled`);
+      
+      // Show network URLs if not localhost
+      if (HOST === '0.0.0.0') {
+        console.log(`\n📱 Access URLs:`);
+        console.log(`   Local:    http://localhost:${PORT}`);
+        console.log(`   Network:  http://<your-ip>:${PORT}`);
+      }
+      
+      // Graceful shutdown
+      process.on('SIGINT', async () => {
+        console.log('\n🛑 Shutting down gracefully...');
+        await DatabaseService.close();
+        process.exit(0);
+      });
+      
+      process.on('SIGTERM', async () => {
+        console.log('\n🛑 Shutting down gracefully...');
+        await DatabaseService.close();
+        process.exit(0);
+      });
+    });
+    
+  } catch (error) {
+    console.error('❌ Failed to initialize application:', error);
+    process.exit(1);
+  }
+}
+
+// Constitution: Start application with database initialization
+initializeApp();

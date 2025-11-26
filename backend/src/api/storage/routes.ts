@@ -1,29 +1,27 @@
 import { Router } from 'express';
 import { authenticate, AuthRequest } from '../../middleware/auth.js';
+import { DatabaseStorageService } from '../../services/DatabaseStorageService.js';
 
 const router = Router();
 
-const userStorage = new Map<string, Map<string, any>>();
-
-const getUserStorage = (userId: string): Map<string, any> => {
-  if (!userStorage.has(userId)) {
-    userStorage.set(userId, new Map());
+router.get('/:key', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const value = await DatabaseStorageService.get(req.user!.id, req.params.key);
+    
+    if (value === null) {
+      return res.status(404).json({ error: 'Key not found' });
+    }
+    
+    res.json({ key: req.params.key, value });
+  } catch (error) {
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'Failed to get data',
+      timestamp: new Date().toISOString()
+    });
   }
-  return userStorage.get(userId)!;
-};
-
-router.get('/:key', authenticate, (req: AuthRequest, res) => {
-  const storage = getUserStorage(req.user!.id);
-  const value = storage.get(req.params.key);
-  
-  if (value === undefined) {
-    return res.status(404).json({ error: 'Key not found' });
-  }
-  
-  res.json({ key: req.params.key, value });
 });
 
-router.post('/', authenticate, (req: AuthRequest, res) => {
+router.post('/', authenticate, async (req: AuthRequest, res) => {
   try {
     const { key, value } = req.body;
     
@@ -31,30 +29,44 @@ router.post('/', authenticate, (req: AuthRequest, res) => {
       return res.status(400).json({ error: 'Key is required' });
     }
     
-    const storage = getUserStorage(req.user!.id);
-    storage.set(key, value);
+    await DatabaseStorageService.set(req.user!.id, key, value);
     
     res.json({ key, value });
   } catch (error) {
-    res.status(500).json({ error: 'Failed to store data' });
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'Failed to store data',
+      timestamp: new Date().toISOString()
+    });
   }
 });
 
-router.delete('/:key', authenticate, (req: AuthRequest, res) => {
-  const storage = getUserStorage(req.user!.id);
-  const deleted = storage.delete(req.params.key);
-  
-  if (!deleted) {
-    return res.status(404).json({ error: 'Key not found' });
+router.delete('/:key', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const deleted = await DatabaseStorageService.delete(req.user!.id, req.params.key);
+    
+    if (!deleted) {
+      return res.status(404).json({ error: 'Key not found' });
+    }
+    
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'Failed to delete data',
+      timestamp: new Date().toISOString()
+    });
   }
-  
-  res.status(204).send();
 });
 
-router.get('/', authenticate, (req: AuthRequest, res) => {
-  const storage = getUserStorage(req.user!.id);
-  const data = Object.fromEntries(storage.entries());
-  res.json(data);
+router.get('/', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const data = await DatabaseStorageService.getAll(req.user!.id);
+    res.json(data);
+  } catch (error) {
+    res.status(500).json({ 
+      error: error instanceof Error ? error.message : 'Failed to get all data',
+      timestamp: new Date().toISOString()
+    });
+  }
 });
 
 export default router;
