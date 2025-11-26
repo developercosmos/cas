@@ -35,3 +35,9 @@ Thumbs.db
 # Temporary
 *.tmp
 *.temp
+
+# Security - sensitive files
+token.txt
+cookies.txt
+*.token
+*.jwt
