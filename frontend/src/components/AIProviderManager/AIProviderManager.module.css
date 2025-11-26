@@ -1,0 +1,517 @@
+/* Constitution: AI Provider Manager Styles */
+
+.container {
+  padding: 2rem;
+  height: 100%;
+  overflow-y: auto;
+  background: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.loading,
+.error {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+}
+
+.spinner {
+  width: 40px;
+  loading;
+  height: 40px;
+  border: 3px solid var(--accent-primary);
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 1rem;
+}
+
+.loading p,
+.error p {
+  margin: 0;
+  color: var(--text-secondary);
+  text-align: center;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.retryButton {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.5rem;
+  cursor: pointer;
+  margin-top: 1rem;
+  transition: background-color 0.2s ease;
+}
+
+.retryButton:hover {
+  background: var(--accent-hover);
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 2rem;
+  gap: 2rem;
+}
+
+.header h2 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+}
+
+.header p {
+  margin: 0;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.quickActions {
+  display: flex;
+  gap: 1rem;
+}
+
+.testButton {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  padding: 0.5rem 1rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-size: 0.875rem;
+}
+
+.testButton:hover:not(:disabled) {
+  background: var(--accent-hover);
+}
+
+.testButton:disabled {
+  opacity: 0.6;
+  .loading-spinner {
+    width: 12px;
+    height: 12px;
+    border: 2px solid rgba(255, 255, 0.3);
+    margin-right: 0.5rem;
+  }
+}
+
+.configSection,
+.statusSection,
+.fallbackSection {
+  background: var(--bg-secondary);
+  padding: 1.5rem;
+  border-radius: 0.5rem;
+  margin-bottom: 2rem;
+}
+
+.configSection h3,
+.statusSection h3,
+.fallbackSection h3 {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+}
+
+.configForm {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.formGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.formGroup label {
+  font-weight: 600;
+  color: var(--text-primary);
+  margin-bottom: 0.25rem;
+}
+
+.formInput {
+  padding: 0.5rem;
+  border: 1px solid var(--border-secondary);
+  border-radius: 0.25rem;
+  background: var(--bg-primary);
+  color: var(--input-text);
+  font-family: 'Fira Code', 'Monaco', monospace;
+  font-size: 0.875rem;
+  transition: all 0.2s ease;
+}
+
+.formInput:focus {
+  outline: none;
+  border-color: var(--accent-primary);
+  box-shadow: 0 0 0 2px rgba(139, 92, 246, 0.1);
+}
+
+.formGroup small {
+  color: var(--text-tertiary);
+  font-size: 0.75rem;
+}
+
+.saveButton {
+  background: var(--accent-success);
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  align-self: flex-start;
+  border: 1px solid transparent;
+}
+
+.saveButton:hover:not(:disabled) {
+  background: var(--accent-success-hover);
+}
+
+.saveButton:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.save.saved {
+  border-color: var(--accent-success);
+}
+
+.saveButton.saving {
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.saveButton.error {
+  border-color: var(--error-color);
+  color: var(--error-color);
+}
+
+.providerList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+  gap: 1rem;
+}
+
+.providerCard {
+  border: 1px solid var(--border-secondary);
+  border-left: 4px solid var(--border-primary);
+  border-radius: 0.5rem;
+  padding: 1rem;
+  transition: all 0.2s ease;
+}
+
+.providerCard:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+}
+
+.providerHeader {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  margin-bottom: 0.75rem;
+}
+
+.providerInfo h4 {
+  margin: 0 0 0.25rem 0;
+  color: var(--text-primary);
+}
+
+.statusBadge {
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  font-size: 0.75rem;
+  font-weight: 500;
+}
+
+.available .statusBadge {
+  background: var(--success-color);
+  color: white;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.testing .statusBadge {
+  background: var(--warning-color);
+  color: white;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+  animation: pulse 1.5s ease-in-out infinite;
+}
+
+.unavailable .statusBadge,
+.error .statusBadge {
+  background: var(--error-color);
+  color: white;
+  border-radius: 0.25rem;
+  padding: 0.25rem 0.5rem;
+}
+
+.providerActions {
+  text-align: right;
+  font-size: 0.75rem;
+  color: var(--text-tertiary);
+}
+
+.providerDetails {
+  margin-top: 0.75rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--border-secondary);
+  font-size: 0.75rem;
+}
+
+.statLine {
+  display: flex;
+  justify-content: space-between;
+  margin-bottom: 0.25rem;
+}
+
+.statKey {
+  font-weight: 600;
+  color: var(--text-secondary);
+}
+
+.statValue {
+  color: var(--text-primary);
+  word-break: break-all;
+}
+
+.providerError {
+  margin-top: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(239, 68, 68, 0.1);
+  border-left: 4px solid var(--error-color);
+  border-radius: 0.25rem;
+}
+
+.providerError small {
+  color: var(--error-color);
+  font-style: italic;
+}
+
+.fallbackDescription {
+  margin-bottom: 1rem;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.fallbackChain {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  padding: 1rem;
+  background: var(--bg-hover);
+  border-radius: 0.25rem;
+}
+
+.fallbackItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 1rem;
+  background: var(--bg-primary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 0.25rem;
+  cursor: grab;
+  transition: all 0.2s ease;
+}
+
+.fallbackItem:hover {
+  background: var(--bg-secondary);
+}
+
+.fallbackNumber {
+  background: var(--accent-primary);
+  color: white;
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  font-size: 0.75rem;
+}
+
+.fallbackName {
+  font-weight: 500;
+  color: var(--text-primary);
+}
+
+.fallbackDragging {
+  background: var(--bg-secondary);
+  transform: scale(1.02);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-color: var(--accent-primary);
+}
+
+.setupGuide {
+  margin-top: 2rem;
+  padding-top: 2rem;
+  border-top: 1px solid var(--border-secondary);
+}
+
+.setupGuide h3 {
+  margin: 0 0 1rem 0;
+  color: var(--text-primary);
+}
+
+.guideSteps {
+  display: grid;
+  gap: 1rem;
+}
+
+.step {
+  display: flex;
+  gap: 1rem;
+  padding: 1.5rem;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-secondary);
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+}
+
+.stepNumber {
+  background: var(--accent-primary);
+  color: white;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  flex-shrink: 0;
+}
+
+.stepContent {
+  flex: 1;
+  color: var(--text-primary);
+}
+
+.stepContent h4 {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-primary);
+}
+
+.stepContent p {
+  margin: 0 0 0.5rem 0;
+  color: var(--text-secondary);
+  line-height: 1.4;
+}
+
+.stepContent code {
+  background: var(--code-bg);
+  color: var(--text-primary);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.25rem;
+  display: inline-block;
+  font-family: 'Fira Code', 'Monaco', monospace;
+  font-size: 0.875rem;
+}
+
+.advancedConfig {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  border-top: 1px solid var(--border-secondary);
+}
+
+.configOptions {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+}
+
+.advancedButton {
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-secondary);
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.25rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-decoration: none;
+}
+
+.advancedButton:hover {
+  background: var(--bg-hover);
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .container {
+    padding: 1rem;
+  }
+
+  .header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+    text-align: center;
+  }
+
+  .providerList {
+    grid-template-columns: 1fr;
+  }
+
+  .fallbackChain {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .setupGuide {
+    text-align: center;
+  }
+
+  .guideSteps {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .step {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+}
+
+/* Success/Warning/Error indicators */
+.success-color {
+  color: #22c55e5;
+  border-color: #22c55e5;
+}
+
+.warning-color {
+  color: #f59e0b;
+  border-color: #f59e0b;
+}
+
+.error-color {
+  color: #ef4444;
+  border-color: #ef4444;
+}
+
+/* Dark theme support */
+[data-theme="dark"] .container {
+  --bg-primary: #1a1a1a;
+  --bg-secondary: #2a2a2a;
+  --text-primary: #ffffff;
+  --text-secondary: #b0b0b0;
+  --text-tertiary: #808080;
+  --border-primary: #333333;
+  --border-secondary: #404040;
+  --accent-primary: #3b82f6;
+  --accent-hover: #2563eb;
+  --success-color: #22c55e5;
+  --warning-color: #f59e0b;
+  --error-color: #ef4444;
+  --code-bg: #2d37348;
+}

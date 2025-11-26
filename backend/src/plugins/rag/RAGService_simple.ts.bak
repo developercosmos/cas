@@ -1,0 +1,108 @@
+// Constitution: RAG Document Intelligence - Simple Implementation
+import { DatabaseService } from '../../services/DatabaseService.js';
+import { aiService, ChatRequest, ChatResponse, EmbeddingRequest } from '../../services/AIService.js';
+import { ragConfig } from './config/RAGConfig.js';
+
+export class RAGService {
+  private static initialized: boolean = false;
+  private static lastHealthCheck = new Map<string, Date>();
+
+  // Constitution: Initialize RAG Service
+  static async initialize(): Promise<void> {
+    try {
+      console.log('🧠 RAG Plugin: Initializing with AI service...');
+      
+      // Load configuration
+      const config = await ragConfig.loadConfig();
+      
+      // Initialize AI service with providers
+      await aiService.initialize(config);
+      
+      // Test all providers
+      await this.testAllProviders();
+      
+      this.initialized = true;
+      console.log('✅ RAG Plugin: Initialized successfully with providers');
+      
+    } catch (err) {
+      console.error('❌ RAG Plugin: Initialization failed', err);
+      throw err;
+    }
+  }
+
+  // Constitution: Get chat response with fallback chain
+  static async generateChat(request: ChatRequest): Promise<ChatResponse> {
+    const providers = this.getAvailableProviders();
+    
+    for (const provider of providers) {
+      try {
+        // Try each provider in priority order
+        console.log(`🤖 Attempting ${provider.name} for chat...`);
+        const response = await aiService.generateChat(request);
+        
+        if (response.success || (response.content && response.content)) {
+          console.log(`✅ Success with ${provider.name}`);
+          return response;
+        }
+      } catch (err) {
+          console.log(`❌ Provider ${provider.name} failed:`, err.message);
+          if (i + 1 < providers.length - 1) {
+            if (providers[i].available) {
+              try {
+                const altResponse = await this.generateChat(request);
+                console.log(`✅ Success with fallback to ${altResponse.provider}`);
+                return altResponse;
+              }
+            }
+          }
+        }
+      }
+
+      // Fallback message if all providers failed
+      throw new Error(`All AI providers failed for chat: ${providers.map(p => p.name).join(', ')}. Error: ${errors.map(e => e.message).join('; ')}`);
+    }
+  }
+
+  // Constitution: Get available embeddings for embeddings
+  static async getEmbeddings(request: EmbeddingRequest): Promise<EmbeddingResponse> {
+    try {
+      console.log('🔤 Generating embeddings for ${request.texts.length} documents...');
+      return await aiService.generateEmbeddings(request);
+    } catch (error) {
+      throw error;
+    }
+  }
+
+  // Constitution: Get all models available chat models
+  static async getChatModels(): Promise<string[]> {
+    const models = await this.getModels();
+    
+    const result: string[] = models.map(model => ({
+      name: model.name,
+      available: models.some(m => m.available)
+    }));
+    
+    return result;
+  }
+
+  // Constitution: Chat request with fallback chain
+  private static async getChatResponse(request: ChatRequest): Promise<ChatResponse> {
+    const bestProvider = this.getBestProvider('chat');
+    
+    try {
+      console.log(`🔍 Using ${bestProvider.name} for chat`);
+      const response = await this.generateChat(request);
+      
+      if (response.content && request.context) {
+        // Add context to the response
+        const prompt = `Based on the following context:\n\n${request.context}\n\n\nQuestion: ${request.message}`;
+        
+        // Generate response with context
+        const response = await aiService.generateChat({
+          message: prompt,
+          context: request.context || '',
+        });
+  
+        return response;
+      } catch (err) {
+          throw new Error(`Failed to get response: ${err instanceof Error ? err.message : 'Chat request failed: ${request.message}`);

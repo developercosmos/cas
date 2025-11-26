@@ -20,11 +20,5 @@ export default defineConfig({
     host: '0.0.0.0', // Listen on all network interfaces
     port: 3000,
     strictPort: true, // Fail if port is already in use
-    proxy: {
-      '/api': {
-        target: 'http://localhost:4000',
-        changeOrigin: true,
-      },
-    },
   },
 });

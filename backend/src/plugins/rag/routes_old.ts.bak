@@ -1,0 +1,520 @@
+// Constitution: RAG Plugin Express Routes
+import { Router } from 'express';
+import { authenticate, AuthRequest } from '../../middleware/auth.js';
+import { DatabaseService } from '../../services/DatabaseService.js';
+import { RAGService } from './RAGService.js';
+import { ragConfig } from './config/RAGConfig.js';
+import { 
+  DocumentUploadRequest, 
+  ChatRequest, 
+  CollectionCreateRequest,
+  SessionCreateRequest,
+  RAGPluginConfig
+} from './types.js';
+
+const router = Router();
+
+// Constitution: Initialize RAG service on plugin load
+let ragInitialized = false;
+
+const ensureRAGInitialized = async () => {
+  if (!ragInitialized) {
+    try {
+      await RAGService.initialize();
+      ragInitialized = true;
+    } catch (error) {
+      console.error('Failed to initialize RAG service:', error);
+      throw error;
+    }
+  }
+};
+
+// Constitution: Plugin status and configuration
+router.get('/status', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const config = ragConfig.getConfigForAPI();
+    const statistics = await RAGService.getStatistics();
+    
+    const pluginConfig: RAGPluginConfig = {
+      pluginId: 'rag-retrieval',
+      isOpenAIConfigured: ragConfig.isOpenAIConfigured(),
+      defaultModel: config.chatModel,
+      defaultEmbeddingModel: config.embeddingModel,
+      statistics
+    };
+
+    res.json({
+      success: true,
+      plugin: {
+        name: 'RAG Document Intelligence',
+        version: '1.0.0',
+        status: ragInitialized ? 'initialized' : 'not initialized',
+        active: ragInitialized,
+        configuration: pluginConfig
+      }
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error'
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  }
+});
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+
+// Constitution: Configure RAG plugin
+router.post('/configure', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { 
+      openaiApiKey, 
+      embeddingModel, 
+      chatModel, 
+      maxChunkSize, 
+      chunkOverlap, 
+      contextWindow, 
+      temperature, 
+      retrievalCount 
+    } = req.body;
+
+    // Validate required fields
+    if (!openaiApiKey) {
+      return res.status(400).json({ error: 'OpenAI API key is required' });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+    }
+
+    // Update configuration
+    const updatedConfig = await ragConfig.updateConfig({
+      openaiApiKey,
+      embeddingModel: embeddingModel || 'text-embedding-3-small',
+      chatModel: chatModel || 'gpt-3.5-turbo',
+      maxChunkSize: maxChunkSize || 1000,
+      chunkOverlap: chunkOverlap || 200,
+      contextWindow: contextWindow || 4000,
+      temperature: temperature || 0.7,
+      retrievalCount: retrievalCount || 5
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+
+    // Reinitialize RAG service with new config
+    ragInitialized = false;
+    await ensureRAGInitialized();
+
+    res.json({
+      success: true,
+      message: 'RAG plugin configured successfully',
+      configuration: ragConfig.getConfigForAPI()
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Configuration failed'
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  }
+});
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+
+// Constitution: Get all collections
+router.get('/collections', authenticate, async (req: AuthRequest, res) => {
+  try {
+    await ensureRAGInitialized();
+    const collections = await RAGService.getCollections(req.user?.id || '');
+    
+    res.json({
+      success: true,
+      data: collections
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to retrieve collections'
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  }
+});
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+
+// Constitution: Create new collection
+router.post('/collections', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { name, description, embeddingModel, chunkSize, chunkOverlap, maxRetrievalCount } = req.body;
+
+    if (!name) {
+      return res.status(400).json({ error: 'Collection name is required' });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+    }
+
+    await ensureRAGInitialized();
+    
+    const result = await RAGService.createCollection(req.user?.id || '', {
+      name,
+      description,
+      embeddingModel,
+      chunkSize,
+      chunkOverlap,
+      maxRetrievalCount
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+
+    if (result.success) {
+      res.json({
+        success: true,
+        message: 'Collection created successfully',
+        collectionId: result.collectionId
+      });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error
+      });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to create collection'
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  }
+});
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+
+// Constitution: Get documents for collection
+router.get('/collections/:collectionId/documents', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { collectionId } = req.params;
+    
+    await ensureRAGInitialized();
+    const documents = await RAGService.getDocuments(collectionId);
+    
+    res.json({
+      success: true,
+      data: documents
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to retrieve documents'
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  }
+});
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+
+// Constitution: Upload and process document
+router.post('/collections/:collectionId/documents', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { collectionId } = req.params;
+    const { title, content, source, contentType, metadata } = req.body;
+
+    if (!content) {
+      return res.status(400).json({ error: 'Document content is required' });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+    }
+
+    await ensureRAGInitialized();
+
+    const uploadRequest: DocumentUploadRequest = {
+      collectionId,
+      title: title || 'Untitled Document',
+      content,
+      source: source || 'Manual Upload',
+      contentType: contentType || 'text/plain',
+      metadata: {
+        ...metadata,
+        uploadedBy: req.user?.id,
+        uploadedAt: new Date().toISOString()
+      }
+    };
+
+    const result = await RAGService.processDocument(uploadRequest);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        message: 'Document processed successfully',
+        documentId: result.documentId,
+        chunks: result.chunks,
+        embeddings: result.embeddings
+      });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error
+      });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Document processing failed'
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  }
+});
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+
+// Constitution: Create chat session
+router.post('/sessions', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { collectionId, title, contextWindow, temperature, model } = req.body;
+
+    if (!collectionId) {
+      return res.status(400).json({ error: 'Collection ID is required' });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+    }
+
+    await ensureRAGInitialized();
+
+    const sessionRequest: SessionCreateRequest = {
+      collectionId,
+      title: title || 'New Chat Session',
+      contextWindow: contextWindow || 4000,
+      temperature: temperature || 0.7,
+      model: model || 'gpt-3.5-turbo'
+    };
+
+    const result = await RAGService.createSession(req.user?.id || '', sessionRequest);
+
+    if (result.success) {
+      res.json({
+        success: true,
+        message: 'Chat session created successfully',
+        sessionId: result.sessionId
+      });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+    } else {
+      res.status(400).json({
+        success: false,
+        error: result.error
+      });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+    }
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to create chat session'
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  }
+});
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+
+// Constitution: Chat with RAG
+router.post('/sessions/:sessionId/chat', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { sessionId } = req.params;
+    const { message } = req.body;
+
+    if (!message) {
+      return res.status(400).json({ error: 'Message is required' });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+    }
+
+    await ensureRAGInitialized();
+
+    const chatRequest: ChatRequest = {
+      sessionId,
+      message
+    };
+
+    const response = await RAGService.generateResponse(chatRequest);
+
+    res.json({
+      success: true,
+      response: response.response,
+      sources: response.sources,
+      tokensUsed: response.tokensUsed,
+      model: response.model,
+      timestamp: new Date().toISOString()
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Chat request failed'
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  }
+});
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+
+// Constitution: Get chat history
+router.get('/sessions/:sessionId/history', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { sessionId } = req.params;
+
+    await ensureRAGInitialized();
+    const history = await RAGService.getChatHistory(sessionId);
+
+    res.json({
+      success: true,
+      data: history
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to retrieve chat history'
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  }
+});
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+
+// Constitution: Get user's chat sessions
+router.get('/sessions', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const sessions = await DatabaseService.query(
+      `SELECT s.*, c.Name as CollectionName 
+       FROM plugin.rag_tx_sessions s
+       JOIN plugin.rag_md_collections c ON s.CollectionId = c.Id
+       WHERE s.UserId = $1 AND s.IsActive = true
+       ORDER BY s.CreatedAt DESC`,
+      [req.user?.id || '']
+    );
+
+    res.json({
+      success: true,
+      data: sessions
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to retrieve chat sessions'
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  }
+});
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+
+// Constitution: Test RAG configuration
+router.post('/test', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { openaiApiKey } = req.body;
+
+    if (!openaiApiKey) {
+      return res.status(400).json({ error: 'OpenAI API key is required for testing' });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+    }
+
+    // Test configuration
+    await ragConfig.updateConfig({ openaiApiKey });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+    
+    res.json({
+      success: true,
+      message: 'RAG configuration test completed successfully',
+      configured: ragConfig.isOpenAIConfigured(),
+      testedAt: new Date().toISOString()
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Configuration test failed'
+    });
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+  }
+});
+
+
+// Constitution: AI service status and models\nrouter.get("/ai/status", authenticate, async (req: AuthRequest, res) => {\n  try {\n    const stats = await RAGService.getStatistics();\n    const health = await RAGService.healthCheck();\n    \n    res.json({\n      success: true,\n      data: {\n        providers: stats.aiService?.providers || [],\n        available: stats.aiService?.available || [],\n        models: stats.aiService?.models || {},\n        health\n      }\n    });\n  } catch (error) {\n    res.status(500).json({\n      success: false,\n      error: error instanceof Error ? error.message : "Failed to get AI status"\n    });\n  }\n});
+
+export default router;

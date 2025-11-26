@@ -46,17 +46,39 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
       - DATABASE_URL=postgresql://${POSTGRES_USER:-dashboard_user}:${POSTGRES_PASSWORD:-dashboard_password}@postgres:5432/${POSTGRES_DB:-dashboard_db}
+      - OLLAMA_BASE_URL=http://ollama:11434
+      - OPENAI_API_KEY=${OPENAI_API_KEY:-}
+      - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     # Note: Use environment variables or secrets management in production
     volumes:
       - ./backend:/app
       - /app/node_modules
     depends_on:
       - postgres
+      - ollama
     networks:
       - dashboard_network
 
+  ollama:
+    image: ollama/ollama:latest
+    container_name: cas_ollama
+    restart: unless-stopped
+    ports:
+      - "11434:11434"
+    volumes:
+      - ollama_data:/root/.ollama
+    networks:
+      - dashboard_network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:11434/api/version"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
 volumes:
   postgres_data:
+  ollama_data:
 
 networks:
   dashboard_network:

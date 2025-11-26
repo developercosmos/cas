@@ -95,6 +95,23 @@ async function initializeApp() {
         console.error('❌ Failed to register LDAP plugin routes:', error);
       }
     })();
+
+    // Constitution: Load RAG plugin routes dynamically
+    (async () => {
+      try {
+        const { plugin: ragPlugin } = await import('./plugins/rag/index.js');
+        if (ragPlugin && ragPlugin.routes) {
+          app.use('/api/plugins/rag', ragPlugin.routes);
+          console.log('🧠 RAG plugin routes registered: /api/plugins/rag');
+          // Initialize plugin
+          if (ragPlugin.initialize) {
+            await ragPlugin.initialize();
+          }
+        }
+      } catch (error) {
+        console.error('❌ Failed to register RAG plugin routes:', error);
+      }
+    })();
     
     // Error handling
     app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

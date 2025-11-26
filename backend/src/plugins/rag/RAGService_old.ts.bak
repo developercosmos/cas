@@ -1,0 +1,445 @@
+// Constitution: Core RAG Service Implementation
+import { DatabaseService } from '../../services/DatabaseService.js';
+import { 
+  RAGConfig, 
+  RAGCollection, 
+  RAGDocument, 
+  RAGEmbedding, 
+  RAGSession, 
+  RAGMessage,
+  RAGSource,
+  DocumentUploadRequest,
+  ChatRequest,
+  ChatResponse,
+  ProcessingResult,
+  RetrievalResult
+} from './types.js';
+import { ragConfig } from './config/RAGConfig.js';
+import crypto from 'crypto';
+
+// EmbedJs imports (will be added to package.json)
+// @ts-ignore - EmbedJs types will be available after npm install
+interface EmbeddingModel {
+  embedDocuments(texts: string[]): Promise<number[][]>;
+  embedQuery(text: string): Promise<number[]>;
+}
+
+interface VectorStore {
+  addVectors(embeddings: number[][], documents: any[]): Promise<void>;
+  similaritySearch(query: string, k: number): Promise<any[]>;
+}
+
+interface ChatModel {
+  invoke(prompt: string): Promise<{ content: string; usage?: { totalTokens: number } }>;
+}
+
+export class RAGService {
+  private static embeddings: EmbeddingModel | null = null;
+  private static vectorStore: VectorStore | null = null;
+  private static llm: ChatModel | null = null;
+  private static initialized: boolean = false;
+
+  // Constitution: Initialize RAG service with EmbedJs
+  static async initialize(): Promise<void> {
+    try {
+      const config = await ragConfig.loadConfig();
+
+      if (!ragConfig.isOpenAIConfigured()) {
+        throw new Error('OpenAI API key not configured');
+      }
+
+      console.log('🧠 RAG Plugin: Initializing RAG service...');
+
+      // Constitution: Initialize embeddings model (mock implementation for now)
+      this.embeddings = {
+        embedDocuments: async (texts: string[]) => {
+          console.log(`🔤 RAG Plugin: Generating embeddings for ${texts.length} documents`);
+          // Mock implementation - replace with actual EmbedJs
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          return texts.map(() => Array(1536).fill(0).map(() => Math.random()));
+        },
+        embedQuery: async (text: string) => {
+          console.log(`🔤 RAG Plugin: Generating embedding for query: "${text.substring(0, 50)}..."`);
+          // Mock implementation - replace with actual EmbedJs
+          await new Promise(resolve => setTimeout(resolve, 500));
+          return Array(1536).fill(0).map(() => Math.random());
+        }
+      };
+
+      // Constitution: Initialize vector store (PostgreSQL with pgvector)
+      this.vectorStore = {
+        addVectors: async (embeddings: number[][], documents: any[]) => {
+          console.log(`💾 RAG Plugin: Storing ${embeddings.length} embeddings in vector database`);
+          // Store in PostgreSQL using DatabaseService
+          for (let i = 0; i < documents.length; i++) {
+            await DatabaseService.execute(
+              `INSERT INTO plugin.rag_tx_embeddings (DocumentId, ChunkIndex, Content, Embedding, Metadata, CreatedAt)
+               VALUES ($1, $2, $3, $4, $5, NOW())`,
+              [
+                documents[i].metadata?.documentId,
+                i,
+                documents[i].pageContent,
+                embeddings[i],
+                JSON.stringify(documents[i].metadata)
+              ]
+            );
+          }
+        },
+        similaritySearch: async (query: string, k: number) => {
+          console.log(`🔍 RAG Plugin: Searching for ${k} similar documents`);
+          // Mock similarity search - replace with actual vector similarity query
+          await new Promise(resolve => setTimeout(resolve, 300));
+          
+          const results = await DatabaseService.query(
+            `SELECT d.Id, d.Title, d.Content, d.Source, e.ChunkIndex, e.Metadata
+             FROM plugin.rag_tx_embeddings e
+             JOIN plugin.rag_tx_documents d ON e.DocumentId = d.Id
+             WHERE d.ProcessingStatus = 'completed'
+             ORDER BY RANDOM()
+             LIMIT $1`,
+            [k]
+          );
+
+          return results.map((doc: any) => ({
+            id: doc.Id,
+            title: doc.Title,
+            pageContent: doc.Content,
+            source: doc.Source,
+            score: Math.random(), // Mock similarity score
+            metadata: { ...doc.Metadata, chunkIndex: doc.ChunkIndex }
+          }));
+        }
+      };
+
+      // Constitution: Initialize chat model
+      this.llm = {
+        invoke: async (prompt: string) => {
+          console.log(`💬 RAG Plugin: Generating response for prompt: "${prompt.substring(0, 100)}..."`);
+          // Mock LLM call - replace with actual OpenAI
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          return {
+            content: `Based on the provided context, I can help you with that information. This is a mock response that will be replaced with actual OpenAI integration.`,
+            usage: { totalTokens: Math.floor(Math.random() * 1000) + 100 }
+          };
+        }
+      };
+
+      this.initialized = true;
+      console.log('✅ RAG Plugin: RAG service initialized successfully');
+
+    } catch (error) {
+      console.error('❌ RAG Plugin: Failed to initialize RAG service:', error);
+      throw error;
+    }
+  }
+
+  // Constitution: Check if service is initialized
+  private static checkInitialized(): void {
+    if (!this.initialized) {
+      throw new Error('RAG service not initialized. Call initialize() first.');
+    }
+  }
+
+  // Constitution: Process document into chunks and embeddings
+  static async processDocument(request: DocumentUploadRequest): Promise<ProcessingResult> {
+    this.checkInitialized();
+
+    try {
+      console.log(`📄 RAG Plugin: Processing document for collection ${request.collectionId}`);
+
+      // Create document record
+      const document = await DatabaseService.queryOne<RAGDocument>(
+        `INSERT INTO plugin.rag_tx_documents 
+         (CollectionId, Title, Content, Source, ContentType, ContentHash, Metadata, ProcessingStatus, CreatedAt, UpdatedAt)
+         VALUES ($1, $2, $3, $4, $5, $6, 'processing', NOW(), NOW())
+         RETURNING Id, Title, Content, Source, ContentType, CreatedAt, UpdatedAt`,
+        [
+          request.collectionId,
+          request.title || 'Untitled Document',
+          request.content,
+          request.source,
+          request.contentType,
+          crypto.createHash('sha256').update(request.content).digest('hex'),
+          JSON.stringify(request.metadata || {})
+        ]
+      );
+
+      if (!document) {
+        return { success: false, error: 'Failed to create document record' };
+      }
+
+      // Constitution: Split into chunks
+      const chunks = await this.chunkText(document.Content, {
+        chunkSize: 1000,
+        overlap: 200
+      });
+
+      console.log(`📝 RAG Plugin: Split into ${chunks.length} chunks`);
+
+      // Constitution: Generate embeddings
+      if (!this.embeddings) {
+        throw new Error('Embeddings model not initialized');
+      }
+      const embeddings = await this.embeddings.embedDocuments(chunks);
+
+      // Constitution: Store in vector database
+      if (!this.vectorStore) {
+        throw new Error('Vector store not initialized');
+      }
+      await this.vectorStore.addVectors(embeddings, chunks.map((chunk, index) => ({
+        pageContent: chunk,
+        metadata: { 
+          documentId: document.Id, 
+          title: document.Title,
+          source: document.Source,
+          chunkIndex: index,
+          ...request.metadata
+        }
+      })));
+
+      // Update document status to completed
+      await DatabaseService.execute(
+        'UPDATE plugin.rag_tx_documents SET ProcessingStatus = $1, UpdatedAt = NOW() WHERE Id = $2',
+        ['completed', document.Id]
+      );
+
+      console.log(`✅ RAG Plugin: Document ${document.Id} processed successfully`);
+
+      return { 
+        success: true, 
+        documentId: document.Id, 
+        chunks: chunks.length, 
+        embeddings: embeddings.length 
+      };
+
+    } catch (error) {
+      console.error('❌ RAG Plugin: Document processing failed:', error);
+      
+      // Update document status to failed if we have a document ID
+      if (request.collectionId) {
+        try {
+          await DatabaseService.execute(
+            'UPDATE plugin.rag_tx_documents SET ProcessingStatus = $1, ErrorMessage = $2, UpdatedAt = NOW() WHERE Id = $3',
+            ['failed', error instanceof Error ? error.message : 'Unknown error', ''] // Will need to extract document ID
+          );
+        } catch (updateError) {
+          console.error('Failed to update document error status:', updateError);
+        }
+      }
+
+      return { 
+        success: false, 
+        error: error instanceof Error ? error.message : 'Unknown error' 
+      };
+    }
+  }
+
+  // Constitution: Split text into chunks with overlap
+  private static async chunkText(text: string, options: { chunkSize: number; overlap: number }): Promise<string[]> {
+    const { chunkSize, overlap } = options;
+    const chunks: string[] = [];
+
+    for (let i = 0; i < text.length; i += chunkSize - overlap) {
+      const chunk = text.substring(i, i + chunkSize);
+      if (chunk.trim().length > 0) {
+        chunks.push(chunk.trim());
+      }
+    }
+
+    return chunks;
+  }
+
+  // Constitution: Generate response with retrieval-augmented context
+  static async generateResponse(request: ChatRequest): Promise<ChatResponse> {
+    this.checkInitialized();
+
+    try {
+      console.log(`💬 RAG Plugin: Generating response for session ${request.sessionId}`);
+
+      // Get session details
+      const session = await DatabaseService.queryOne<RAGSession>(
+        'SELECT * FROM plugin.rag_tx_sessions WHERE Id = $1 AND IsActive = true',
+        [request.sessionId]
+      );
+
+      if (!session) {
+        throw new Error('Session not found or inactive');
+      }
+
+      // Constitution: Retrieve relevant documents
+      if (!this.vectorStore) {
+        throw new Error('Vector store not initialized');
+      }
+      const retrievedDocs = await this.vectorStore.similaritySearch(request.message, session.MaxRetrievalCount || 5);
+
+      // Format context
+      const context = retrievedDocs.map((doc, index) => 
+        `Source ${index + 1}:\n${doc.pageContent}`
+      ).join('\n\n');
+
+      // Constitution: Generate response with context
+      const prompt = `Based on the following sources, answer the user's question. If the sources don't contain the answer, say so.
+
+SOURCES:
+${context}
+
+QUESTION: ${request.message}
+
+ANSWER:`;
+
+      if (!this.llm) {
+        throw new Error('LLM not initialized');
+      }
+      const response = await this.llm.invoke(prompt);
+
+      // Convert retrieved docs to RAGSource format
+      const sources: RAGSource[] = retrievedDocs.map(doc => ({
+        Id: doc.id,
+        Title: doc.title,
+        Content: doc.pageContent,
+        Score: doc.score,
+        Metadata: doc.metadata
+      }));
+
+      // Store user message
+      await this.storeMessage(session.Id, 'user', request.message);
+
+      // Store assistant response
+      await this.storeMessage(session.Id, 'assistant', response.content, sources, response.usage?.totalTokens);
+
+      console.log(`✅ RAG Plugin: Response generated successfully`);
+
+      return {
+        response: response.content,
+        sources,
+        tokensUsed: response.usage?.totalTokens || 0,
+        model: session.Model
+      };
+
+    } catch (error) {
+      console.error('❌ RAG Plugin: Response generation failed:', error);
+      throw error;
+    }
+  }
+
+  // Constitution: Store chat message
+  private static async storeMessage(
+    sessionId: string, 
+    role: 'user' | 'assistant', 
+    content: string, 
+    sources?: RAGSource[],
+    tokensUsed?: number
+  ): Promise<void> {
+    await DatabaseService.execute(
+      `INSERT INTO plugin.rag_tx_messages 
+       (SessionId, Role, Content, Sources, TokensUsed, Model, CreatedAt)
+       VALUES ($1, $2, $3, $4, $5, $6, NOW())`,
+      [
+        sessionId,
+        role,
+        content,
+        sources ? JSON.stringify(sources) : null,
+        tokensUsed,
+        'gpt-3.5-turbo' // Will be dynamic based on session
+      ]
+    );
+  }
+
+  // Constitution: Get collections for user
+  static async getCollections(userId: string): Promise<RAGCollection[]> {
+    return await DatabaseService.query<RAGCollection>(
+      'SELECT * FROM plugin.rag_md_collections ORDER BY CreatedAt DESC'
+    );
+  }
+
+  // Constitution: Create new collection
+  static async createCollection(userId: string, request: any): Promise<{ success: boolean; collectionId?: string; error?: string }> {
+    try {
+      const collection = await DatabaseService.queryOne<RAGCollection>(
+        `INSERT INTO plugin.rag_md_collections 
+         (Name, Description, EmbeddingModel, ChunkSize, ChunkOverlap, MaxRetrievalCount, CreatedAt, UpdatedAt)
+         VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())
+         RETURNING Id, Name, Description, CreatedAt, UpdatedAt`,
+        [
+          request.name,
+          request.description,
+          request.embeddingModel || 'text-embedding-3-small',
+          request.chunkSize || 1000,
+          request.chunkOverlap || 200,
+          request.maxRetrievalCount || 5
+        ]
+      );
+
+      if (collection) {
+        return { success: true, collectionId: collection.Id };
+      } else {
+        return { success: false, error: 'Failed to create collection' };
+      }
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }
+
+  // Constitution: Get documents for collection
+  static async getDocuments(collectionId: string): Promise<RAGDocument[]> {
+    return await DatabaseService.query<RAGDocument>(
+      'SELECT * FROM plugin.rag_tx_documents WHERE CollectionId = $1 ORDER BY CreatedAt DESC',
+      [collectionId]
+    );
+  }
+
+  // Constitution: Create chat session
+  static async createSession(userId: string, request: any): Promise<{ success: boolean; sessionId?: string; error?: string }> {
+    try {
+      const session = await DatabaseService.queryOne<RAGSession>(
+        `INSERT INTO plugin.rag_tx_sessions 
+         (CollectionId, UserId, Title, ContextWindow, Temperature, Model, IsActive, CreatedAt, UpdatedAt)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, NOW(), NOW())
+         RETURNING Id, Title, Model, CreatedAt`,
+        [
+          request.collectionId,
+          userId,
+          request.title || 'New Chat',
+          request.contextWindow || 4000,
+          request.temperature || 0.7,
+          request.model || 'gpt-3.5-turbo',
+          true
+        ]
+      );
+
+      if (session) {
+        return { success: true, sessionId: session.Id };
+      } else {
+        return { success: false, error: 'Failed to create session' };
+      }
+    } catch (error) {
+      return { success: false, error: error instanceof Error ? error.message : 'Unknown error' };
+    }
+  }
+
+  // Constitution: Get chat history
+  static async getChatHistory(sessionId: string): Promise<RAGMessage[]> {
+    return await DatabaseService.query<RAGMessage>(
+      'SELECT * FROM plugin.rag_tx_messages WHERE SessionId = $1 ORDER BY CreatedAt ASC',
+      [sessionId]
+    );
+  }
+
+  // Constitution: Get plugin statistics
+  static async getStatistics(): Promise<any> {
+    const stats = await DatabaseService.queryOne(
+      `SELECT 
+         (SELECT COUNT(*) FROM plugin.rag_md_collections) as totalCollections,
+         (SELECT COUNT(*) FROM plugin.rag_tx_documents WHERE ProcessingStatus = 'completed') as totalDocuments,
+         (SELECT COUNT(*) FROM plugin.rag_tx_sessions) as totalSessions,
+         (SELECT COUNT(*) FROM plugin.rag_tx_messages) as totalMessages`
+    );
+
+    return stats || {
+      totalCollections: 0,
+      totalDocuments: 0,
+      totalSessions: 0,
+      totalMessages: 0
+    };
+  }
+}
