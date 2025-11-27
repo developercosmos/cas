@@ -224,25 +224,7 @@ router.delete('/:id', authenticate, (req: AuthRequest, res) => {
   res.status(204).send();
 });
 
-router.get('/docs/summary', authenticate, async (req: AuthRequest, res) => {
-  try {
-    const { language = 'en' } = req.query;
-    
-    const summary = await PluginDocumentationService.getPluginDocumentationSummary(language as string);
-    
-    res.json({
-      success: true,
-      data: summary
-    });
-  } catch (error) {
-    res.status(500).json({
-      success: false,
-      error: error instanceof Error ? error.message : 'Failed to get documentation summary'
-    });
-  }
-});
-
-// Documentation routes (general, must be after specific routes)
+// Documentation routes
 router.get('/:id/docs', /* authenticate, */ async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
@@ -457,6 +439,30 @@ router.get('/docs/summary', authenticate, async (req: AuthRequest, res) => {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get documentation summary'
+    });
+  }
+});
+
+// General documentation route (must be after all specific routes)
+router.get('/:id/docs', /* authenticate, */ async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { language = 'en', includeVersions = 'false' } = req.query;
+    
+    const docs = await PluginDocumentationService.getByPluginId(
+      id, 
+      language as string, 
+      includeVersions === 'true'
+    );
+    
+    res.json({
+      success: true,
+      data: docs
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get documentation'
     });
   }
 });
