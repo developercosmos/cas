@@ -444,7 +444,7 @@ router.get('/docs/summary', authenticate, async (req: AuthRequest, res) => {
 });
 
 // General documentation route (must be after all specific routes)
-router.get('/:id/docs', /* authenticate, */ async (req: AuthRequest, res) => {
+router.get('/:id/docs', authenticate, async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const { language = 'en', includeVersions = 'false' } = req.query;
