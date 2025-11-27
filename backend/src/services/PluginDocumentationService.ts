@@ -182,6 +182,16 @@ export class PluginDocumentationService {
     language: string = 'en', 
     includeVersions: boolean = false
   ): Promise<PluginDocumentation[]> {
+    // First resolve the pluginId to the internal UUID
+    const pluginConfig = await DatabaseService.queryOne<{ id: string }>(
+      'SELECT Id FROM plugin.plugin_configurations WHERE PluginId = $1',
+      [pluginId]
+    );
+
+    if (!pluginConfig) {
+      return []; // Plugin not found, return empty array
+    }
+
     const results = await DatabaseService.query<any>(
       `SELECT 
         Id, PluginId, DocumentType, Title, Content, ContentFormat, Language, 
@@ -191,7 +201,7 @@ export class PluginDocumentationService {
        AND Language = $2
        AND ($3 OR IsCurrent = TRUE)
        ORDER BY OrderIndex, DocumentType, Version DESC`,
-      [pluginId, language, includeVersions]
+      [pluginConfig.id, language, includeVersions]
     );
 
     return results.map(doc => this.mapToDocumentation(doc));
@@ -205,6 +215,16 @@ export class PluginDocumentationService {
     documentType: PluginDocumentation['documentType'], 
     language: string = 'en'
   ): Promise<PluginDocumentation | null> {
+    // First resolve pluginId to internal UUID
+    const pluginConfig = await DatabaseService.queryOne<{ id: string }>(
+      'SELECT Id FROM plugin.plugin_configurations WHERE PluginId = $1',
+      [pluginId]
+    );
+
+    if (!pluginConfig) {
+      return null; // Plugin not found
+    }
+
     const result = await DatabaseService.queryOne<any>(
       `SELECT 
         Id, PluginId, DocumentType, Title, Content, ContentFormat, Language, 
@@ -216,7 +236,7 @@ export class PluginDocumentationService {
        AND IsCurrent = TRUE
        ORDER BY Version DESC, CreatedAt DESC
        LIMIT 1`,
-      [pluginId, documentType, language]
+      [pluginConfig.id, documentType, language]
     );
 
     return result ? this.mapToDocumentation(result) : null;
