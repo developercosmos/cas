@@ -411,6 +411,74 @@ For support and documentation updates, contact the plugin administrator.',
         DROP FUNCTION IF EXISTS plugin.update_documentation_timestamp CASCADE;
         DROP TABLE IF EXISTS plugin.plugin_md_documentation CASCADE;
       `
+    },
+    {
+      version: '2025112702',
+      name: 'populate_plugin_documentation',
+      timestamp: new Date('2025-11-27T11:00:00Z'),
+      up: `
+        -- Populate plugin documentation with existing plugin docs
+        -- Text Block Plugin Documentation
+        INSERT INTO plugin.plugin_md_documentation (PluginId, DocumentType, Title, Content, ContentFormat, Language, IsCurrent, OrderIndex)
+        SELECT 
+            pc.Id,
+            'readme',
+            'Text Block Plugin',
+            '# Text Block Plugin
+
+## Description
+A simple text block plugin that allows users to create and edit text content on their dashboard.
+
+## Version
+1.0.0
+
+## Author
+System
+
+## Status
+Active
+
+## Features
+- Rich text editing
+- Real-time preview
+- Customizable formatting options
+- Persistent storage
+
+## Installation
+This plugin is managed through the CAS plugin system and is automatically available.
+
+## Usage
+1. Click "Add Block" on your dashboard
+2. Select "Text Block" from available blocks
+3. Start typing your content
+4. Use the formatting toolbar to style your text
+5. Click "Save" to persist your changes
+
+## Configuration
+The text block plugin supports the following configuration options:
+- Font size
+- Text alignment
+- Background color
+- Border style
+
+## Support
+For support and documentation updates, contact the plugin administrator.',
+            'markdown',
+            'en',
+            TRUE,
+            0
+        FROM plugin.plugin_configurations pc 
+        WHERE pc.PluginId = 'text-block'
+        AND NOT EXISTS (
+            SELECT 1 FROM plugin.plugin_md_documentation pd 
+            WHERE pd.PluginId = pc.Id 
+            AND pd.DocumentType = 'readme'
+            AND pd.Language = 'en'
+        );
+      `,
+      down: `
+        DELETE FROM plugin.plugin_md_documentation WHERE DocumentType IN ('readme', 'api', 'installation');
+      `
     }
   ];
 

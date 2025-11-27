@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { PluginMetadata, PluginInstallRequest } from '../../types';
 import { PluginAdminService } from '../../services/PluginAdminService';
+import { PluginDocumentationService } from '../../services/PluginDocumentationService';
 import LdapUserManager from '../LdapUserManager';
 import LdapTreeBrowser from '../LdapTreeBrowser';
 
@@ -48,6 +49,9 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
   const [ldapConfig, setLdapConfig] = useState<any>(null);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [documentationModal, setDocumentationModal] = useState<PluginMetadata | null>(null);
+  const [documentationContent, setDocumentationContent] = useState<any>(null);
+  const [documentationLoading, setDocumentationLoading] = useState(false);
+  const [documentationError, setDocumentationError] = useState<string | null>(null);
   const [showUserManager, setShowUserManager] = useState(false);
   const [ldapConfigId, setLdapConfigId] = useState<string | null>(null);
   const [showTreeBrowser, setShowTreeBrowser] = useState(false);
@@ -112,6 +116,49 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
       setError(err instanceof Error ? err.message : 'Failed to load plugins');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPluginDocumentation = async (plugin: PluginMetadata) => {
+    try {
+      setDocumentationLoading(true);
+      setDocumentationError(null);
+      
+      const docs = await PluginDocumentationService.getByPluginId(plugin.id, 'en', false);
+      
+      if (docs.length > 0) {
+        // Group documentation by type for easier display
+        const groupedDocs = docs.reduce((acc, doc) => {
+          if (!acc[doc.documentType]) {
+            acc[doc.documentType] = doc;
+          }
+          return acc;
+        }, {} as Record<string, any>);
+        
+        setDocumentationContent(groupedDocs);
+      } else {
+        // Fallback: create minimal documentation
+        setDocumentationContent({
+          readme: {
+            title: `${plugin.name} Documentation`,
+            content: `# ${plugin.name}\n\n${plugin.description}\n\n**Version:** ${plugin.version}\n**Author:** ${plugin.author}`,
+            contentFormat: 'markdown'
+          }
+        });
+      }
+    } catch (error) {
+      console.error('Failed to load plugin documentation:', error);
+      setDocumentationError(error instanceof Error ? error.message : 'Failed to load documentation');
+      // Fallback to basic documentation
+      setDocumentationContent({
+        readme: {
+          title: `${plugin.name} Documentation`,
+          content: `# ${plugin.name}\n\n${plugin.description}\n\n**Version:** ${plugin.version}\n**Author:** ${plugin.author}`,
+          contentFormat: 'markdown'
+        }
+      });
+    } finally {
+      setDocumentationLoading(false);
     }
   };
 
@@ -434,7 +481,10 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                     {editingConfig === plugin.id ? 'Hide' : 'Config'}
                   </button>
                   <button 
-                    onClick={() => setDocumentationModal(plugin)}
+                    onClick={() => {
+                      setDocumentationModal(plugin);
+                      loadPluginDocumentation(plugin);
+                    }}
                     className={styles.documentationButton}
                   >
                     📚 Docs
