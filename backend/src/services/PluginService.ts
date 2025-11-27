@@ -1,6 +1,7 @@
 import { PluginMetadata, PluginConfig, PluginInstallRequest, PluginOperationResponse } from '../types/plugin';
 
 import { DatabaseService } from './DatabaseService.js';
+import { PluginDocumentationService } from './PluginDocumentationService.js';
 
 export class PluginService {
   private plugins: Map<string, PluginMetadata> = new Map();
@@ -98,10 +99,20 @@ export class PluginService {
         };
       }
 
+      // Remove plugin from memory
       this.plugins.delete(id);
       
       const configId = `${id}-config`;
       this.configs.delete(configId);
+
+      // Clean up documentation from database
+      try {
+        const deletedCount = await PluginDocumentationService.deleteByPluginId(id);
+        console.log(`📚 Cleaned up ${deletedCount} documentation records for plugin: ${id}`);
+      } catch (docError) {
+        console.warn(`⚠️ Warning: Failed to cleanup documentation for plugin ${id}:`, docError);
+        // Don't fail the uninstall if documentation cleanup fails
+      }
 
       return {
         success: true,

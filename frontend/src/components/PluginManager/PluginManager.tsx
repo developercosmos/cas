@@ -170,16 +170,37 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
   const handleToggleStatus = async (id: string, enable: boolean) => {
     try {
       setActionLoading(id);
+      setError(null); // Clear any previous errors
+      
       const response = enable 
         ? await PluginAdminService.enablePlugin(id)
         : await PluginAdminService.disablePlugin(id);
       
       if (response.success) {
+        // Show success message
+        const plugin = plugins.find(p => p.id === id);
+        const message = `✅ ${plugin?.name || 'Plugin'} ${enable ? 'enabled' : 'disabled'} successfully!`;
+        
+        // Create temporary success message
+        const successDiv = document.createElement('div');
+        successDiv.className = styles.success;
+        successDiv.textContent = message;
+        successDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: var(--success-bg, #10b981); color: white; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 10000; animation: slideInRight 0.3s ease;';
+        document.body.appendChild(successDiv);
+        
+        // Remove success message after 3 seconds
+        setTimeout(() => {
+          successDiv.style.animation = 'slideOutRight 0.3s ease';
+          setTimeout(() => successDiv.remove(), 300);
+        }, 3000);
+        
+        // Reload plugins to reflect new status
         await loadPlugins();
       } else {
-        setError(response.message);
+        setError(response.message || `Failed to ${enable ? 'enable' : 'disable'} plugin`);
       }
     } catch (err) {
+      console.error('Toggle status error:', err);
       setError(err instanceof Error ? err.message : `Failed to ${enable ? 'enable' : 'disable'} plugin`);
     } finally {
       setActionLoading(null);

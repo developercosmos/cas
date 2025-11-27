@@ -103,26 +103,52 @@ export class PluginAdminService {
 
   // Enable a plugin
   static async enablePlugin(id: string): Promise<{ success: boolean; message: string; plugin?: PluginMetadata }> {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      return {
+        success: false,
+        message: 'No authentication token found'
+      };
+    }
+
     const response = await fetch(`${API_BASE}/api/plugins/${id}/enable`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        'Authorization': `Bearer ${token}`
       }
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
     const result = await response.json();
     return result;
   }
 
   // Disable a plugin
   static async disablePlugin(id: string): Promise<{ success: boolean; message: string; plugin?: PluginMetadata }> {
+    const token = localStorage.getItem('auth_token');
+    if (!token) {
+      return {
+        success: false,
+        message: 'No authentication token found'
+      };
+    }
+
     const response = await fetch(`${API_BASE}/api/plugins/${id}/disable`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${localStorage.getItem('authToken')}`
+        'Authorization': `Bearer ${token}`
       }
     });
+    
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+    
     const result = await response.json();
     return result;
   }

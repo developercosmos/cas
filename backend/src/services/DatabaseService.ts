@@ -1,7 +1,7 @@
 import { Pool, PoolClient } from 'pg';
 
 // Database configuration following constitution
-const DATABASE_URL = process.env.DATABASE_URL || 'postgresql://localhost:5432/dashboard_db';
+const DATABASE_URL = process.env.DATABASE_URL;
 
 export class DatabaseService {
   private static pool: Pool | null = null;

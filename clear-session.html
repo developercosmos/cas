@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CAS Platform - Clear Session</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            max-width: 500px;
+            width: 90%;
+        }
+        h1 {
+            margin: 0 0 1rem 0;
+            color: #333;
+        }
+        p {
+            color: #666;
+            line-height: 1.6;
+        }
+        button {
+            background: #667eea;
+            color: white;
+            border: none;
+            padding: 0.75rem 1.5rem;
+            border-radius: 6px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 0.5rem 0.5rem 0.5rem 0;
+            transition: background 0.2s;
+        }
+        button:hover {
+            background: #5568d3;
+        }
+        button.secondary {
+            background: #6c757d;
+        }
+        button.secondary:hover {
+            background: #5a6268;
+        }
+        .success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+            color: #155724;
+            padding: 1rem;
+            border-radius: 6px;
+            margin: 1rem 0;
+            display: none;
+        }
+        .info-box {
+            background: #e7f3ff;
+            border-left: 4px solid #2196F3;
+            padding: 1rem;
+            margin: 1rem 0;
+        }
+        .info-box h3 {
+            margin: 0 0 0.5rem 0;
+            color: #1976D2;
+        }
+        .info-box ol {
+            margin: 0.5rem 0 0 0;
+            padding-left: 1.5rem;
+        }
+        .info-box li {
+            margin: 0.25rem 0;
+            color: #555;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔐 CAS Platform Session Manager</h1>
+        <p>Use this page to clear your session and force logout from the CAS Platform.</p>
+        
+        <div class="success" id="successMessage">
+            ✅ Session cleared successfully! You can now close this page and reload the CAS Platform.
+        </div>
+
+        <button onclick="clearSession()">Clear Session & Logout</button>
+        <button class="secondary" onclick="openCAS()">Open CAS Platform</button>
+
+        <div class="info-box">
+            <h3>Manual Steps (Alternative Method)</h3>
+            <ol>
+                <li>Open the CAS Platform (http://localhost:3000)</li>
+                <li>Press <strong>F12</strong> to open Developer Tools</li>
+                <li>Go to <strong>Console</strong> tab</li>
+                <li>Type: <code>localStorage.clear()</code> and press Enter</li>
+                <li>Reload the page (F5 or Ctrl+R)</li>
+                <li>You should now see the login screen</li>
+            </ol>
+        </div>
+
+        <div class="info-box">
+            <h3>📝 Default Login Credentials</h3>
+            <p><strong>Admin Account:</strong></p>
+            <ul style="margin: 0.5rem 0;">
+                <li>Username: <code>admin</code></li>
+                <li>Password: <code>password</code></li>
+            </ul>
+            <p><strong>Demo Account:</strong></p>
+            <ul style="margin: 0.5rem 0;">
+                <li>Username: <code>demo</code></li>
+                <li>Password: <code>demo123</code></li>
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        function clearSession() {
+            // Clear localStorage
+            localStorage.clear();
+            
+            // Clear sessionStorage
+            sessionStorage.clear();
+            
+            // Show success message
+            document.getElementById('successMessage').style.display = 'block';
+            
+            // Auto-redirect after 2 seconds
+            setTimeout(() => {
+                window.location.href = 'http://localhost:3000';
+            }, 2000);
+        }
+
+        function openCAS() {
+            window.open('http://localhost:3000', '_blank');
+        }
+
+        // Auto-clear if opened from localhost
+        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+            console.log('Auto-clearing session from localhost...');
+        }
+    </script>
+</body>
+</html>

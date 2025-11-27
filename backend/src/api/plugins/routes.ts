@@ -1,6 +1,8 @@
 import { Router } from 'express';
 import { authenticate, AuthRequest } from '../../middleware/auth.js';
 import { PluginService } from '../../services/PluginService.js';
+import { PluginDocumentationService } from '../../services/PluginDocumentationService.js';
+import { DatabaseService } from '../../services/DatabaseService.js';
 
 const router = Router();
 const pluginService = new PluginService();
@@ -25,6 +27,13 @@ const pluginRegistry = new Map<string, PluginManifest>([
   }],
 ]);
 
+// Constitution: Plugin status storage (persists across requests)
+const pluginStatusMap = new Map<string, string>([
+  ['core.text-block', 'active'],
+  ['ldap-auth', 'disabled'],
+  ['rag-retrieval', 'active']
+]);
+
 router.get('/', authenticate, async (req: AuthRequest, res) => {
   try {
     // Constitution: Load LDAP plugin dynamically
@@ -38,7 +47,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
         description: 'Basic text editing block',
         author: 'Dashboard Team',
         permissions: ['storage.read', 'storage.write'],
-        status: 'active'
+        status: pluginStatusMap.get('core.text-block') || 'active'
       },
       {
         id: 'ldap-auth',
@@ -47,7 +56,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
         description: 'LDAP directory authentication plugin',
         author: 'System',
         permissions: ['auth.ldap'],
-        status: ldapPlugin ? 'active' : 'disabled',
+        status: pluginStatusMap.get('ldap-auth') || 'disabled',
         isSystem: true,
         routes: ldapPlugin ? {
           configure: '/api/plugins/ldap/configure',
@@ -63,7 +72,7 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
         description: 'Retrieval-Augmented Generation for document analysis and intelligent chat (English & Bahasa Indonesia)',
         author: 'System',
         permissions: ['document:upload', 'chat:create', 'collection:manage', 'rag:configure'],
-        status: 'active',
+        status: pluginStatusMap.get('rag-retrieval') || 'active',
         isSystem: true,
         icon: '🧠',
         capabilities: {
@@ -120,95 +129,71 @@ router.get('/:id', authenticate, (req: AuthRequest, res) => {
 });
 
 // Constitution: Enable/disable plugin endpoints
-router.post('/:id/enable', authenticate, (req: AuthRequest, res) => {
+router.post('/:id/enable', authenticate, async (req: AuthRequest, res) => {
   const pluginId = req.params.id;
   
-  // Find plugin from loaded plugins
-  const plugins = [
-    {
-      id: 'core.text-block',
-      name: 'Text Block',
-      version: '1.0.0',
-      description: 'Basic text editing block',
-      author: 'Dashboard Team',
-      status: 'active'
-    },
-    {
-      id: 'ldap-auth',
-      name: 'LDAP Authentication',
-      version: '1.0.0',
-      description: 'LDAP directory authentication plugin',
-      author: 'System',
-      status: 'active',
-      isSystem: true,
-      routes: {
-        configure: '/api/plugins/ldap/configure',
-        test: '/api/plugins/ldap/test',
-        import: '/api/plugins/ldap/import',
-        status: '/api/plugins/ldap/status'
-      }
-    }
-  ];
+  // Constitution: Plugin metadata for response
+  const pluginMeta = {
+    'core.text-block': { name: 'Text Block', version: '1.0.0' },
+    'ldap-auth': { name: 'LDAP Authentication', version: '1.0.0' },
+    'rag-retrieval': { name: 'RAG Document Intelligence', version: '1.0.0' }
+  };
   
-  const plugin = plugins.find(p => p.id === pluginId);
+  const meta = pluginMeta[pluginId as keyof typeof pluginMeta];
   
-  if (!plugin) {
+  if (!meta) {
     return res.status(404).json({ success: false, message: 'Plugin not found' });
   }
   
-  // Constitution: Update plugin status
-  plugin.status = 'active';
+  // Constitution: Update plugin status in persistent map
+  pluginStatusMap.set(pluginId, 'active');
+  
+  console.log(`✅ Plugin enabled: ${pluginId} -> active`);
+  console.log(`📊 Current status map:`, Array.from(pluginStatusMap.entries()));
   
   res.json({ 
     success: true, 
-    message: `Plugin ${plugin.name} enabled successfully`,
-    plugin
+    message: `Plugin ${meta.name} enabled successfully`,
+    plugin: {
+      id: pluginId,
+      name: meta.name,
+      version: meta.version,
+      status: 'active'
+    }
   });
 });
 
-router.post('/:id/disable', authenticate, (req: AuthRequest, res) => {
+router.post('/:id/disable', authenticate, async (req: AuthRequest, res) => {
   const pluginId = req.params.id;
   
-  // Find plugin from loaded plugins
-  const plugins = [
-    {
-      id: 'core.text-block',
-      name: 'Text Block',
-      version: '1.0.0',
-      description: 'Basic text editing block',
-      author: 'Dashboard Team',
-      status: 'active'
-    },
-    {
-      id: 'ldap-auth',
-      name: 'LDAP Authentication',
-      version: '1.0.0',
-      description: 'LDAP directory authentication plugin',
-      author: 'System',
-      status: 'active',
-      isSystem: true,
-      routes: {
-        configure: '/api/plugins/ldap/configure',
-        test: '/api/plugins/ldap/test',
-        import: '/api/plugins/ldap/import',
-        status: '/api/plugins/ldap/status'
-      }
-    }
-  ];
+  // Constitution: Plugin metadata for response
+  const pluginMeta = {
+    'core.text-block': { name: 'Text Block', version: '1.0.0' },
+    'ldap-auth': { name: 'LDAP Authentication', version: '1.0.0' },
+    'rag-retrieval': { name: 'RAG Document Intelligence', version: '1.0.0' }
+  };
   
-  const plugin = plugins.find(p => p.id === pluginId);
+  const meta = pluginMeta[pluginId as keyof typeof pluginMeta];
   
-  if (!plugin) {
+  if (!meta) {
     return res.status(404).json({ success: false, message: 'Plugin not found' });
   }
   
-  // Constitution: Update plugin status
-  plugin.status = 'disabled';
+  // Constitution: Update plugin status in persistent map
+  pluginStatusMap.set(pluginId, 'disabled');
+  
+  console.log(`⚠️ Plugin disabled: ${pluginId} -> disabled`);
+  console.log(`📊 Current status map:`, Array.from(pluginStatusMap.entries()));
   
   res.json({ 
     success: true, 
-    message: `Plugin ${plugin.name} disabled successfully`,
-    plugin
+    message: `Plugin ${meta.name} disabled successfully`,
+    plugin: {
+      id: pluginId,
+      name: meta.name,
+      version: meta.version,
+      status: 'disabled'
+    }
   });
 });
 
@@ -237,6 +222,225 @@ router.delete('/:id', authenticate, (req: AuthRequest, res) => {
     return res.status(404).json({ error: 'Plugin not found' });
   }
   res.status(204).send();
+});
+
+// Documentation routes
+router.get('/:id/docs', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { language = 'en', includeVersions = 'false' } = req.query;
+    
+    const docs = await PluginDocumentationService.getByPluginId(
+      id, 
+      language as string, 
+      includeVersions === 'true'
+    );
+    
+    res.json({
+      success: true,
+      data: docs
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get documentation'
+    });
+  }
+});
+
+router.get('/:id/docs/:type', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { id, type } = req.params;
+    const { language = 'en' } = req.query;
+    
+    const doc = await PluginDocumentationService.getByType(
+      id,
+      type as any,
+      language as string
+    );
+    
+    if (!doc) {
+      return res.status(404).json({
+        success: false,
+        error: 'Documentation not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: doc
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get documentation'
+    });
+  }
+});
+
+router.post('/:id/docs', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { documentType, title, content, contentFormat, language, version, isCurrent, orderIndex, metadata } = req.body;
+    
+    if (!documentType || !title || !content) {
+      return res.status(400).json({
+        success: false,
+        error: 'Document type, title, and content are required'
+      });
+    }
+    
+    // Get plugin configuration to validate plugin exists
+    const pluginConfig = await DatabaseService.queryOne(
+      'SELECT Id FROM plugin.plugin_configurations WHERE PluginId = $1',
+      [id]
+    );
+    
+    if (!pluginConfig) {
+      return res.status(404).json({
+        success: false,
+        error: 'Plugin not found'
+      });
+    }
+    
+    const doc = await PluginDocumentationService.create({
+      pluginId: pluginConfig.id,
+      documentType,
+      title,
+      content,
+      contentFormat,
+      language,
+      version,
+      isCurrent,
+      orderIndex,
+      metadata
+    });
+    
+    res.status(201).json({
+      success: true,
+      data: doc
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to create documentation'
+    });
+  }
+});
+
+router.put('/:id/docs/:docId', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { docId } = req.params;
+    const { title, content, contentFormat, version, isCurrent, orderIndex, metadata } = req.body;
+    
+    const doc = await PluginDocumentationService.update(docId, {
+      title,
+      content,
+      contentFormat,
+      version,
+      isCurrent,
+      orderIndex,
+      metadata
+    });
+    
+    res.json({
+      success: true,
+      data: doc
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to update documentation'
+    });
+  }
+});
+
+router.post('/:id/docs/:docId/current', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { docId } = req.params;
+    
+    const doc = await PluginDocumentationService.setCurrent(docId);
+    
+    res.json({
+      success: true,
+      data: doc
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to set current documentation'
+    });
+  }
+});
+
+router.delete('/:id/docs/:docId', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { docId } = req.params;
+    
+    const deleted = await PluginDocumentationService.delete(docId);
+    
+    if (!deleted) {
+      return res.status(404).json({
+        success: false,
+        error: 'Documentation not found'
+      });
+    }
+    
+    res.status(204).send();
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to delete documentation'
+    });
+  }
+});
+
+router.get('/:id/docs/search', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { id } = req.params;
+    const { q: query, language = 'en' } = req.query;
+    
+    if (!query) {
+      return res.status(400).json({
+        success: false,
+        error: 'Search query is required'
+      });
+    }
+    
+    const docs = await PluginDocumentationService.search(
+      id,
+      query as string,
+      language as string
+    );
+    
+    res.json({
+      success: true,
+      data: docs
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to search documentation'
+    });
+  }
+});
+
+router.get('/docs/summary', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { language = 'en' } = req.query;
+    
+    const summary = await PluginDocumentationService.getPluginDocumentationSummary(language as string);
+    
+    res.json({
+      success: true,
+      data: summary
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get documentation summary'
+    });
+  }
 });
 
 export default router;
