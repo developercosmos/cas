@@ -46,7 +46,7 @@ services:
       - JWT_SECRET=${JWT_SECRET}
       - CORS_ORIGIN=${CORS_ORIGIN:-http://localhost:3000}
       - DATABASE_URL=postgresql://${POSTGRES_USER:-dashboard_user}:${POSTGRES_PASSWORD:-dashboard_password}@postgres:5432/${POSTGRES_DB:-dashboard_db}
-      - OLLAMA_BASE_URL=http://ollama:11434
+      - OLLAMA_BASE_URL=http://172.19.0.1:11434
       - OPENAI_API_KEY=${OPENAI_API_KEY:-}
       - GEMINI_API_KEY=${GEMINI_API_KEY:-}
     # Note: Use environment variables or secrets management in production
@@ -55,9 +55,10 @@ services:
       - /app/node_modules
     depends_on:
       - postgres
-      - ollama
     networks:
       - dashboard_network
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
 
   ollama:
     image: ollama/ollama:latest

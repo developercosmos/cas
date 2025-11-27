@@ -61,9 +61,8 @@ export class RAGConfigManager {
 
     const errors: string[] = [];
 
-    if (!this.config.openaiApiKey) {
-      errors.push('OpenAI API key is required');
-    }
+    // OpenAI API key is optional when using Ollama
+    // Validation only for actual values, not emptiness
 
     if (this.config.maxChunkSize < 100 || this.config.maxChunkSize > 10000) {
       errors.push('Chunk size must be between 100 and 10000');

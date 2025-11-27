@@ -55,6 +55,36 @@ router.get('/', authenticate, async (req: AuthRequest, res) => {
           import: '/api/plugins/ldap/import',
           authenticate: '/api/plugins/ldap/authenticate'
         } : null
+      },
+      {
+        id: 'rag-retrieval',
+        name: 'RAG Document Intelligence',
+        version: '1.0.0',
+        description: 'Retrieval-Augmented Generation for document analysis and intelligent chat (English & Bahasa Indonesia)',
+        author: 'System',
+        permissions: ['document:upload', 'chat:create', 'collection:manage', 'rag:configure'],
+        status: 'active',
+        isSystem: true,
+        icon: '🧠',
+        capabilities: {
+          multilingual: true,
+          languages: ['English', 'Bahasa Indonesia', '100+ languages'],
+          vectorSearch: true,
+          semanticSearch: true,
+          chatInterface: true,
+          documentProcessing: true
+        },
+        routes: {
+          status: '/api/plugins/rag/status',
+          configure: '/api/plugins/rag/configure',
+          test: '/api/plugins/rag/test',
+          aiStatus: '/api/plugins/rag/ai/status',
+          aiTest: '/api/plugins/rag/ai/test',
+          collections: '/api/plugins/rag/collections',
+          documents: '/api/plugins/rag/documents',
+          sessions: '/api/plugins/rag/sessions',
+          chat: '/api/plugins/rag/chat'
+        }
       }
     ];
 

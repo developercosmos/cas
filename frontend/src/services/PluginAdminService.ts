@@ -53,14 +53,25 @@ export class PluginAdminService {
       }
 
       console.log('🔌 Loading plugins via API...');
-      const response = await this.request<{ plugins: PluginMetadata[] }>('/');
-      console.log('📦 Plugin API response:', response);
-      const result = {
-        success: true,
-        data: response.plugins || []
+      // Use /api/plugins instead of /api/admin/plugins
+      const response = await fetch(`${API_BASE}/api/plugins`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      
+      const result = await response.json();
+      console.log('📦 Plugin API response:', result);
+      
+      return {
+        success: result.success !== false,
+        data: result.data || []
       };
-      console.log('✅ Processed plugin data:', result);
-      return result;
     } catch (error) {
       console.error('❌ Failed to load plugins:', error);
       return {

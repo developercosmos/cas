@@ -140,7 +140,7 @@ export class AIService {
       }
 
       const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 5000);
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // Increased to 10s
       
       const response = await fetch(`${this.config.ollama.baseUrl}/api/tags`, {
         signal: controller.signal

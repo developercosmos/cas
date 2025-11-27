@@ -102,30 +102,9 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
       setError(null);
       const response = await PluginAdminService.listPlugins();
       if (response.success) {
-        // Constitution: Add LDAP plugin manually to ensure it appears
-        const allPlugins = [
-          ...response.data,
-          {
-            id: 'ldap-auth',
-            name: 'LDAP Authentication',
-            version: '1.0.0',
-            description: 'LDAP directory authentication plugin',
-            author: 'System',
-            status: 'active',
-            permissions: ['auth.ldap'],
-            entry: 'ldap-auth',
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString(),
-            isSystem: true,
-            routes: {
-              configure: '/api/plugins/ldap/configure',
-              test: '/api/plugins/ldap/test',
-              import: '/api/plugins/ldap/import',
-              status: '/api/plugins/ldap/status'
-            }
-          } as PluginMetadata & { isSystem: boolean; routes: any }
-        ];
-        setPlugins(allPlugins);
+        // Constitution: Use plugins from API response (includes LDAP, RAG, etc.)
+        setPlugins(response.data);
+        console.log('✅ Loaded plugins:', response.data.map((p: any) => p.name));
       } else {
         setError('Failed to load plugins');
       }
