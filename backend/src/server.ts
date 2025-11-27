@@ -70,48 +70,52 @@ async function initializeApp() {
   try {
     console.log('🔄 Initializing database...');
     await DatabaseService.initialize();
-    
+
     console.log('🔄 Applying database migrations...');
     await MigrationService.initialize();
-    
+
     console.log('✅ Database initialized successfully');
-    
-    // Start API routes
-    app.use('/api/auth', authRouter);
-    app.use('/api/plugins', pluginsRouter);
-    app.use('/api/storage', storageRouter);
-    app.use('/api/admin/plugins', adminPluginsRouter);
-    app.use('/api/ldap', ldapRouter);
+  } catch (error) {
+    console.warn('⚠️  Database initialization failed, running in fallback mode:', error instanceof Error ? error.message : 'Unknown error');
+    console.log('📝 Note: Application running with limited functionality without database');
+  }
 
-    // Constitution: Load LDAP plugin routes dynamically
-    (async () => {
-      try {
-        const { plugin: ldapPlugin } = await import('./plugins/ldap/index.js');
-        if (ldapPlugin && ldapPlugin.routes) {
-          app.use('/api/plugins/ldap', ldapPlugin.routes);
-          console.log('🔌 LDAP plugin routes registered: /api/plugins/ldap');
-        }
-      } catch (error) {
-        console.error('❌ Failed to register LDAP plugin routes:', error);
-      }
-    })();
+  // Start API routes (always start regardless of database status)
+  app.use('/api/auth', authRouter);
+  app.use('/api/plugins', pluginsRouter);
+  app.use('/api/storage', storageRouter);
+  app.use('/api/admin/plugins', adminPluginsRouter);
+  app.use('/api/ldap', ldapRouter);
 
-    // Constitution: Load RAG plugin routes dynamically
-    (async () => {
-      try {
-        const { plugin: ragPlugin } = await import('./plugins/rag/index.js');
-        if (ragPlugin && ragPlugin.routes) {
-          app.use('/api/plugins/rag', ragPlugin.routes);
-          console.log('🧠 RAG plugin routes registered: /api/plugins/rag');
-          // Initialize plugin
-          if (ragPlugin.initialize) {
-            await ragPlugin.initialize();
-          }
-        }
-      } catch (error) {
-        console.error('❌ Failed to register RAG plugin routes:', error);
+  // Constitution: Load LDAP plugin routes dynamically
+  (async () => {
+    try {
+      const { plugin: ldapPlugin } = await import('./plugins/ldap/index.js');
+      if (ldapPlugin && ldapPlugin.routes) {
+        app.use('/api/plugins/ldap', ldapPlugin.routes);
+        console.log('🔌 LDAP plugin routes registered: /api/plugins/ldap');
       }
-    })();
+    } catch (error) {
+      console.error('❌ Failed to register LDAP plugin routes:', error);
+    }
+  })();
+
+  // Constitution: Load RAG plugin routes dynamically
+  (async () => {
+    try {
+      const { plugin: ragPlugin } = await import('./plugins/rag/index.js');
+      if (ragPlugin && ragPlugin.routes) {
+        app.use('/api/plugins/rag', ragPlugin.routes);
+        console.log('🧠 RAG plugin routes registered: /api/plugins/rag');
+        // Initialize plugin
+        if (ragPlugin.initialize) {
+          await ragPlugin.initialize();
+        }
+      }
+    } catch (error) {
+      console.error('❌ Failed to register RAG plugin routes:', error);
+    }
+  })();
     
     // Error handling
     app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {
@@ -123,7 +127,8 @@ async function initializeApp() {
     });
     
     // Constitution: Start server only after database is ready
-    app.listen(PORT, HOST, () => {
+    try {
+      app.listen(PORT, HOST, () => {
       console.log(`🚀 Server running on http://${HOST}:${PORT}`);
       console.log(`📊 Environment: ${process.env.NODE_ENV || 'development'}`);
       console.log(`🗄️ Database: PostgreSQL (connected)`);
@@ -148,10 +153,9 @@ async function initializeApp() {
         await DatabaseService.close();
         process.exit(0);
       });
-    });
-    
+    });  // Close app.listen callback
   } catch (error) {
-    console.error('❌ Failed to initialize application:', error);
+    console.error('❌ Failed to start server:', error);
     process.exit(1);
   }
 }

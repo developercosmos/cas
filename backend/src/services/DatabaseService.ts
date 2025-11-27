@@ -1,8 +1,5 @@
 import { Pool, PoolClient } from 'pg';
 
-// Database configuration following constitution
-const DATABASE_URL = process.env.DATABASE_URL;
-
 export class DatabaseService {
   private static pool: Pool | null = null;
 
@@ -12,15 +9,44 @@ export class DatabaseService {
     }
 
     try {
-      this.pool = new Pool({
-        connectionString: DATABASE_URL,
+      // Get DATABASE_URL at runtime after dotenv has loaded
+      const DATABASE_URL = process.env.DATABASE_URL;
+      console.log('🔍 DATABASE_URL loaded:', DATABASE_URL ? 'Yes' : 'No');
+      
+      // Parse connection string or use explicit config
+      const config: any = {
         // Constitution: Connection management
         max: 20, // Maximum connections
         idleTimeoutMillis: 30000, // Close idle connections after 30s
         connectionTimeoutMillis: 2000, // Return error after 2s if can't connect
         // SSL for production
         ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
-      });
+      };
+
+      // Use explicit config to avoid string parsing issues
+      if (DATABASE_URL) {
+        try {
+          const url = new URL(DATABASE_URL);
+          config.host = url.hostname;
+          config.port = parseInt(url.port) || 5432;
+          config.database = url.pathname.slice(1); // Remove leading /
+          config.user = url.username;
+          config.password = String(url.password); // Ensure password is a string
+          console.log('🔍 DB Config:', {
+            host: config.host,
+            port: config.port,
+            database: config.database,
+            user: config.user,
+            passwordLength: config.password?.length
+          });
+        } catch (e) {
+          console.error('❌ URL parsing failed:', e);
+          // Fallback to connection string if URL parsing fails
+          config.connectionString = DATABASE_URL;
+        }
+      }
+
+      this.pool = new Pool(config);
 
       // Test connection
       const client = await this.pool.connect();

@@ -23,12 +23,49 @@
   flex-direction: column;
 }
 
+.content {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  min-height: 0;
+}
+
+.headerActions {
+  padding: 16px 24px;
+  display: flex;
+  gap: 12px;
+  border-bottom: 1px solid var(--border-color, #333);
+  flex-shrink: 0;
+}
+
+.headerActions button {
+  background: var(--accent-primary);
+  color: white;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  transition: all 0.15s ease;
+}
+
+.headerActions button:hover {
+  background: var(--accent-hover);
+}
+
+.headerActions button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 20px 24px;
   border-bottom: 1px solid var(--border-color, #333);
+  flex-shrink: 0;
 }
 
 .header h2 {
@@ -95,6 +132,7 @@
   display: flex;
   gap: 12px;
   border-bottom: 1px solid var(--border-color, #333);
+  flex-shrink: 0;
 }
 
 .primaryButton {
@@ -135,6 +173,7 @@
 .installForm {
   padding: 20px 24px;
   border-bottom: 1px solid var(--border-color, #333);
+  flex-shrink: 0;
 }
 
 .installForm h3 {
@@ -179,6 +218,22 @@
   flex: 1;
   overflow-y: auto;
   padding: 16px 24px 24px;
+  min-height: 0;
+}
+
+.pluginsList {
+  flex: 1;
+  overflow-y: auto;
+  padding: 16px 24px 24px;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.pluginsGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .empty {

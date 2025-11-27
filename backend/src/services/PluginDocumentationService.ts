@@ -403,6 +403,24 @@ export class PluginDocumentationService {
    * Map database row to PluginDocumentation interface
    */
   private static mapToDocumentation(row: any): PluginDocumentation {
+    let metadata = {};
+    if (row.metadata) {
+      try {
+        // Handle different metadata formats
+        if (typeof row.metadata === 'string') {
+          metadata = JSON.parse(row.metadata);
+        } else if (typeof row.metadata === 'object') {
+          metadata = row.metadata;
+        } else {
+          console.warn('⚠️ Unexpected metadata type:', typeof row.metadata, row.metadata);
+          metadata = {};
+        }
+      } catch (error) {
+        console.error('❌ Failed to parse metadata:', row.metadata, error);
+        metadata = {};
+      }
+    }
+    
     return {
       id: row.id,
       pluginId: row.pluginid,
@@ -414,7 +432,7 @@ export class PluginDocumentationService {
       version: row.version,
       isCurrent: row.iscurrent,
       orderIndex: row.orderindex,
-      metadata: row.metadata ? JSON.parse(row.metadata) : {},
+      metadata,
       createdAt: row.createdat,
       updatedAt: row.updatedat
     };

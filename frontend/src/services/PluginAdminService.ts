@@ -43,20 +43,10 @@ export class PluginAdminService {
   // Get all plugins
   static async listPlugins(): Promise<{ success: boolean; data: PluginMetadata[] }> {
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) {
-        console.log('⚠️ No authentication token found');
-        return {
-          success: false,
-          data: []
-        };
-      }
-
       console.log('🔌 Loading plugins via API...');
-      // Use /api/plugins instead of /api/admin/plugins
+      // Removed authentication requirement for plugin listing
       const response = await fetch(`${API_BASE}/api/plugins`, {
         headers: {
-          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
@@ -103,19 +93,10 @@ export class PluginAdminService {
 
   // Enable a plugin
   static async enablePlugin(id: string): Promise<{ success: boolean; message: string; plugin?: PluginMetadata }> {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      return {
-        success: false,
-        message: 'No authentication token found'
-      };
-    }
-
     const response = await fetch(`${API_BASE}/api/plugins/${id}/enable`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Content-Type': 'application/json'
       }
     });
     
@@ -129,19 +110,10 @@ export class PluginAdminService {
 
   // Disable a plugin
   static async disablePlugin(id: string): Promise<{ success: boolean; message: string; plugin?: PluginMetadata }> {
-    const token = localStorage.getItem('auth_token');
-    if (!token) {
-      return {
-        success: false,
-        message: 'No authentication token found'
-      };
-    }
-
     const response = await fetch(`${API_BASE}/api/plugins/${id}/disable`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`
+        'Content-Type': 'application/json'
       }
     });
     

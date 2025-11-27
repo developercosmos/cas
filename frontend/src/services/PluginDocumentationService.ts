@@ -1,4 +1,16 @@
-const API_BASE = import.meta.env.VITE_API_URL || 'http://localhost:4000';
+const getApiBaseUrl = () => {
+  if (import.meta.env.VITE_API_URL) {
+    return import.meta.env.VITE_API_URL;
+  }
+  // Use current hostname so it works from network (e.g., 192.168.1.225:4000)
+  if (typeof window !== 'undefined') {
+    const hostname = window.location.hostname;
+    return `http://${hostname}:4000`;
+  }
+  return 'http://localhost:4000';
+};
+
+const API_BASE = getApiBaseUrl();
 
 export interface PluginDocumentation {
   id: string;
@@ -47,10 +59,9 @@ export interface PluginDocumentationSummary {
 
 class PluginDocumentationServiceClass {
   private getAuthHeaders() {
-    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    // Documentation endpoints no longer require authentication
     return {
-      'Content-Type': 'application/json',
-      ...(token && { 'Authorization': `Bearer ${token}` })
+      'Content-Type': 'application/json'
     };
   }
 
