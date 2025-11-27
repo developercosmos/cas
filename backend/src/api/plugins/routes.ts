@@ -224,7 +224,25 @@ router.delete('/:id', authenticate, (req: AuthRequest, res) => {
   res.status(204).send();
 });
 
-// Documentation routes
+router.get('/docs/summary', authenticate, async (req: AuthRequest, res) => {
+  try {
+    const { language = 'en' } = req.query;
+    
+    const summary = await PluginDocumentationService.getPluginDocumentationSummary(language as string);
+    
+    res.json({
+      success: true,
+      data: summary
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get documentation summary'
+    });
+  }
+});
+
+// Documentation routes (general, must be after specific routes)
 router.get('/:id/docs', /* authenticate, */ async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
