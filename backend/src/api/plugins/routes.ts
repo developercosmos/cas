@@ -225,7 +225,7 @@ router.delete('/:id', authenticate, (req: AuthRequest, res) => {
 });
 
 // Documentation routes
-router.get('/:id/docs', authenticate, async (req: AuthRequest, res) => {
+router.get('/:id/docs', /* authenticate, */ async (req: AuthRequest, res) => {
   try {
     const { id } = req.params;
     const { language = 'en', includeVersions = 'false' } = req.query;
