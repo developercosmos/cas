@@ -35,10 +35,10 @@ body {
 
 /* Typography */
 h1, h2, h3, h4, h5, h6 {
-  font-family: var(--font-mono);
-  font-weight: var(--font-weight-semibold);
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-bold);
   line-height: var(--line-height-tight);
-  letter-spacing: -0.02em;
+  letter-spacing: var(--letter-spacing-tight);
 }
 
 h1 {
@@ -56,8 +56,9 @@ h3 {
 
 /* Buttons */
 button {
-  font-family: inherit;
-  font-weight: var(--font-weight-medium);
+  font-family: var(--font-family);
+  font-weight: var(--font-weight-semibold);
+  letter-spacing: var(--letter-spacing-normal);
   cursor: pointer;
   border: none;
   background: none;
@@ -75,14 +76,26 @@ button:focus-visible {
 input,
 textarea,
 select {
-  font-family: inherit;
+  font-family: var(--font-family);
   font-size: inherit;
+  font-weight: 500;
+  letter-spacing: var(--letter-spacing-normal);
   color: var(--text-primary);
-  background-color: var(--bg-secondary);
+  background-color: var(--bg-tertiary);
   border: 1px solid var(--border-color);
-  border-radius: var(--radius-md);
+  border-radius: var(--radius-lg);
   padding: var(--space-2) var(--space-3);
-  transition: all var(--transition-fast);
+  transition: all var(--transition-base);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+}
+
+input:hover:not(:disabled),
+textarea:hover:not(:disabled),
+select:hover:not(:disabled) {
+  border-color: var(--accent-primary);
+  background-color: var(--bg-secondary);
+  transform: translateY(-1px);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
 }
 
 input:focus,
@@ -90,7 +103,15 @@ textarea:focus,
 select:focus {
   outline: none;
   border-color: var(--accent-primary);
-  background-color: var(--bg-tertiary);
+  background-color: var(--bg-secondary);
+  box-shadow: 0 0 0 3px rgba(230, 126, 34, 0.1), 0 2px 6px rgba(0, 0, 0, 0.15);
+  transform: translateY(-1px);
+}
+
+input::placeholder,
+textarea::placeholder {
+  color: var(--text-muted);
+  font-weight: 400;
 }
 
 /* Links */

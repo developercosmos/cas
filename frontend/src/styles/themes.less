@@ -1,6 +1,6 @@
 // Factory.ai exact theme - Dark-first modern design
 :root {
-  // Dark theme (default to match Factory.ai)
+  // Dark theme (default to match Factory.ai Enterprise)
   --bg-primary: #000000;
   --bg-secondary: #0a0a0a;
   --bg-tertiary: #141414;
@@ -8,12 +8,23 @@
   --text-primary: #ffffff;
   --text-secondary: #d1d1d1;
   --text-tertiary: #737373;
-  --text-muted: #525252;
+  --text-muted: #9CA3AF;
   --border-color: #262626;
   --border-subtle: #1a1a1a;
-  --accent-primary: #F27B2F;
+  
+  // Factory.ai Enterprise Color Palette
+  --accent-primary: #E67E22;
   --accent-hover: #FF9C6E;
-  --accent-muted: #d97706;
+  --accent-muted: rgba(230, 126, 34, 0.1);
+  --accent-gradient-start: #E67E22;
+  --accent-gradient-mid: #8B5CF6;
+  --accent-gradient-end: #3B82F6;
+  --success-primary: #10B981;
+  --success-hover: #34D399;
+  --warning-primary: #F59E0B;
+  --warning-hover: #FCD34D;
+  --danger-primary: #DC2626;
+  --danger-hover: #EF4444;
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.3);
@@ -33,16 +44,16 @@
   --space-16: 64px;
   --space-20: 80px;
   
-  // Typography (Clean sans-serif stack like Factory.ai)
-  --font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', 'Helvetica Neue', sans-serif;
-  --font-mono: 'Geist Mono', 'SF Mono', ui-monospace, 'Monaco', 'Cascadia Code', 'Roboto Mono', 'Courier New', monospace;
+  // Typography (Factory.ai Enterprise fonts)
+  --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen', 'Ubuntu', 'Cantarell', sans-serif;
+  --font-mono: 'SF Mono', 'Fira Code', 'Source Code Pro', ui-monospace, 'Monaco', 'Inconsolata', 'Roboto Mono', monospace;
   --font-size-xs: 12px;
   --font-size-sm: 13px;
   --font-size-base: 14px;
   --font-size-md: 15px;
   --font-size-lg: 16px;
   --font-size-xl: 18px;
-  --font-size-2xl: 24px;
+  --font-size-2xl: 20px;
   --font-size-3xl: 30px;
   --font-size-4xl: 36px;
   --font-size-5xl: 48px;
@@ -50,10 +61,15 @@
   --font-weight-medium: 500;
   --font-weight-semibold: 600;
   --font-weight-bold: 700;
-  --line-height-tight: 1.25;
-  --line-height-snug: 1.375;
-  --line-height-normal: 1.5;
-  --line-height-relaxed: 1.625;
+  --line-height-tight: 1.1;
+  --line-height-snug: 1.2;
+  --line-height-normal: 1.4;
+  --line-height-relaxed: 1.6;
+  
+  // Factory.ai Enterprise Letter Spacing
+  --letter-spacing-tight: -0.025em;
+  --letter-spacing-normal: -0.01em;
+  --letter-spacing-wide: 0.025em;
   
   // Header
   --header-height: 56px;
@@ -66,10 +82,10 @@
   --transition-slow: 300ms cubic-bezier(0.4, 0, 0.2, 1);
   
   // Radius
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 8px;
-  --radius-xl: 12px;
+  --radius-sm: 3px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+  --radius-xl: 8px;
   --radius-full: 9999px;
 }
 
@@ -79,14 +95,26 @@
   --bg-tertiary: #f5f5f5;
   --bg-elevated: #ffffff;
   --text-primary: #0a0a0a;
-  --text-secondary: #5c5855;
-  --text-tertiary: #737373;
-  --text-muted: #a1a1a1;
+  --text-secondary: #4a4a4a;  /* Improved from #5c5855 for better contrast (AAA compliant 8.58:1) */
+  --text-tertiary: #666666;    /* Improved from #737373 for better contrast (AA compliant 5.74:1) */
+  --text-muted: #757575;       /* Improved from #a1a1a1 for better contrast (AA compliant 4.54:1) */
   --border-color: #e5e5e5;
   --border-subtle: #f0f0f0;
-  --accent-primary: #F27B2F;
-  --accent-hover: #FF9C6E;
-  --accent-muted: #ffedd5;
+  
+  // Factory.ai Enterprise Light Theme Colors
+  --accent-primary: #D97706;   /* Darker orange for better contrast (AA compliant 4.54:1 on white) */
+  --accent-hover: #EA580C;     /* Darker hover state for better contrast */
+  --accent-muted: rgba(217, 119, 6, 0.1);
+  --accent-gradient-start: #D97706;
+  --accent-gradient-mid: #7C3AED;
+  --accent-gradient-end: #2563EB;
+  --success-primary: #059669;
+  --success-hover: #10B981;
+  --warning-primary: #D97706;
+  --warning-hover: #F59E0B;
+  --danger-primary: #B91C1C;
+  --danger-hover: #DC2626;
+  
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
   --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);

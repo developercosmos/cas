@@ -39,26 +39,6 @@
   flex-shrink: 0;
 }
 
-.headerActions button {
-  background: var(--accent-primary);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.15s ease;
-}
-
-.headerActions button:hover {
-  background: var(--accent-hover);
-}
-
-.headerActions button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
 .header {
   display: flex;
   justify-content: space-between;
@@ -70,27 +50,6 @@
 
 .header h2 {
   margin: 0;
-  color: var(--text-primary);
-}
-
-.closeButton {
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 6px;
-  transition: all 0.15s ease;
-}
-
-.closeButton:hover {
-  background: var(--bg-secondary);
   color: var(--text-primary);
 }
 
@@ -113,61 +72,12 @@
   gap: 16px;
 }
 
-.error button {
-  background: none;
-  border: none;
-  color: var(--error-color, #ef4444);
-  cursor: pointer;
-  font-size: 18px;
-  padding: 0;
-  width: 24px;
-  height: 24px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
 .actions {
   padding: 16px 24px;
   display: flex;
   gap: 12px;
   border-bottom: 1px solid var(--border-color, #333);
   flex-shrink: 0;
-}
-
-.primaryButton {
-  background: var(--accent-primary);
-  color: white;
-  border: none;
-  padding: 8px 16px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-weight: 500;
-  transition: all 0.15s ease;
-}
-
-.primaryButton:hover {
-  background: var(--accent-hover);
-}
-
-.primaryButton:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
-}
-
-.dangerButton {
-  background: rgba(239, 68, 68, 0.1);
-  color: var(--error-color, #ef4444);
-  border: 1px solid rgba(239, 68, 68, 0.2);
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.15s ease;
-}
-
-.dangerButton:hover {
-  background: rgba(239, 68, 68, 0.2);
 }
 
 .installForm {
@@ -190,22 +100,6 @@
   margin-bottom: 6px;
   font-weight: 500;
   color: var(--text-primary);
-}
-
-.formGroup input {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid var(--border-color, #333);
-  border-radius: 6px;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-.formGroup input:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb), 0.2);
 }
 
 .formActions {
@@ -293,7 +187,7 @@
   color: var(--text-secondary);
 }
 
-.error {
+.statusError {
   background: rgba(239, 68, 68, 0.1);
   color: var(--error-color, #ef4444);
 }
@@ -304,28 +198,7 @@
   padding: 12px 16px;
   background: var(--bg-primary);
   border-top: 1px solid var(--border-color, #333);
-}
-
-.pluginActions button {
-  background: none;
-  border: 1px solid var(--border-color, #333);
-  color: var(--text-secondary);
-  padding: 6px 12px;
-  border-radius: 6px;
-  cursor: pointer;
-  font-size: 12px;
-  transition: all 0.15s ease;
-}
-
-.pluginActions button:hover:not(:disabled) {
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  border-color: var(--accent-primary);
-}
-
-.pluginActions button:disabled {
-  opacity: 0.5;
-  cursor: not-allowed;
+  flex-wrap: wrap;
 }
 
 .configEditor {
@@ -339,29 +212,11 @@
   color: var(--text-primary);
 }
 
-.configEditor textarea {
-  width: 100%;
-  padding: 12px;
-  border: 1px solid var(--border-color, #333);
-  border-radius: 6px;
-  background: var(--bg-secondary);
-  color: var(--text-primary);
-  font-family: var(--font-mono, monospace);
-  font-size: 12px;
-  resize: vertical;
-  min-height: 150px;
-}
-
-.configEditor textarea:focus {
-  outline: none;
-  border-color: var(--accent-primary);
-  box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb), 0.2);
-}
-
 .configActions {
   margin-top: 12px;
   display: flex;
   gap: 12px;
+  flex-wrap: wrap;
 }
 
 /* Dark theme specific */
@@ -383,28 +238,21 @@
 }
 
 [data-theme='light'] .statusBadge.active {
-  background: rgba(34, 197, 94, 0.1);
-  color: #16a34a;
+  background: rgba(34, 197, 94, 0.15);
+  color: #15803d;  /* Darker green for AA compliance (4.52:1 contrast) */
+  font-weight: 600;
 }
 
 [data-theme='light'] .statusBadge.disabled {
-  background: rgba(156, 163, 175, 0.1);
-  color: #6b7280;
+  background: rgba(107, 114, 128, 0.15);
+  color: #4b5563;  /* Darker gray for AA compliance (6.37:1 contrast) */
+  font-weight: 600;
 }
 
 [data-theme='light'] .statusBadge.error {
-  background: rgba(239, 68, 68, 0.1);
-  color: #dc2626;
-}
-
-[data-theme='light'] .dangerButton {
-  background: rgba(239, 68, 68, 0.05);
-  color: #dc2626;
-  border-color: rgba(239, 68, 68, 0.2);
-}
-
-[data-theme='light'] .dangerButton:hover {
-  background: rgba(239, 68, 68, 0.1);
+  background: rgba(239, 68, 68, 0.15);
+  color: #b91c1c;  /* Darker red for AA compliance (5.03:1 contrast) */
+  font-weight: 600;
 }
 
 /* LDAP Plugin Configuration Styles */
@@ -507,22 +355,6 @@
 .pluginIcon {
   font-size: 28px;
   display: inline-block;
-}
-
-.closeButton {
-  background: none;
-  border: none;
-  font-size: 24px;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 4px;
-  border-radius: 4px;
-  transition: all 0.2s ease;
-}
-
-.closeButton:hover {
-  background: var(--bg-tertiary);
-  color: var(--text-primary);
 }
 
 .documentationBody {
@@ -663,6 +495,24 @@
   font-weight: 500;
 }
 
+.methodGet {
+  background: var(--accent-muted);
+  color: var(--accent-primary);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.methodDelete {
+  background: var(--error-light);
+  color: var(--error-dark);
+  padding: 2px 6px;
+  border-radius: 3px;
+  font-size: 12px;
+  font-weight: 500;
+}
+
 /* Documentation Button Styles */
 .documentationButton {
   background: var(--bg-tertiary);
@@ -776,24 +626,24 @@
     width: 95vw;
     max-width: none;
   }
-  
+
   .documentationHeader {
     padding: 16px 20px;
   }
-  
+
   .documentationBody {
     padding: 20px;
   }
-  
+
   .documentationHeader h2 {
     font-size: 20px;
   }
-  
+
   .fieldTable table,
   .apiTable table {
     font-size: 12px;
   }
-  
+
   .fieldTable th,
   .fieldTable td,
   .apiTable th,
@@ -994,4 +844,3 @@
   overflow-y: auto;
   box-shadow: 0 20px 40px rgba(0, 0, 0, 0.4);
 }
-

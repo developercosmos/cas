@@ -1,10 +1,12 @@
 import React, { createContext, useContext, useEffect, useState, ReactNode } from 'react';
+import { createDesignTokens } from '@/styles/mui-theme';
 import type { Theme } from '@/types';
 
 interface ThemeContextType {
   theme: Theme;
   toggleTheme: () => void;
   setTheme: (theme: Theme) => void;
+  designTokens: ReturnType<typeof createDesignTokens>;
 }
 
 const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
@@ -21,9 +23,14 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
     return 'dark';
   });
 
+  // Update design tokens whenever theme changes
+  const [designTokens, setDesignTokens] = useState(createDesignTokens);
+
   useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem(THEME_STORAGE_KEY, theme);
+    // Update design tokens after theme change
+    setDesignTokens(createDesignTokens());
   }, [theme]);
 
   const toggleTheme = () => {
@@ -35,7 +42,7 @@ export const ThemeProvider: React.FC<{ children: ReactNode }> = ({ children }) =
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme }}>
+    <ThemeContext.Provider value={{ theme, toggleTheme, setTheme, designTokens }}>
       {children}
     </ThemeContext.Provider>
   );

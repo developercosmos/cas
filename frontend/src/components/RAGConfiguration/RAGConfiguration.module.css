@@ -43,7 +43,7 @@
 .closeButton {
   background: none;
   border: none;
-  color: #888;
+  color: var(--text-secondary);
   font-size: 1.5rem;
   cursor: pointer;
   padding: 0.5rem;
@@ -52,8 +52,8 @@
 }
 
 .closeButton:hover {
-  background: #333;
-  color: #fff;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
 }
 
 .configContent {
@@ -262,9 +262,9 @@
 }
 
 .chainButton {
-  background: #333;
-  border: none;
-  color: #888;
+  background: var(--bg-tertiary);
+  border: 1px solid var(--border-color);
+  color: var(--text-secondary);
   width: 30px;
   height: 30px;
   border-radius: 4px;
@@ -276,8 +276,9 @@
 }
 
 .chainButton:hover:not(:disabled) {
-  background: #444;
-  color: #fff;
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--accent-primary);
 }
 
 .chainButton:disabled {
@@ -385,7 +386,7 @@
 }
 
 .saveButton {
-  background: #007bff;
+  background: var(--accent-primary);
   color: white;
   border: none;
   padding: 0.75rem 1.5rem;
@@ -396,7 +397,7 @@
 }
 
 .saveButton:hover:not(:disabled) {
-  background: #0056b3;
+  background: var(--accent-hover);
 }
 
 .saveButton:disabled {
@@ -405,9 +406,9 @@
 }
 
 .cancelButton {
-  background: #333;
-  color: white;
-  border: none;
+  background: var(--bg-tertiary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-color);
   padding: 0.75rem 1.5rem;
   border-radius: 4px;
   cursor: pointer;
@@ -415,7 +416,8 @@
 }
 
 .cancelButton:hover {
-  background: #555;
+  background: var(--bg-secondary);
+  border-color: var(--accent-primary);
 }
 
 /* Responsive Design */
@@ -456,4 +458,13 @@
   .settingGroup {
     margin-bottom: 0.75rem;
   }
+}
+
+
+.errorText {
+  color: #dc3545;
+  font-size: 12px;
+  margin-top: 4px;
+  font-weight: 500;
+  display: block;
 }

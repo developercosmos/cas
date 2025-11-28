@@ -1,14 +1,15 @@
 import React from 'react';
 import { useTheme } from '@/contexts/ThemeContext';
-import styles from './ThemeToggle.module.css';
+import { Button } from '@/components/base-ui/styled-components';
 
 export const ThemeToggle: React.FC = () => {
   const { theme, toggleTheme } = useTheme();
 
   return (
-    <button
+    <Button
       onClick={toggleTheme}
-      className={styles.themeToggle}
+      variant="ghost"
+      size="sm"
       aria-label={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
       title={`Switch to ${theme === 'light' ? 'dark' : 'light'} mode`}
     >
@@ -34,6 +35,6 @@ export const ThemeToggle: React.FC = () => {
           />
         </svg>
       )}
-    </button>
+    </Button>
   );
 };

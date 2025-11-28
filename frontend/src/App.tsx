@@ -2,6 +2,8 @@ import { ThemeProvider } from '@/contexts/ThemeContext';
 import { Header } from '@/components/Header';
 import { Canvas } from '@/components/Canvas';
 import { AuthService } from '@/services/AuthService';
+import { AccessibilityTestRunner } from '@/components/accessibility/AccessibilityTestRunner';
+import AccessibilityTestPage from '@/pages/AccessibilityTestPage';
 import '@/styles/global.css';
 import { useState, useEffect } from 'react';
 
@@ -11,6 +13,7 @@ function App() {
   const isAdmin = AuthService.isAdmin();
   const token = AuthService.getToken();
   const [ldapEnabled, setLdapEnabled] = useState(false);
+  const [showAccessibilityTest, setShowAccessibilityTest] = useState(false);
 
   // Check if LDAP plugin is enabled
   useEffect(() => {
@@ -21,7 +24,7 @@ function App() {
           const apiUrl = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
             ? 'http://localhost:4000'
             : `${window.location.protocol}//${window.location.hostname}:4000`;
-          
+
           const response = await fetch(`${apiUrl}/api/ldap/status`);
           if (response.ok) {
             const data = await response.json();
@@ -37,12 +40,37 @@ function App() {
       checkLdapStatus();
     }
   }, [isAuthenticated]);
-  
+
+  // Simple route handling
+  useEffect(() => {
+    const handleKeyPress = (e: KeyboardEvent) => {
+      // Press Ctrl+Shift+A to toggle accessibility test page
+      if (e.ctrlKey && e.shiftKey && e.key === 'A') {
+        setShowAccessibilityTest(!showAccessibilityTest);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyPress);
+    return () => window.removeEventListener('keydown', handleKeyPress);
+  }, [showAccessibilityTest]);
+
+  // If showing accessibility test page
+  if (showAccessibilityTest) {
+    return (
+      <ThemeProvider>
+        <div>
+          <AccessibilityTestPage />
+        </div>
+      </ThemeProvider>
+    );
+  }
+
   // If not authenticated, show login screen
   if (!isAuthenticated) {
     return (
       <ThemeProvider>
         <div className="app">
+          <AccessibilityTestRunner />
           <div className="login-screen">
             <div className="login-container">
               <h1>CAS Platform Login</h1>
@@ -52,7 +80,7 @@ function App() {
                 const username = formData.get('username') as string;
                 const password = formData.get('password') as string;
                 const useAD = formData.get('useAD') === 'on';
-                
+
                 try {
                   const response = await AuthService.login(username, password, useAD);
                   AuthService.setToken(response.token);
@@ -62,12 +90,12 @@ function App() {
                 }
               }}>
                 <div className="form-group">
-                  <label>Username</label>
-                  <input name="username" type="text" required placeholder="Enter username" />
+                  <label htmlFor="username">Username</label>
+                  <input id="username" name="username" type="text" required placeholder="Enter username" />
                 </div>
                 <div className="form-group">
-                  <label>Password</label>
-                  <input name="password" type="password" required placeholder="Enter password" />
+                  <label htmlFor="password">Password</label>
+                  <input id="password" name="password" type="password" required placeholder="Enter password" />
                 </div>
                 {ldapEnabled && (
                   <div className="form-group checkbox-group">
@@ -81,7 +109,18 @@ function App() {
               </form>
             </div>
           </div>
-          
+
+          <div style={{
+            position: 'fixed',
+            bottom: '10px',
+            left: '10px',
+            fontSize: '12px',
+            color: 'var(--text-muted)',
+            zIndex: 1000
+          }}>
+            Press Ctrl+Shift+A for accessibility test
+          </div>
+
           <style>{`
             .login-screen {
               min-height: 100vh;
@@ -90,7 +129,7 @@ function App() {
               justify-content: center;
               background: var(--bg-primary);
             }
-            
+
             .login-container {
               background: var(--bg-secondary);
               border: 1px solid var(--border-color, #333);
@@ -99,24 +138,24 @@ function App() {
               width: 100%;
               max-width: 400px;
             }
-            
+
             .login-container h1 {
               color: var(--text-primary);
               margin-bottom: 2rem;
               text-align: center;
             }
-            
+
             .form-group {
               margin-bottom: 1rem;
             }
-            
+
             .form-group label {
               display: block;
               margin-bottom: 0.5rem;
               color: var(--text-primary);
               font-weight: 500;
             }
-            
+
             .form-group input {
               width: 100%;
               padding: 0.75rem;
@@ -126,11 +165,11 @@ function App() {
               color: var(--text-primary);
               font-size: 14px;
             }
-            
+
             .form-group input:focus {
               outline: none;
               border-color: var(--accent-primary);
-              box-shadow: 0 0 0 2px rgba(var(--accent-primary-rgb), 0.2);
+              box-shadow: 0 0 0 2px var(--accent-muted);
             }
 
             .checkbox-group {
@@ -156,7 +195,7 @@ function App() {
               color: var(--text-primary);
               font-size: 0.9rem;
             }
-            
+
             button {
               width: 100%;
               padding: 0.75rem;
@@ -169,16 +208,21 @@ function App() {
               cursor: pointer;
               transition: all 0.15s ease;
             }
-            
+
             button:hover {
               background: var(--accent-hover);
+            }
+
+            button:focus {
+              outline: 2px solid var(--accent-primary);
+              outline-offset: 2px;
             }
           `}</style>
         </div>
       </ThemeProvider>
     );
   }
-  
+
   // If authenticated, show main app
   let username = 'User';
   if (token) {
@@ -188,12 +232,24 @@ function App() {
       username = 'User';
     }
   }
-  
+
   return (
     <ThemeProvider>
       <div className="app">
+        <AccessibilityTestRunner />
         <Header username={username} logoText="CAS Platform" isAdmin={isAdmin} />
         <Canvas />
+
+        <div style={{
+          position: 'fixed',
+          bottom: '10px',
+          left: '10px',
+          fontSize: '12px',
+          color: 'var(--text-muted)',
+          zIndex: 1000
+        }}>
+          Press Ctrl+Shift+A for accessibility test
+        </div>
       </div>
     </ThemeProvider>
   );

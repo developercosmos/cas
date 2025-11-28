@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { PluginMetadata, PluginInstallRequest } from '../../types';
 import { PluginAdminService } from '../../services/PluginAdminService';
 import { PluginDocumentationService } from '../../services/PluginDocumentationService';
+import { Button, Input, Textarea } from '../base-ui/styled-components';
 import LdapUserManager from '../LdapUserManager';
 import LdapTreeBrowser from '../LdapTreeBrowser';
 import RAGConfiguration from '../RAGConfiguration/RAGConfiguration';
@@ -10,7 +11,7 @@ import RAGConfiguration from '../RAGConfiguration/RAGConfiguration';
 const getApiBaseUrl = () => {
   // Constitution: Always use localhost for development to avoid CORS issues
   // Only use localhost if actually accessing via localhost
-  if (window.location.hostname === 'localhost' || 
+  if (window.location.hostname === 'localhost' ||
       window.location.hostname === '127.0.0.1') {
     return 'http://localhost:4000';
   }
@@ -58,7 +59,7 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
   const [showTreeBrowser, setShowTreeBrowser] = useState(false);
   const [ldapServerConfig, setLdapServerConfig] = useState<any>(null);
   const [showRAGConfig, setShowRAGConfig] = useState(false);
-  const [ragConfig, setRAGConfig] = useState<any>(null);
+  const [ragConfig, setRagConfig] = useState<any>(null);
 
   // Install form state
   const [installForm, setInstallForm] = useState<PluginInstallRequest>({
@@ -119,7 +120,7 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
         if (response.ok) {
           const data = await response.json();
           if (data.success && data.plugin?.configuration) {
-            setRAGConfig(data.plugin.configuration);
+            setRagConfig(data.plugin.configuration);
             console.log('🤖 RAG Configuration loaded:', data.plugin.configuration);
           }
         }
@@ -154,9 +155,9 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
     try {
       setDocumentationLoading(true);
       setDocumentationError(null);
-      
+
       const docs = await PluginDocumentationService.getByPluginId(plugin.id, 'en', false);
-      
+
       if (docs.length > 0) {
         // Group documentation by type for easier display
         const groupedDocs = docs.reduce((acc, doc) => {
@@ -165,7 +166,7 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
           }
           return acc;
         }, {} as Record<string, any>);
-        
+
         setDocumentationContent(groupedDocs);
       } else {
         // Fallback: create minimal documentation
@@ -249,29 +250,29 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
     try {
       setActionLoading(id);
       setError(null); // Clear any previous errors
-      
-      const response = enable 
+
+      const response = enable
         ? await PluginAdminService.enablePlugin(id)
         : await PluginAdminService.disablePlugin(id);
-      
+
       if (response.success) {
         // Show success message
         const plugin = plugins.find(p => p.id === id);
         const message = `✅ ${plugin?.name || 'Plugin'} ${enable ? 'enabled' : 'disabled'} successfully!`;
-        
+
         // Create temporary success message
         const successDiv = document.createElement('div');
         successDiv.className = styles.success;
         successDiv.textContent = message;
         successDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: var(--success-bg, #10b981); color: white; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 10000; animation: slideInRight 0.3s ease;';
         document.body.appendChild(successDiv);
-        
+
         // Remove success message after 3 seconds
         setTimeout(() => {
           successDiv.style.animation = 'slideOutRight 0.3s ease';
           setTimeout(() => successDiv.remove(), 300);
         }, 3000);
-        
+
         // Reload plugins to reflect new status
         await loadPlugins();
       } else {
@@ -291,7 +292,7 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
       disabled: { text: 'Disabled', className: styles.disabled },
       error: { text: 'Error', className: styles.error }
     };
-    
+
     const config = statusMap[status as keyof typeof statusMap] || statusMap.disabled;
     return (
       <span className={`${styles.statusBadge} ${config.className}`}>
@@ -303,7 +304,7 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
   const handleLdapAction = async (action: string) => {
     try {
       setActionLoading(`ldap-${action}`);
-      
+
       // Constitution: Ensure token exists
       const token = getAuthToken();
       if (!token) {
@@ -312,7 +313,7 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
       }
 
       // Only 'test' action is supported now - import is handled by "Manage Users" button
-      
+
       const response = await fetch(`${API_BASE}/api/plugins/ldap/${action}`, {
         method: 'POST',
         headers: {
@@ -371,26 +372,26 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
       <div className={styles.container}>
         <div className={styles.header}>
           <h2>Plugin Manager</h2>
-          <button className={styles.closeButton} onClick={onClose}>×</button>
+          <Button variant="ghost" onClick={onClose}>×</Button>
         </div>
 
         {error && (
           <div className={styles.error}>
             {error}
-            <button onClick={() => setError(null)}>×</button>
+            <Button variant="ghost" onClick={() => setError(null)}>×</Button>
           </div>
         )}
 
         <div className={styles.actions}>
-          <button 
-            className={styles.primaryButton}
+          <Button
+            variant="primary"
             onClick={() => setShowInstallForm(true)}
           >
             Install Plugin
-          </button>
-          <button onClick={loadPlugins} disabled={actionLoading !== null}>
+          </Button>
+          <Button variant="secondary" onClick={loadPlugins} disabled={actionLoading !== null}>
             Refresh
-          </button>
+          </Button>
         </div>
 
         {showInstallForm && (
@@ -399,74 +400,75 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
             <form onSubmit={handleInstall}>
               <div className={styles.formGroup}>
                 <label>Plugin ID *</label>
-                <input
-                  type="text"
+                <Input
                   value={installForm.id}
                   onChange={(e) => setInstallForm({ ...installForm, id: e.target.value })}
-                  required
                   placeholder="e.g., my-plugin"
+                  required
+                  fullWidth
                 />
               </div>
               <div className={styles.formGroup}>
                 <label>Name *</label>
-                <input
-                  type="text"
+                <Input
                   value={installForm.name}
                   onChange={(e) => setInstallForm({ ...installForm, name: e.target.value })}
-                  required
                   placeholder="e.g., My Plugin"
+                  required
+                  fullWidth
                 />
               </div>
               <div className={styles.formGroup}>
                 <label>Version</label>
-                <input
-                  type="text"
+                <Input
                   value={installForm.version}
                   onChange={(e) => setInstallForm({ ...installForm, version: e.target.value })}
                   placeholder="1.0.0"
+                  fullWidth
                 />
               </div>
               <div className={styles.formGroup}>
                 <label>Description</label>
-                <input
-                  type="text"
+                <Input
                   value={installForm.description}
                   onChange={(e) => setInstallForm({ ...installForm, description: e.target.value })}
                   placeholder="Plugin description"
+                  fullWidth
                 />
               </div>
               <div className={styles.formGroup}>
                 <label>Author</label>
-                <input
-                  type="text"
+                <Input
                   value={installForm.author}
                   onChange={(e) => setInstallForm({ ...installForm, author: e.target.value })}
                   placeholder="Author name"
+                  fullWidth
                 />
               </div>
               <div className={styles.formGroup}>
                 <label>Entry Point</label>
-                <input
-                  type="text"
+                <Input
                   value={installForm.entry}
                   onChange={(e) => setInstallForm({ ...installForm, entry: e.target.value })}
                   placeholder="main.js"
+                  fullWidth
                 />
               </div>
               <div className={styles.formActions}>
-                <button 
-                  type="submit" 
-                  className={styles.primaryButton}
+                <Button
+                  type="submit"
+                  variant="primary"
                   disabled={actionLoading === 'install'}
                 >
                   {actionLoading === 'install' ? 'Installing...' : 'Install'}
-                </button>
-                <button 
-                  type="button" 
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
                   onClick={() => setShowInstallForm(false)}
                 >
                   Cancel
-                </button>
+                </Button>
               </div>
             </form>
           </div>
@@ -492,43 +494,50 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                 </div>
                 <div className={styles.pluginActions}>
                   {plugin.status === 'active' ? (
-                    <button 
+                    <Button
+                      size="sm"
                       onClick={() => handleToggleStatus(plugin.id, false)}
                       disabled={actionLoading === plugin.id}
                     >
                       {actionLoading === plugin.id ? '...' : 'Disable'}
-                    </button>
+                    </Button>
                   ) : (
-                    <button 
+                    <Button
+                      size="sm"
                       onClick={() => handleToggleStatus(plugin.id, true)}
                       disabled={actionLoading === plugin.id}
                     >
                       {actionLoading === plugin.id ? '...' : 'Enable'}
-                    </button>
+                    </Button>
                   )}
-                  <button 
+                  <Button
+                    size="sm"
+                    variant="ghost"
                     onClick={() => setEditingConfig(editingConfig === plugin.id ? null : plugin.id)}
                   >
                     {editingConfig === plugin.id ? 'Hide' : 'Config'}
-                  </button>
-                  <button 
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="secondary"
                     onClick={() => {
                       setDocumentationModal(plugin);
                       loadPluginDocumentation(plugin);
                     }}
-                    className={styles.documentationButton}
                   >
                     📚 Docs
-                  </button>
+                  </Button>
                   {plugin.id === 'ldap-auth' && (
                     <>
-                      <button 
+                      <Button
+                        size="sm"
                         onClick={() => handleLdapAction('test')}
                         disabled={actionLoading === 'ldap-test'}
                       >
                         {actionLoading === 'ldap-test' ? '...' : 'Test LDAP'}
-                      </button>
-                      <button 
+                      </Button>
+                      <Button
+                        size="sm"
                         onClick={async () => {
                           try {
                             const token = getAuthToken();
@@ -559,20 +568,21 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                         }}
                       >
                         👥 Manage Users
-                      </button>
+                      </Button>
                     </>
                   )}
                   {!plugin.isSystem && (
-                    <button 
+                    <Button
+                      size="sm"
+                      variant="danger"
                       onClick={() => handleUninstall(plugin.id)}
                       disabled={actionLoading === plugin.id}
-                      className={styles.dangerButton}
                     >
                       {actionLoading === plugin.id ? '...' : 'Uninstall'}
-                    </button>
+                    </Button>
                   )}
                 </div>
-                
+
                 {editingConfig === plugin.id && (
                   <div className={styles.configEditor}>
                     {plugin.id === 'ldap-auth' ? (
@@ -581,24 +591,23 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                         <form className={styles.ldapConfigForm} onSubmit={(e) => e.preventDefault()}>
                           <div className={styles.formGroup}>
                             <label>Server URL *</label>
-                            <input
-                              type="text"
+                            <Input
                               id="ldap-serverurl"
                               placeholder="ldap.example.com"
-                              className={styles.ldapInput}
                               defaultValue={ldapConfig?.serverurl || "ldap://10.99.99.11:389"}
                               autoComplete="url"
+                              fullWidth
                             />
                           </div>
                           <div className={styles.formGroup}>
                             <label>Port *</label>
-                            <input
+                            <Input
                               type="number"
                               id="ldap-port"
                               placeholder="389"
-                              className={styles.ldapInput}
                               defaultValue={ldapConfig?.port?.toString() || "389"}
                               autoComplete="off"
+                              fullWidth
                             />
                           </div>
                           <div className={styles.formGroup}>
@@ -615,16 +624,14 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                           <div className={styles.formGroup}>
                             <label>Base DN * (User Search Base)</label>
                             <div style={{ display: 'flex', gap: '0.5rem' }}>
-                              <input
-                                type="text"
+                              <Input
                                 id="ldap-basedn"
                                 placeholder="dc=example,dc=com"
-                                className={styles.ldapInput}
                                 defaultValue={ldapConfig?.baseDN || "DC=starcosmos,DC=intranet"}
                                 autoComplete="organization"
                                 style={{ flex: 1 }}
                               />
-                              <button
+                              <Button
                                 type="button"
                                 onClick={() => {
                                   const serverUrl = (document.getElementById('ldap-serverurl') as HTMLInputElement)?.value;
@@ -649,19 +656,11 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                                   });
                                   setShowTreeBrowser(true);
                                 }}
-                                style={{
-                                  padding: '0.75rem 1rem',
-                                  background: 'var(--accent-primary)',
-                                  color: 'white',
-                                  border: 'none',
-                                  borderRadius: '6px',
-                                  cursor: 'pointer',
-                                  fontSize: '0.9rem',
-                                  whiteSpace: 'nowrap'
-                                }}
+                                size="sm"
+                                variant="primary"
                               >
                                 🌳 Browse...
-                              </button>
+                              </Button>
                             </div>
                             <small style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', marginTop: '0.25rem', display: 'block' }}>
                               Click "Browse..." to navigate the LDAP directory tree
@@ -669,93 +668,86 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                           </div>
                           <div className={styles.formGroup}>
                             <label>Bind DN *</label>
-                            <input
-                              type="text"
+                            <Input
                               id="ldap-binddn"
                               placeholder="cn=admin,dc=example,dc=com"
-                              className={styles.ldapInput}
                               defaultValue={ldapConfig?.bindDN || "admst@starcosmos.intranet"}
                               autoComplete="username"
+                              fullWidth
                             />
                           </div>
                           <div className={styles.formGroup}>
                             <label>Bind Password *</label>
-                            <input
+                            <Input
                               type="password"
                               id="ldap-bindpassword"
                               placeholder="LDAP bind password"
                               autoComplete="current-password"
-                              className={styles.ldapInput}
                               defaultValue={ldapConfig?.bindPassword || "StarCosmos*888"}
+                              fullWidth
                             />
                           </div>
                           <div className={styles.formGroup}>
                             <label>User Search Base (Optional)</label>
-                            <input
-                              type="text"
+                            <Input
                               id="ldap-searchbase"
                               placeholder="ou=users,dc=example,dc=com"
-                              className={styles.ldapInput}
+                              fullWidth
                             />
                           </div>
                           <div className={styles.formGroup}>
                             <label>Search Filter *</label>
-                            <input
-                              type="text"
+                            <Input
                               id="ldap-searchfilter"
                               placeholder="(objectClass=person)"
-                              className={styles.ldapInput}
                               defaultValue="(objectClass=person)"
+                              fullWidth
                             />
                           </div>
                           <div className={styles.formGroup}>
                             <label>Username Attribute *</label>
-                            <input
-                              type="text"
+                            <Input
                               id="ldap-searchattribute"
                               placeholder="uid"
-                              className={styles.ldapInput}
                               defaultValue="uid"
+                              fullWidth
                             />
                           </div>
                           <div className={styles.formGroup}>
                             <label>Email Attribute (Optional)</label>
-                            <input
-                              type="text"
+                            <Input
                               id="ldap-emailattribute"
                               placeholder="mail"
-                              className={styles.ldapInput}
                               defaultValue="mail"
+                              fullWidth
                             />
                           </div>
                           <div className={styles.formGroup}>
                             <label>Display Name Attribute (Optional)</label>
-                            <input
-                              type="text"
+                            <Input
                               id="ldap-displaynameattribute"
                               placeholder="cn"
-                              className={styles.ldapInput}
                               defaultValue="cn"
+                              fullWidth
                             />
                           </div>
                           <div className={styles.formGroup}>
                             <label>Group Attribute (Optional)</label>
-                            <input
-                              type="text"
+                            <Input
                               id="ldap-groupattribute"
                               placeholder="memberOf"
-                              className={styles.ldapInput}
                               defaultValue="memberOf"
+                              fullWidth
                             />
                           </div>
                           <div className={styles.formGroup}>
                             <label>Connection Timeout (seconds)</label>
-                            <input
+                            <Input
                               type="number"
                               id="ldap-timeout"
                               placeholder="30"
-                              className={styles.ldapInput}
                               defaultValue="30"
+                              fullWidth
                             />
                           </div>
                           <div className={styles.formGroup}>
@@ -786,13 +778,14 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                       <>
                         <h4>RAG Plugin Configuration</h4>
                         <div className={styles.configActions}>
-                          <button 
+                          <Button
+                            variant="primary"
                             onClick={() => setShowRAGConfig(true)}
-                            className={styles.primaryButton}
                           >
                             Open Configuration
-                          </button>
-                          <button 
+                          </Button>
+                          <Button
+                            variant="secondary"
                             onClick={() => {
                               // Test current RAG configuration
                               const testRAGConfig = async () => {
@@ -828,21 +821,31 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                               testRAGConfig().finally(() => setActionLoading(null));
                             }}
                             disabled={actionLoading === plugin.id}
-                            className={styles.secondaryButton}
                           >
                             {actionLoading === plugin.id ? 'Testing...' : 'Test'}
-                          </button>
+                          </Button>
                         </div>
                       </>
                     ) : (
                       <>
                         <h4>Plugin Configuration</h4>
                         <form className={styles.configForm} onSubmit={(e) => e.preventDefault()}>
+                          <Textarea
+                            placeholder="Enter plugin configuration as JSON..."
+                            fullWidth
+                            rows={6}
+                            style={{
+                              fontFamily: 'var(--font-mono, monospace)',
+                              fontSize: '12px'
+                            }}
+                            defaultValue="{}"
+                          />
                           <div className={styles.configActions}>
-                            <button 
+                            <Button
+                              variant="primary"
                               onClick={async () => {
                                 const textarea = document.querySelector(`.${styles.configForm} textarea`) as HTMLTextAreaElement;
-                              
+
                               let config;
                               try {
                                 config = JSON.parse(textarea.value);
@@ -850,15 +853,15 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                                 alert('Invalid JSON configuration. Please check your syntax.');
                                 return;
                               }
-                              
+
                               // Validation
                               if (!config || Object.keys(config).length === 0) {
                                 alert('Please provide a valid configuration object.');
                                 return;
                               }
-                              
+
                               setActionLoading(plugin.id);
-                              
+
                               try {
                                 const response = await fetch(`${API_BASE}/api/admin/plugins/${plugin.id}/config`, {
                                   method: 'PUT',
@@ -868,11 +871,11 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                                   },
                                   body: JSON.stringify({ config })
                                 });
-                                
+
                                 if (!response.ok) {
                                   throw new Error(`HTTP ${response.status}: ${response.statusText}`);
                                 }
-                                
+
                                 const result = await response.json();
                                 if (result.success) {
                                   alert('Plugin configuration saved successfully!');
@@ -893,15 +896,15 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                               }
                             }}
                             disabled={actionLoading === plugin.id}
-                            className={styles.primaryButton}
                           >
                             {actionLoading === plugin.id ? 'Saving...' : 'Save'}
-                          </button>
-                          <button 
+                          </Button>
+                          <Button
+                            variant="secondary"
                             onClick={() => setEditingConfig(null)}
                           >
                             Cancel
-                          </button>
+                          </Button>
                           </div>
                         </form>
                       </>
@@ -921,20 +924,40 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
             <div className={styles.documentationHeader}>
               <h2>
                 <span className={styles.pluginIcon}>
-                  {documentationModal.id === 'ldap-auth' ? '🔐' : 
+                  {documentationModal.id === 'ldap-auth' ? '🔐' :
                    documentationModal.id === 'core.text-block' ? '📝' : '🔌'}
                 </span>
                 {documentationModal.name}
               </h2>
-              <button 
+              <Button
+                variant="ghost"
                 onClick={() => setDocumentationModal(null)}
-                className={styles.closeButton}
               >
                 ✕
-              </button>
+              </Button>
             </div>
 
-            <div className={styles.documentationBody}>
+            <div
+              className={styles.documentationBody}
+              tabIndex={0}
+              role="region"
+              aria-label="Plugin documentation"
+              onKeyDown={(e) => {
+                if (e.key === 'ArrowDown') {
+                  e.currentTarget.scrollBy({ top: 30, behavior: 'smooth' });
+                } else if (e.key === 'ArrowUp') {
+                  e.currentTarget.scrollBy({ top: -30, behavior: 'smooth' });
+                } else if (e.key === 'PageDown') {
+                  e.currentTarget.scrollBy({ top: 200, behavior: 'smooth' });
+                } else if (e.key === 'PageUp') {
+                  e.currentTarget.scrollBy({ top: -200, behavior: 'smooth' });
+                } else if (e.key === 'Home') {
+                  e.currentTarget.scrollTo({ top: 0, behavior: 'smooth' });
+                } else if (e.key === 'End') {
+                  e.currentTarget.scrollTo({ top: e.currentTarget.scrollHeight, behavior: 'smooth' });
+                }
+              }}
+            >
               {/* Plugin Description */}
               <section className={styles.documentationSection}>
                 <h3>Description</h3>
@@ -942,7 +965,7 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                 <div className={styles.pluginMeta}>
                   <span><strong>Version:</strong> {documentationModal.version}</span>
                   <span><strong>Author:</strong> {documentationModal.author}</span>
-                  <span><strong>Status:</strong> 
+                  <span><strong>Status:</strong>
                     <span className={`${styles.status} ${styles[documentationModal.status]}`}>
                       {documentationModal.status}
                     </span>
@@ -974,17 +997,80 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                     <section key={docType} className={styles.documentationSection}>
                       <h3>{doc.title || docType.charAt(0).toUpperCase() + docType.slice(1)}</h3>
                       {doc.contentFormat === 'markdown' ? (
-                        <div dangerouslySetInnerHTML={{ __html: 
-                          doc.content
-                            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-                            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-                            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-                            .replace(/^\*\*(.*)\*\*/gm, '<strong>$1</strong>')
-                            .replace(/\*\*(.*)\*\*/gm, '<strong>$1</strong>')
-                            .replace(/^\* (.*$)/gm, '<li>$1</li>')
-                            .replace(/^- (.*$)/gm, '<li>$1</li>')
-                            .replace(/`([^`]+)`/gm, '<code>$1</code>')
-                            .replace(/\n/g, '<br>')
+                        <div dangerouslySetInnerHTML={{ __html:
+                          (() => {
+                            let html = doc.content;
+
+                            // First convert lists to preserve them from paragraph processing
+                            html = html.replace(/(?:^\* (.*$)\n?)+/gm, (match: string) => {
+                              const items = match.trim().split('\n').map((line: string) =>
+                                line.replace(/^\* (.*)$/, '<li>$1</li>')
+                              ).join('');
+                              return `<ul>${items}</ul>`;
+                            });
+
+                            html = html.replace(/(?:^- (.*$)\n?)+/gm, (match: string) => {
+                              const items = match.trim().split('\n').map((line: string) =>
+                                line.replace(/^- (.*)$/, '<li>$1</li>')
+                              ).join('');
+                              return `<ul>${items}</ul>`;
+                            });
+
+                            // Process headers
+                            html = html
+                              .replace(/^# (.*$)/gm, '<h1>$1</h1>')
+                              .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+                              .replace(/^### (.*$)/gm, '<h3>$1</h3>');
+
+                            // Process bold text
+                            html = html
+                              .replace(/^\*\*(.*)\*\*/gm, '<strong>$1</strong>')
+                              .replace(/\*\*(.*)\*\*/gm, '<strong>$1</strong>');
+
+                            // Process inline code
+                            html = html.replace(/`([^`]+)`/gm, '<code>$1</code>');
+
+                            // Split into lines and process paragraphs, skipping lists and headers
+                            const lines = html.split('\n');
+                            const result: string[] = [];
+                            let inParagraph = false;
+
+                            for (let i = 0; i < lines.length; i++) {
+                              const line = lines[i].trim();
+
+                              // Skip empty lines
+                              if (!line) {
+                                if (inParagraph) {
+                                  result.push('</p>');
+                                  inParagraph = false;
+                                }
+                                continue;
+                              }
+
+                              // Don't wrap lists, headers, or already processed HTML in paragraphs
+                              if (line.match(/^<[hul]/) || line.match(/^<(h[1-6]|ul|li)/)) {
+                                if (inParagraph) {
+                                  result.push('</p>');
+                                  inParagraph = false;
+                                }
+                                result.push(line);
+                              } else {
+                                // Regular text line - add to paragraph or create new one
+                                if (!inParagraph) {
+                                  result.push('<p>');
+                                  inParagraph = true;
+                                }
+                                result.push(line);
+                              }
+                            }
+
+                            // Close any open paragraph
+                            if (inParagraph) {
+                              result.push('</p>');
+                            }
+
+                            return result.join('\n');
+                          })()
                         }} />
                       ) : (
                         <div dangerouslySetInnerHTML={{ __html: doc.content }} />
@@ -1387,7 +1473,7 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
 
       {/* LDAP User Manager Modal */}
       {showUserManager && ldapConfigId && (
-        <LdapUserManager 
+        <LdapUserManager
           configId={ldapConfigId}
           onClose={() => setShowUserManager(false)}
         />
@@ -1416,7 +1502,7 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
               configId="rag-retrieval"
               onClose={() => setShowRAGConfig(false)}
               onSave={(newConfig) => {
-                setRAGConfig(newConfig);
+                setRagConfig(newConfig);
                 console.log('🤖 RAG Configuration saved:', newConfig);
               }}
             />

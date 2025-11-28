@@ -128,6 +128,55 @@ router.get('/:id', (req, res) => {
   res.json(plugin);
 });
 
+// Plugin status endpoint - proxies to specific plugin status routes
+router.get('/:id/status', async (req, res) => {
+  const { id } = req.params;
+  
+  try {
+    // Map plugin IDs to their status endpoints
+    const statusRouteMap: Record<string, string> = {
+      'ldap-auth': '/api/plugins/ldap/status',
+      'rag-retrieval': '/api/plugins/rag/status',
+      'core.text-block': null // Text block doesn't have a status endpoint
+    };
+
+    const statusRoute = statusRouteMap[id];
+    
+    if (!statusRoute) {
+      // For plugins without status endpoints, return basic info
+      return res.json({
+        success: true,
+        plugin: {
+          id,
+          status: 'active',
+          message: 'Plugin does not have detailed status endpoint'
+        }
+      });
+    }
+
+    // Forward the request to the actual plugin status endpoint
+    const token = req.headers.authorization;
+    
+    const fetch = (await import('node-fetch')).default;
+    const baseURL = `http://localhost:${process.env.PORT || 4000}`;
+    const response = await fetch(`${baseURL}${statusRoute}`, {
+      headers: {
+        'Authorization': token || ''
+      }
+    });
+
+    const data = await response.json();
+    return res.status(response.status).json(data);
+    
+  } catch (error) {
+    console.error(`Error getting status for plugin ${id}:`, error);
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get plugin status'
+    });
+  }
+});
+
 // Enable/disable plugin endpoints - saves to database
 router.post('/:id/enable', async (req, res) => {
   const pluginId = req.params.id;

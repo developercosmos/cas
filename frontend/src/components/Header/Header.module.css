@@ -54,24 +54,23 @@
   gap: var(--space-3);
 }
 
+/* Factory.ai style admin button */
 .adminButton {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-2) var(--space-3);
-  border-radius: var(--radius-md);
-  background: rgba(var(--accent-primary-rgb), 0.1);
-  border: 1px solid rgba(var(--accent-primary-rgb), 0.2);
-  color: var(--accent-primary);
-  font-size: var(--font-size-sm);
-  font-weight: var(--font-weight-medium);
-  cursor: pointer;
-  transition: all var(--transition-fast);
+  background-color: var(--bg-tertiary) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+  font-size: 13px !important;
+  font-weight: 500 !important;
+  min-height: 31px !important;
+  padding: 6px 12px !important;
+  gap: 8px !important;
+  border-radius: var(--radius-md) !important;
+  transition: all 0.15s ease-in-out !important;
 }
 
 .adminButton:hover {
-  background: rgba(var(--accent-primary-rgb), 0.2);
-  border-color: rgba(var(--accent-primary-rgb), 0.3);
+  background-color: var(--bg-secondary) !important;
+  border-color: var(--accent-primary) !important;
 }
 
 .adminButton svg {
@@ -79,43 +78,26 @@
   height: 16px;
 }
 
-.adminButton span {
-  font-size: var(--font-size-xs);
-}
-
-.logoutButton {
-  background: none;
-  border: none;
-  color: var(--text-secondary);
-  cursor: pointer;
-  padding: 4px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all var(--transition-fast);
-}
-
-.logoutButton:hover {
-  color: var(--text-primary);
-  background: rgba(var(--text-primary-rgb), 0.1);
-}
-
 .userInfo {
+  position: relative;
   display: flex;
   align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
-  border-radius: var(--radius-full);
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  transition: all var(--transition-fast);
-  cursor: pointer;
 }
 
-.userInfo:hover {
-  background-color: var(--bg-tertiary);
-  border-color: var(--border-color);
+/* Custom styling for user button */
+.userButton {
+  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1) !important;
+  border-radius: var(--radius-full) !important;
+  background-color: var(--bg-secondary) !important;
+  border: 1px solid var(--border-color) !important;
+  color: var(--text-primary) !important;
+  gap: var(--space-2) !important;
+  min-height: 36px !important;
+}
+
+.userButton:hover {
+  background-color: var(--bg-tertiary) !important;
+  border-color: var(--border-color) !important;
 }
 
 .avatar {
@@ -142,35 +124,13 @@
   .username {
     display: none;
   }
-  
+
   .container {
     padding: 0 var(--space-4);
   }
 }
 
-/* User menu dropdown styles */
-.userInfo {
-  position: relative !important;
-}
-
-.userButton {
-  display: flex;
-  align-items: center;
-  gap: var(--space-2);
-  padding: var(--space-1) var(--space-3) var(--space-1) var(--space-1);
-  border-radius: var(--radius-full);
-  background-color: var(--bg-secondary);
-  border: 1px solid var(--border-color);
-  transition: all var(--transition-fast);
-  cursor: pointer;
-  color: var(--text-primary);
-}
-
-.userButton:hover {
-  background-color: var(--bg-tertiary);
-  border-color: var(--border-color);
-}
-
+/* Dropdown icon styling */
 .dropdownIcon {
   color: var(--text-secondary);
   transition: transform 0.2s;
@@ -180,6 +140,7 @@
   color: var(--text-primary);
 }
 
+/* User menu dropdown overlay */
 .menuOverlay {
   position: fixed;
   top: 0;
@@ -189,6 +150,7 @@
   z-index: 999;
 }
 
+/* User menu dropdown styling */
 .userMenu {
   position: absolute;
   top: calc(100% + 0.5rem);
@@ -212,10 +174,19 @@
   color: var(--text-primary);
   font-size: 0.9rem;
   font-weight: 500;
+  background: transparent;
+  border: none;
+  width: 100%;
+  text-align: left;
 }
 
 .menuItem:hover {
   background: var(--bg-primary);
+}
+
+.menuItem:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: -2px;
 }
 
 .menuItem svg {

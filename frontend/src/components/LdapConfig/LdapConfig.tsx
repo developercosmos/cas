@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import styles from './LdapConfig.module.css';
+import { Button, Input, Switch } from '../base-ui/styled-components';
 
 interface LdapConfiguration {
   id: string;
@@ -26,6 +27,7 @@ const LdapConfig: React.FC<LdapConfigProps> = ({ onClose }) => {
   const [testResult, setTestResult] = useState<{ success: boolean; message: string } | null>(null);
   const [loading, setLoading] = useState(false);
   const [importResult, setImportResult] = useState<{ success: boolean; message: string } | null>(null);
+  const [formErrors, setFormErrors] = useState<Record<string, string>>({});
 
   const [formData, setFormData] = useState({
     serverUrl: '',
@@ -42,6 +44,43 @@ const LdapConfig: React.FC<LdapConfigProps> = ({ onClose }) => {
   useEffect(() => {
     loadConfigs();
   }, []);
+
+  const validateForm = (): boolean => {
+    const errors: Record<string, string> = {};
+
+    if (!formData.serverUrl.trim()) {
+      errors.serverUrl = 'Server URL is required';
+    } else if (!/^https?:\/\/.+/.test(formData.serverUrl)) {
+      errors.serverUrl = 'Server URL must be a valid URL (e.g., ldap://example.com)';
+    }
+
+    if (!formData.baseDN.trim()) {
+      errors.baseDN = 'Base DN is required';
+    }
+
+    if (!formData.bindDN.trim()) {
+      errors.bindDN = 'Bind DN is required';
+    }
+
+    if (!formData.bindPassword.trim() && !editingConfig) {
+      errors.bindPassword = 'Bind Password is required for new configurations';
+    }
+
+    if (!formData.port || formData.port < 1 || formData.port > 65535) {
+      errors.port = 'Port must be between 1 and 65535';
+    }
+
+    if (!formData.searchFilter.trim()) {
+      errors.searchFilter = 'Search filter is required';
+    }
+
+    if (!formData.searchAttribute.trim()) {
+      errors.searchAttribute = 'Search attribute is required';
+    }
+
+    setFormErrors(errors);
+    return Object.keys(errors).length === 0;
+  };
 
   const loadConfigs = async () => {
     try {
@@ -66,6 +105,11 @@ const LdapConfig: React.FC<LdapConfigProps> = ({ onClose }) => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
     setTestResult(null);
 
@@ -79,7 +123,7 @@ const LdapConfig: React.FC<LdapConfigProps> = ({ onClose }) => {
 
       const method = editingConfig ? 'PUT' : 'POST';
       const url = editingConfig ? `/api/ldap/configs/${editingConfig.id}` : '/api/ldap/configs';
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -103,6 +147,7 @@ const LdapConfig: React.FC<LdapConfigProps> = ({ onClose }) => {
           isSecure: false,
           port: 389
         });
+        setFormErrors({});
         loadConfigs();
       } else {
         const error = await response.json();
@@ -115,6 +160,10 @@ const LdapConfig: React.FC<LdapConfigProps> = ({ onClose }) => {
   };
 
   const handleTest = async () => {
+    if (!validateForm()) {
+      return;
+    }
+
     setLoading(true);
     setTestResult(null);
 
@@ -200,6 +249,7 @@ const LdapConfig: React.FC<LdapConfigProps> = ({ onClose }) => {
       isSecure: config.isSecure,
       port: config.port
     });
+    setFormErrors({});
     setShowForm(true);
   };
 
@@ -225,32 +275,47 @@ const LdapConfig: React.FC<LdapConfigProps> = ({ onClose }) => {
     }
   };
 
+  const handleInputChange = (field: string, value: string | number | boolean) => {
+    setFormData(prev => ({ ...prev, [field]: value }));
+    // Clear error when user starts typing
+    if (formErrors[field]) {
+      setFormErrors(prev => ({ ...prev, [field]: '' }));
+    }
+  };
+
   return (
     <div className={styles.overlay}>
       <div className={styles.modal}>
         <div className={styles.header}>
           <h2>LDAP Configuration</h2>
-          <button onClick={onClose} className={styles.closeButton}>×</button>
+          <Button
+            onClick={onClose}
+            variant="ghost"
+            size="sm"
+            className={styles.closeButton}
+          >
+            ×
+          </Button>
         </div>
 
         <div className={styles.content}>
           {!showForm && (
             <>
               <div className={styles.actions}>
-                <button 
-                  onClick={() => setShowForm(true)} 
-                  className={styles.addButton}
+                <Button
+                  onClick={() => setShowForm(true)}
+                  variant="primary"
                 >
                   Add Configuration
-                </button>
+                </Button>
                 {configs.some(c => c.isActive) && (
-                  <button 
+                  <Button
                     onClick={handleImport}
                     disabled={loading}
-                    className={styles.importButton}
+                    variant="secondary"
                   >
                     {loading ? 'Importing...' : 'Import Users'}
-                  </button>
+                  </Button>
                 )}
               </div>
 
@@ -270,18 +335,20 @@ const LdapConfig: React.FC<LdapConfigProps> = ({ onClose }) => {
                       <p>Status: {config.isActive ? 'Active' : 'Inactive'}</p>
                     </div>
                     <div className={styles.configActions}>
-                      <button 
+                      <Button
                         onClick={() => editConfig(config)}
-                        className={styles.editButton}
+                        variant="secondary"
+                        size="sm"
                       >
                         Edit
-                      </button>
-                      <button 
+                      </Button>
+                      <Button
                         onClick={() => deleteConfig(config.id)}
-                        className={styles.deleteButton}
+                        variant="danger"
+                        size="sm"
                       >
                         Delete
-                      </button>
+                      </Button>
                     </div>
                   </div>
                 ))}
@@ -299,95 +366,126 @@ const LdapConfig: React.FC<LdapConfigProps> = ({ onClose }) => {
                 <div className={styles.formGrid}>
                   <div className={styles.formGroup}>
                     <label>Server URL</label>
-                    <input
+                    <Input
                       type="text"
                       value={formData.serverUrl}
-                      onChange={(e) => setFormData({...formData, serverUrl: e.target.value})}
+                      onChange={(e) => handleInputChange('serverUrl', e.target.value)}
+                      placeholder="ldap://example.com"
+                      fullWidth
                       required
                     />
+                    {formErrors.serverUrl && (
+                      <span className={styles.errorText}>{formErrors.serverUrl}</span>
+                    )}
                   </div>
 
                   <div className={styles.formGroup}>
                     <label>Port</label>
-                    <input
+                    <Input
                       type="number"
-                      value={formData.port}
-                      onChange={(e) => setFormData({...formData, port: parseInt(e.target.value)})}
+                      value={formData.port.toString()}
+                      onChange={(e) => handleInputChange('port', parseInt(e.target.value) || 389)}
+                      min="1"
+                      max="65535"
+                      fullWidth
                       required
                     />
+                    {formErrors.port && (
+                      <span className={styles.errorText}>{formErrors.port}</span>
+                    )}
                   </div>
 
                   <div className={styles.formGroup}>
                     <label>Base DN</label>
-                    <input
+                    <Input
                       type="text"
                       value={formData.baseDN}
-                      onChange={(e) => setFormData({...formData, baseDN: e.target.value})}
+                      onChange={(e) => handleInputChange('baseDN', e.target.value)}
                       placeholder="dc=example,dc=com"
+                      fullWidth
                       required
                     />
+                    {formErrors.baseDN && (
+                      <span className={styles.errorText}>{formErrors.baseDN}</span>
+                    )}
                   </div>
 
                   <div className={styles.formGroup}>
                     <label>Bind DN</label>
-                    <input
+                    <Input
                       type="text"
                       value={formData.bindDN}
-                      onChange={(e) => setFormData({...formData, bindDN: e.target.value})}
+                      onChange={(e) => handleInputChange('bindDN', e.target.value)}
                       placeholder="cn=admin,dc=example,dc=com"
+                      fullWidth
                       required
                     />
+                    {formErrors.bindDN && (
+                      <span className={styles.errorText}>{formErrors.bindDN}</span>
+                    )}
                   </div>
 
                   <div className={styles.formGroup}>
                     <label>Bind Password</label>
-                    <input
+                    <Input
                       type="password"
                       value={formData.bindPassword}
-                      onChange={(e) => setFormData({...formData, bindPassword: e.target.value})}
-                      required
+                      onChange={(e) => handleInputChange('bindPassword', e.target.value)}
+                      placeholder={editingConfig ? "Leave empty to keep current password" : "Enter bind password"}
+                      fullWidth
+                      required={!editingConfig}
                     />
+                    {formErrors.bindPassword && (
+                      <span className={styles.errorText}>{formErrors.bindPassword}</span>
+                    )}
                   </div>
 
                   <div className={styles.formGroup}>
                     <label>Search Filter</label>
-                    <input
+                    <Input
                       type="text"
                       value={formData.searchFilter}
-                      onChange={(e) => setFormData({...formData, searchFilter: e.target.value})}
+                      onChange={(e) => handleInputChange('searchFilter', e.target.value)}
                       placeholder="(objectClass=person)"
+                      fullWidth
                     />
+                    {formErrors.searchFilter && (
+                      <span className={styles.errorText}>{formErrors.searchFilter}</span>
+                    )}
                   </div>
 
                   <div className={styles.formGroup}>
                     <label>Search Attribute</label>
-                    <input
+                    <Input
                       type="text"
                       value={formData.searchAttribute}
-                      onChange={(e) => setFormData({...formData, searchAttribute: e.target.value})}
+                      onChange={(e) => handleInputChange('searchAttribute', e.target.value)}
                       placeholder="uid"
+                      fullWidth
                     />
+                    {formErrors.searchAttribute && (
+                      <span className={styles.errorText}>{formErrors.searchAttribute}</span>
+                    )}
                   </div>
 
                   <div className={styles.formGroup}>
                     <label>Group Attribute</label>
-                    <input
+                    <Input
                       type="text"
                       value={formData.groupAttribute}
-                      onChange={(e) => setFormData({...formData, groupAttribute: e.target.value})}
+                      onChange={(e) => handleInputChange('groupAttribute', e.target.value)}
                       placeholder="memberOf"
+                      fullWidth
                     />
                   </div>
 
                   <div className={styles.formGroup}>
-                    <label>
-                      <input
-                        type="checkbox"
-                        checked={formData.isSecure}
-                        onChange={(e) => setFormData({...formData, isSecure: e.target.checked})}
-                      />
-                      Use LDAPS (Secure)
-                    </label>
+                    <Switch
+                      checked={formData.isSecure}
+                      onCheckedChange={(checked) => handleInputChange('isSecure', checked)}
+                      label="Use LDAPS (Secure)"
+                      id="ldap-secure"
+                    />
                   </div>
                 </div>
 
@@ -398,31 +496,33 @@ const LdapConfig: React.FC<LdapConfigProps> = ({ onClose }) => {
                 )}
 
                 <div className={styles.formActions}>
-                  <button 
+                  <Button
                     type="button"
                     onClick={handleTest}
                     disabled={loading}
-                    className={styles.testButton}
+                    variant="secondary"
                   >
                     {loading ? 'Testing...' : 'Test Connection'}
-                  </button>
-                  <button 
+                  </Button>
+                  <Button
                     type="submit"
                     disabled={loading}
-                    className={styles.saveButton}
+                    variant="primary"
                   >
                     {loading ? 'Saving...' : 'Save Configuration'}
-                  </button>
-                  <button 
+                  </Button>
+                  <Button
                     type="button"
                     onClick={() => {
                       setShowForm(false);
                       setEditingConfig(null);
                       setTestResult(null);
+                      setFormErrors({});
                     }}
+                    variant="ghost"
                   >
                     Cancel
-                  </button>
+                  </Button>
                 </div>
               </form>
             </div>
