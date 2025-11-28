@@ -1,0 +1,45 @@
+{
+  "id": "cas-plugin-template",
+  "name": "CAS Plugin Template",
+  "version": "1.0.0",
+  "description": "Template plugin demonstrating CAS externalized dependencies",
+  "author": "CAS Platform Team",
+  "entry": "dist/index.js",
+  "dependencies": [
+    {
+      "name": "@cas/types",
+      "version": "^1.0.0",
+      "type": "core"
+    },
+    {
+      "name": "@cas/ui-components",
+      "version": "^1.0.0",
+      "type": "core"
+    },
+    {
+      "name": "@cas/core-api",
+      "version": "^1.0.0",
+      "type": "core"
+    }
+  ],
+  "permissions": [
+    "storage.read",
+    "storage.write",
+    "api.request",
+    "dom.access",
+    "events.emit",
+    "events.listen"
+  ],
+  "casVersion": ">=1.0.0",
+  "metadata": {
+    "category": "utility",
+    "tags": ["template", "example", "demo"],
+    "repository": "https://github.com/cas-platform/plugin-template",
+    "homepage": "https://cas-platform.com/docs/plugins/template",
+    "license": "MIT"
+  },
+  "compatibility": {
+    "minCasVersion": "1.0.0",
+    "maxCasVersion": null
+  }
+}

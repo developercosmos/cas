@@ -132,4 +132,74 @@ export class PluginAdminService {
       body: JSON.stringify({ config }),
     });
   }
+
+  // Export plugin as ZIP package
+  static async exportPlugin(id: string): Promise<Blob> {
+    const token = localStorage.getItem('auth_token');
+    
+    const response = await fetch(`${API_BASE}/api/plugins/${id}/export`, {
+      headers: {
+        ...(token && { Authorization: `Bearer ${token}` }),
+      }
+    });
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Export failed' }));
+      throw new Error(error.error || error.message || `HTTP ${response.status}`);
+    }
+    
+    // Return the ZIP file as Blob
+    return response.blob();
+  }
+
+  // Import plugin from ZIP package
+  static async importPlugin(zipFile: File | ArrayBuffer): Promise<{ success: boolean; message: string; plugin?: any }> {
+    const token = localStorage.getItem('auth_token');
+    
+    // Convert to base64
+    let base64Data: string;
+    if (zipFile instanceof File) {
+      const arrayBuffer = await zipFile.arrayBuffer();
+      base64Data = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+    } else {
+      base64Data = btoa(String.fromCharCode(...new Uint8Array(zipFile)));
+    }
+    
+    const response = await fetch(`${API_BASE}/api/plugins/import`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify({ zipData: base64Data }),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Import failed' }));
+      throw new Error(error.error || error.message || `HTTP ${response.status}`);
+    }
+    
+    return response.json();
+  }
+
+  // Import plugin from JSON (backward compatibility)
+  static async importPluginJson(pluginPackage: any): Promise<{ success: boolean; message: string; plugin?: any }> {
+    const token = localStorage.getItem('auth_token');
+    
+    const response = await fetch(`${API_BASE}/api/plugins/import`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+      },
+      body: JSON.stringify(pluginPackage),
+    });
+    
+    if (!response.ok) {
+      const error = await response.json().catch(() => ({ message: 'Import failed' }));
+      throw new Error(error.error || error.message || `HTTP ${response.status}`);
+    }
+    
+    return response.json();
+  }
 }

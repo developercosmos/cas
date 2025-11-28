@@ -1,0 +1,276 @@
+{
+  "format": "portable-migration-v1",
+  "version": "1.0.0",
+  "migration": {
+    "id": "migration_ldap-plugin_1.0.1",
+    "pluginId": "ldap-auth",
+    "version": "1.0.1",
+    "name": "User Data Migration with Transformations",
+    "description": "Migrate LDAP user data to new schema with field transformations and validation",
+    "type": "data",
+    "dependencies": [],
+    "conflicts": [],
+    "category": "migration",
+    "estimatedDuration": 300,
+    "riskLevel": "high",
+    "requiresBackup": true,
+    "databaseEngines": ["postgresql"],
+    "author": "System",
+    "steps": {
+      "up": [
+        {
+          "id": "create_new_user_table",
+          "type": "schema",
+          "name": "Create New User Table Structure",
+          "description": "Create new table structure for enhanced user management",
+          "sql": {
+            "universal": "CREATE TABLE IF NOT EXISTS plugin.ldap_users_enhanced (\n  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n  user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,\n  distinguished_name TEXT NOT NULL UNIQUE,\n  username VARCHAR(255) NOT NULL UNIQUE,\n  email VARCHAR(255),\n  first_name VARCHAR(255),\n  last_name VARCHAR(255),\n  display_name VARCHAR(255),\n  department VARCHAR(255),\n  title VARCHAR(255),\n  company VARCHAR(255),\n  phone_number VARCHAR(100),\n  mobile_number VARCHAR(100),\n  manager_dn TEXT,\n  direct_reports TEXT[],\n  user_groups JSONB DEFAULT '[]',\n  attributes JSONB DEFAULT '{}',\n  is_active BOOLEAN DEFAULT TRUE,\n  is_locked BOOLEAN DEFAULT FALSE,\n  last_login_at TIMESTAMPTZ,\n  login_count INTEGER DEFAULT 0,\n  failed_login_attempts INTEGER DEFAULT 0,\n  password_changed_at TIMESTAMPTZ,\n  account_expires_at TIMESTAMPTZ,\n  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),\n  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()\n);\n\nCREATE INDEX IF NOT EXISTS idx_ldap_users_enhanced_username ON plugin.ldap_users_enhanced(username);\nCREATE INDEX IF NOT EXISTS idx_ldap_users_enhanced_email ON plugin.ldap_users_enhanced(email) WHERE email IS NOT NULL;\nCREATE INDEX IF NOT EXISTS idx_ldap_users_enhanced_active ON plugin.ldap_users_enhanced(is_active);\nCREATE INDEX IF NOT EXISTS idx_ldap_users_enhanced_dn ON plugin.ldap_users_enhanced(distinguished_name);\nCREATE INDEX IF NOT EXISTS idx_ldap_users_enhanced_groups ON plugin.ldap_users_enhanced USING GIN(user_groups);"
+          },
+          "transactional": true,
+          "rollbackSupported": true,
+          "skipOnError": false,
+          "timeout": 120,
+          "expectedChanges": {
+            "tables": 1,
+            "indexes": 5
+          }
+        },
+        {
+          "id": "migrate_user_data",
+          "type": "data",
+          "name": "Migrate User Data with Transformations",
+          "description": "Migrate existing user data with field transformations and validation",
+          "transform": {
+            "source": "plugin.ldap_imported_users",
+            "target": "plugin.ldap_users_enhanced",
+            "mapping": [
+              {
+                "source": "DistinguishedName",
+                "target": "distinguished_name",
+                "required": true
+              },
+              {
+                "source": "Username",
+                "target": "username",
+                "transform": {
+                  "type": "function",
+                  "definition": "normalize_username"
+                },
+                "required": true
+              },
+              {
+                "source": "Email",
+                "target": "email",
+                "transform": {
+                  "type": "function",
+                  "definition": "normalize_email"
+                }
+              },
+              {
+                "source": "FirstName",
+                "target": "first_name",
+                "transform": {
+                  "type": "function",
+                  "definition": "title_case"
+                }
+              },
+              {
+                "source": "LastName",
+                "target": "last_name",
+                "transform": {
+                  "type": "function",
+                  "definition": "title_case"
+                }
+              },
+              {
+                "source": "DisplayName",
+                "target": "display_name"
+              },
+              {
+                "source": "Department",
+                "target": "department",
+                "transform": {
+                  "type": "function",
+                  "definition": "normalize_department"
+                }
+              },
+              {
+                "source": "Title",
+                "target": "title",
+                "transform": {
+                  "type": "function",
+                  "definition": "title_case"
+                }
+              },
+              {
+                "source": "Company",
+                "target": "company"
+              },
+              {
+                "source": "PhoneNumber",
+                "target": "phone_number",
+                "transform": {
+                  "type": "function",
+                  "definition": "format_phone"
+                }
+              },
+              {
+                "source": "UserGroups",
+                "target": "user_groups",
+                "transform": {
+                  "type": "function",
+                  "definition": "parse_groups"
+                }
+              },
+              {
+                "source": "RawAttributes",
+                "target": "attributes",
+                "transform": {
+                  "type": "function",
+                  "definition": "clean_attributes"
+                }
+              },
+              {
+                "source": "IsActive",
+                "target": "is_active"
+              },
+              {
+                "source": "CreatedAt",
+                "target": "created_at"
+              }
+            ],
+            "filter": "DistinguishedName IS NOT NULL AND Username IS NOT NULL",
+            "batchSize": 500,
+            "validation": [
+              {
+                "field": "username",
+                "rule": "username ~ '^[a-zA-Z0-9._-]+$'",
+                "message": "Username contains invalid characters",
+                "severity": "error"
+              },
+              {
+                "field": "email",
+                "rule": "email ~ '^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$' OR email IS NULL",
+                "message": "Invalid email format",
+                "severity": "warning"
+              },
+              {
+                "field": "distinguished_name",
+                "rule": "distinguished_name ~ '^CN=|OU=|DC='",
+                "message": "Invalid distinguished name format",
+                "severity": "error"
+              }
+            ]
+          },
+          "transactional": true,
+          "rollbackSupported": false,
+          "skipOnError": true,
+          "timeout": 600,
+          "expectedChanges": {
+            "rowsInserted": 0
+          }
+        },
+        {
+          "id": "create_user_functions",
+          "type": "function",
+          "name": "Create User Management Functions",
+          "description": "Create helper functions for user data transformation and validation",
+          "sql": {
+            "universal": "-- Username normalization function\nCREATE OR REPLACE FUNCTION plugin.normalize_username(p_username TEXT)\nRETURNS TEXT AS $$\nBEGIN\n  RETURN LOWER(TRIM(p_username));\nEND;\n$$ LANGUAGE plpgsql IMMUTABLE;\n\n-- Email normalization function\nCREATE OR REPLACE FUNCTION plugin.normalize_email(p_email TEXT)\nRETURNS TEXT AS $$\nBEGIN\n  IF p_email IS NULL THEN RETURN NULL; END IF;\n  RETURN LOWER(TRIM(p_email));\nEND;\n$$ LANGUAGE plpgsql IMMUTABLE;\n\n-- Title case function\nCREATE OR REPLACE FUNCTION plugin.title_case(p_text TEXT)\nRETURNS TEXT AS $$\nBEGIN\n  IF p_text IS NULL THEN RETURN NULL; END IF;\n  RETURN INITCAP(LOWER(TRIM(p_text)));\nEND;\n$$ LANGUAGE plpgsql IMMUTABLE;\n\n-- Department normalization\nCREATE OR REPLACE FUNCTION plugin.normalize_department(p_dept TEXT)\nRETURNS TEXT AS $$\nBEGIN\n  IF p_dept IS NULL THEN RETURN NULL; END IF;\n  \n  -- Common department name mappings\n  RETURN CASE \n    WHEN LOWER(p_dept) IN ('it', 'information technology', 'mis') THEN 'IT'\n    WHEN LOWER(p_dept) IN ('hr', 'human resources', 'personnel') THEN 'Human Resources'\n    WHEN LOWER(p_dept) IN ('fin', 'finance', 'accounting') THEN 'Finance'\n    WHEN LOWER(p_dept) IN ('mktg', 'marketing', 'sales') THEN 'Sales & Marketing'\n    WHEN LOWER(p_dept) IN ('ops', 'operations') THEN 'Operations'\n    ELSE INITCAP(LOWER(TRIM(p_dept)))\n  END;\nEND;\n$$ LANGUAGE plpgsql IMMUTABLE;\n\n-- Phone number formatting\nCREATE OR REPLACE FUNCTION plugin.format_phone(p_phone TEXT)\nRETURNS TEXT AS $$\nBEGIN\n  IF p_phone IS NULL THEN RETURN NULL; END IF;\n  \n  -- Remove all non-numeric characters\n  p_phone := REGEXP_REPLACE(p_phone, '[^0-9]', '', 'g');\n  \n  -- Format as standard phone number\n  IF LENGTH(p_phone) = 10 THEN\n    return SUBSTRING(p_phone, 1, 3) || '-' || SUBSTRING(p_phone, 4, 3) || '-' || SUBSTRING(p_phone, 7, 4);\n  ELSIF LENGTH(p_phone) = 11 AND SUBSTRING(p_phone, 1, 1) = '1' THEN\n    return SUBSTRING(p_phone, 2, 3) || '-' || SUBSTRING(p_phone, 5, 3) || '-' || SUBSTRING(p_phone, 8, 4);\n  END IF;\n  \n  RETURN p_phone;\nEND;\n$$ LANGUAGE plpgsql IMMUTABLE;\n\n-- Parse user groups\nCREATE OR REPLACE FUNCTION plugin.parse_groups(p_groups JSONB)\nRETURNS JSONB AS $$\nBEGIN\n  IF p_groups IS NULL THEN RETURN '[]'::JSONB; END IF;\n  \n  -- Ensure groups is a valid array\n  IF jsonb_typeof(p_groups) != 'array' THEN\n    RETURN '[]'::JSONB;\n  END IF;\n  \n  -- Clean and normalize group names\n  RETURN (SELECT jsonb_agg(DISTINCT LOWER(TRIM(group_name::TEXT)))\n          FROM jsonb_array_elements_text(p_groups) AS group_name\n          WHERE group_name IS NOT NULL AND TRIM(group_name) != '');\nEND;\n$$ LANGUAGE plpgsql IMMUTABLE;\n\n-- Clean attributes\nCREATE OR REPLACE FUNCTION plugin.clean_attributes(p_attrs JSONB)\nRETURNS JSONB AS $$\nBEGIN\n  IF p_attrs IS NULL THEN RETURN '{}'::JSONB; END IF;\n  \n  -- Remove sensitive attributes and clean data\n  RETURN p_attrs - 'userPassword' - 'unicodePwd' - 'clearTextPassword';\nEND;\n$$ LANGUAGE plpgsql IMMUTABLE;"
+          },
+          "transactional": true,
+          "rollbackSupported": true,
+          "skipOnError": false,
+          "timeout": 60,
+          "dependencies": ["create_new_user_table"]
+        },
+        {
+          "id": "update_user_relationships",
+          "type": "data",
+          "name": "Update User Relationships",
+          "description": "Set up manager-direct reports relationships",
+          "transform": {
+            "source": "plugin.ldap_users_enhanced",
+            "target": "plugin.ldap_users_enhanced",
+            "mapping": [
+              {
+                "source": "manager_dn",
+                "target": "manager_dn"
+              },
+              {
+                "source": "id",
+                "target": "direct_reports",
+                "transform": {
+                  "type": "custom",
+                  "definition": "get_direct_reports"
+                }
+              }
+            ],
+            "filter": "manager_dn IS NOT NULL",
+            "batchSize": 100
+          },
+          "transactional": true,
+          "rollbackSupported": false,
+          "skipOnError": true,
+          "timeout": 180,
+          "dependencies": ["migrate_user_data"]
+        },
+        {
+          "id": "create_audit_triggers",
+          "type": "trigger",
+          "name": "Create Audit Triggers",
+          "description": "Create triggers for auditing user changes",
+          "sql": {
+            "universal": "-- Create audit table\nCREATE TABLE IF NOT EXISTS plugin.ldap_users_audit (\n  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n  user_id UUID,\n  operation VARCHAR(20) NOT NULL CHECK (operation IN ('INSERT', 'UPDATE', 'DELETE')),\n  old_values JSONB,\n  new_values JSONB,\n  changed_by UUID REFERENCES auth.users(id),\n  changed_at TIMESTAMPTZ NOT NULL DEFAULT NOW()\n);\n\n-- Create audit trigger function\nCREATE OR REPLACE FUNCTION plugin.audit_user_changes()\nRETURNS TRIGGER AS $$\nBEGIN\n  IF TG_OP = 'DELETE' THEN\n    INSERT INTO plugin.ldap_users_audit (user_id, operation, old_values, changed_by)\n    VALUES (OLD.id, 'DELETE', row_to_json(OLD), NULL);\n    RETURN OLD;\n  ELSIF TG_OP = 'INSERT' THEN\n    INSERT INTO plugin.ldap_users_audit (user_id, operation, new_values, changed_by)\n    VALUES (NEW.id, 'INSERT', row_to_json(NEW), NULL);\n    RETURN NEW;\n  ELSIF TG_OP = 'UPDATE' THEN\n    INSERT INTO plugin.ldap_users_audit (user_id, operation, old_values, new_values, changed_by)\n    VALUES (NEW.id, 'UPDATE', row_to_json(OLD), row_to_json(NEW), NULL);\n    RETURN NEW;\n  END IF;\n  RETURN NULL;\nEND;\n$$ LANGUAGE plpgsql;\n\n-- Create trigger\nCREATE TRIGGER tr_ldap_users_enhanced_audit\n  AFTER INSERT OR UPDATE OR DELETE ON plugin.ldap_users_enhanced\n  FOR EACH ROW EXECUTE FUNCTION plugin.audit_user_changes();"
+          },
+          "transactional": true,
+          "rollbackSupported": true,
+          "skipOnError": false,
+          "timeout": 60,
+          "dependencies": ["migrate_user_data"]
+        }
+      ],
+      "down": [
+        {
+          "id": "remove_audit_triggers",
+          "type": "trigger",
+          "name": "Remove Audit Triggers",
+          "sql": {
+            "universal": "DROP TRIGGER IF EXISTS tr_ldap_users_enhanced_audit ON plugin.ldap_users_enhanced;\nDROP FUNCTION IF EXISTS plugin.audit_user_changes() CASCADE;\nDROP TABLE IF EXISTS plugin.ldap_users_audit;"
+          },
+          "transactional": true,
+          "rollbackSupported": false,
+          "skipOnError": false,
+          "timeout": 30
+        },
+        {
+          "id": "drop_user_functions",
+          "type": "function",
+          "name": "Drop User Management Functions",
+          "sql": {
+            "universal": "DROP FUNCTION IF EXISTS plugin.normalize_username(TEXT);\nDROP FUNCTION IF EXISTS plugin.normalize_email(TEXT);\nDROP FUNCTION IF EXISTS plugin.title_case(TEXT);\nDROP FUNCTION IF EXISTS plugin.normalize_department(TEXT);\nDROP FUNCTION IF EXISTS plugin.format_phone(TEXT);\nDROP FUNCTION IF EXISTS plugin.parse_groups(JSONB);\nDROP FUNCTION IF EXISTS plugin.clean_attributes(JSONB);"
+          },
+          "transactional": true,
+          "rollbackSupported": false,
+          "skipOnError": true,
+          "timeout": 30
+        },
+        {
+          "id": "drop_new_user_table",
+          "type": "schema",
+          "name": "Drop Enhanced User Table",
+          "sql": {
+            "universal": "DROP TABLE IF EXISTS plugin.ldap_users_enhanced CASCADE;"
+          },
+          "transactional": true,
+          "rollbackSupported": false,
+          "skipOnError": false,
+          "timeout": 60,
+          "requiresBackup": true
+        }
+      ]
+    },
+    "createdAt": "2025-11-28T10:00:00.000Z",
+    "updatedAt": "2025-11-28T10:00:00.000Z"
+  }
+}

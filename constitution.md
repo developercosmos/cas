@@ -1,6 +1,6 @@
 <!--
 Sync Impact Report:
-Version change: 1.1.1 → 1.2.0 (minor version - added plugin development standards)
+Version change: 1.2.0 → 1.3.0 (minor version - added plugin export/import standards)
 Modified principles: N/A (existing principles unchanged)
 Added sections: 
   - Section VIII: Plugin Architecture Requirements
@@ -14,13 +14,17 @@ Added sections:
   - Section XVI: Plugin Performance Standards
   - Section XVII: Plugin Interoperability
   - Section XVIII: Plugin Deployment Standards
+  - Section XIX: Plugin Export/Import Standards (NEW)
 Templates requiring updates:
   - New plugin template should be created following these standards
   - Existing plugins (LDAP, RAG) already comply with these standards
+  - Export/Import functionality implemented in backend/src/api/plugins/routes.ts
 Follow-up TODOs:
   - Create plugin template/boilerplate following these standards
   - Review existing plugins for full compliance
   - Add automated compliance checking in CI/CD
+  - Implement plugin loader for dynamic code execution from imported ZIPs
+  - Add digital signature support for enterprise deployments
 -->
 
 # CBS Constitution
@@ -469,10 +473,95 @@ Plugins MUST be deployable independently without system downtime.
 - Environment-specific configuration MUST use environment variables
 - Plugins MUST NOT hardcode environment-specific values
 
+### XIX. Plugin Export/Import Standards
+
+Plugins MUST support portable distribution via ZIP-based export/import for cross-system deployment.
+
+#### Export Requirements
+All plugin exports MUST include:
+- `plugin.json` - Complete manifest with entry point, permissions, and compatibility
+- `backend/src/` - TypeScript source code for development and modification
+- `backend/dist/` - Compiled JavaScript for immediate execution on import
+- `backend/migrations/` - SQL migration scripts with rollback support
+- `backend/package.json` - Dependencies and build configuration
+- `frontend/src/components/` - React components (TSX) and styles (CSS modules)
+- `frontend/src/services/` - API service files
+- `docs/` - Documentation exported from database
+- `data/export.json` - Non-sensitive configuration data
+- `metadata.json` - Export timestamp, source system info, version
+- `README.md` - Auto-generated documentation
+- `checksum.sha256` - SHA-256 hash for integrity verification
+
+#### Export Exclusions
+Exports MUST NOT include:
+- Sensitive data (passwords, API keys, secrets)
+- `node_modules/` directories
+- Build artifacts that can be regenerated
+- User-specific or instance-specific data
+- Temporary files or caches
+
+#### Import Requirements
+Plugin import MUST:
+- Validate ZIP structure and checksum before extraction
+- Parse and validate `plugin.json` manifest
+- Check compatibility with target CAS version
+- Run database migrations in order
+- Register plugin in `plugin_configurations` table
+- Import documentation to `plugin_md_documentation` table
+- Import non-sensitive configuration data
+- Support both ZIP (base64 encoded) and JSON formats for backward compatibility
+
+#### ZIP Structure Standard
+```
+plugin-id-v1.0.0.zip
+├── plugin.json              # Plugin manifest (REQUIRED)
+├── backend/
+│   ├── src/                # TypeScript source (REQUIRED)
+│   │   ├── index.ts       # Entry point with lifecycle methods
+│   │   ├── routes.ts      # Express routes
+│   │   └── types.ts       # TypeScript interfaces
+│   ├── dist/               # Compiled JavaScript (REQUIRED for runnable)
+│   │   └── index.js       # Compiled entry point
+│   ├── migrations/         # Database migrations (REQUIRED if uses DB)
+│   └── package.json        # Dependencies
+├── frontend/
+│   ├── src/
+│   │   ├── components/    # React components
+│   │   └── services/      # API services
+│   └── package.json        # Frontend dependencies
+├── docs/                   # Documentation
+├── data/
+│   └── export.json        # Configuration data
+├── tests/                  # Test files
+├── metadata.json           # Export metadata (REQUIRED)
+├── README.md               # Documentation
+└── checksum.sha256         # Integrity hash (REQUIRED)
+```
+
+#### Auto-Generation
+When source code is not available, the export system MUST generate:
+- Backend `index.js` with standard lifecycle methods (initialize, activate, deactivate, uninstall)
+- Backend `routes.js` with status and configuration endpoints
+- Frontend React component template with status display
+- CSS module with standard styling
+- Migration SQL based on plugin type
+
+#### Integrity Verification
+- Exports MUST include SHA-256 checksum of manifest and metadata
+- Imports MUST verify checksum before processing
+- Checksum mismatches SHOULD log warnings but MAY proceed with user confirmation
+- Digital signatures (optional) SHOULD be verified if present
+
+#### Version Compatibility
+- Exports MUST declare minimum CAS version in `compatibility.casVersion`
+- Exports MUST declare minimum Node.js version in `compatibility.nodeVersion`
+- Imports MUST check compatibility before installation
+- Incompatible plugins MUST be rejected with clear error message
+
 ## Governance
 
 This constitution supersedes all other development practices and documentation. Amendments require: (1) Documentation of proposed change, (2) Impact analysis on existing features, (3) Approval process via team review, (4) Version increment following semantic versioning rules, (5) Migration plan for affected implementations.
 
 All pull requests and code reviews MUST verify compliance with these constitutional principles. Any complexity or deviation from these principles MUST be explicitly justified with documented business or technical requirements. Use spec.md files for runtime development guidance aligned with these principles.
 
-**Version**: 1.2.0 | **Ratified**: 2025-11-19 | **Last Amended**: 2025-11-27
+**Version**: 1.3.0 | **Ratified**: 2025-11-19 | **Last Amended**: 2025-11-28

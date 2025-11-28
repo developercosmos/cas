@@ -60,6 +60,9 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
   const [ldapServerConfig, setLdapServerConfig] = useState<any>(null);
   const [showRAGConfig, setShowRAGConfig] = useState(false);
   const [ragConfig, setRagConfig] = useState<any>(null);
+  const [showImportModal, setShowImportModal] = useState(false);
+  const [importData, setImportData] = useState<string>('');
+  const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   // Install form state
   const [installForm, setInstallForm] = useState<PluginInstallRequest>({
@@ -301,6 +304,130 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
     );
   };
 
+  // Export plugin as ZIP file (following PORTABLE_PLUGIN_SYSTEM_IMPLEMENTATION_GUIDE.md)
+  const handleExportPlugin = async (pluginId: string) => {
+    try {
+      setActionLoading(`export-${pluginId}`);
+      setError(null);
+
+      const plugin = plugins.find(p => p.id === pluginId);
+      const blob = await PluginAdminService.exportPlugin(pluginId);
+      
+      // Create downloadable ZIP file
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `${pluginId}-v${plugin?.version || '1.0.0'}-${Date.now()}.zip`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+
+      // Show success message
+      const successDiv = document.createElement('div');
+      successDiv.className = styles.success;
+      successDiv.textContent = `Plugin "${plugin?.name || pluginId}" exported as ZIP successfully!`;
+      successDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: var(--success-bg, #10b981); color: white; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 10000;';
+      document.body.appendChild(successDiv);
+      setTimeout(() => successDiv.remove(), 3000);
+
+    } catch (err) {
+      console.error('Export plugin error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to export plugin');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
+  // State for imported file
+  const [importFile, setImportFile] = useState<File | null>(null);
+
+  // Handle file selection for import (supports both ZIP and JSON)
+  const handleFileSelect = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    const isZip = file.name.endsWith('.zip') || file.type === 'application/zip';
+    
+    if (isZip) {
+      // Store ZIP file for later import
+      setImportFile(file);
+      setImportData(`ZIP Package: ${file.name} (${(file.size / 1024).toFixed(1)} KB)`);
+      setShowImportModal(true);
+    } else {
+      // Read JSON file
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const content = e.target?.result as string;
+        setImportData(content);
+        setImportFile(null);
+        setShowImportModal(true);
+      };
+      reader.onerror = () => {
+        setError('Failed to read file');
+      };
+      reader.readAsText(file);
+    }
+    
+    // Reset file input
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  // Import plugin from ZIP or JSON
+  const handleImportPlugin = async () => {
+    try {
+      setActionLoading('import');
+      setError(null);
+
+      let result;
+      
+      if (importFile) {
+        // Import from ZIP file
+        result = await PluginAdminService.importPlugin(importFile);
+      } else {
+        // Import from JSON (backward compatibility)
+        let importPackage;
+        try {
+          importPackage = JSON.parse(importData);
+        } catch {
+          setError('Invalid JSON format. Please provide a valid plugin package.');
+          return;
+        }
+
+        if (!importPackage.plugin || !importPackage.plugin.id) {
+          setError('Invalid plugin package: missing plugin information');
+          return;
+        }
+
+        result = await PluginAdminService.importPluginJson(importPackage);
+      }
+      
+      if (result.success) {
+        setShowImportModal(false);
+        setImportData('');
+        setImportFile(null);
+        await loadPlugins();
+
+        // Show success message
+        const successDiv = document.createElement('div');
+        successDiv.className = styles.success;
+        successDiv.textContent = result.message || 'Plugin imported successfully!';
+        successDiv.style.cssText = 'position: fixed; top: 20px; right: 20px; background: var(--success-bg, #10b981); color: white; padding: 1rem 1.5rem; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); z-index: 10000;';
+        document.body.appendChild(successDiv);
+        setTimeout(() => successDiv.remove(), 3000);
+      } else {
+        setError(result.message || 'Failed to import plugin');
+      }
+    } catch (err) {
+      console.error('Import plugin error:', err);
+      setError(err instanceof Error ? err.message : 'Failed to import plugin');
+    } finally {
+      setActionLoading(null);
+    }
+  };
+
   const handleLdapAction = async (action: string) => {
     try {
       setActionLoading(`ldap-${action}`);
@@ -389,6 +516,20 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
           >
             Install Plugin
           </Button>
+          <Button 
+            variant="secondary" 
+            onClick={() => fileInputRef.current?.click()}
+            disabled={actionLoading !== null}
+          >
+            Import Plugin
+          </Button>
+          <input
+            type="file"
+            ref={fileInputRef}
+            onChange={handleFileSelect}
+            accept=".zip,.json"
+            style={{ display: 'none' }}
+          />
           <Button variant="secondary" onClick={loadPlugins} disabled={actionLoading !== null}>
             Refresh
           </Button>
@@ -526,6 +667,14 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                     }}
                   >
                     📚 Docs
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    onClick={() => handleExportPlugin(plugin.id)}
+                    disabled={actionLoading === `export-${plugin.id}`}
+                  >
+                    {actionLoading === `export-${plugin.id}` ? '...' : '📦 Export'}
                   </Button>
                   {plugin.id === 'ldap-auth' && (
                     <>
@@ -1506,6 +1655,109 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                 console.log('🤖 RAG Configuration saved:', newConfig);
               }}
             />
+          </div>
+        </div>
+      )}
+
+      {/* Import Plugin Modal */}
+      {showImportModal && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent} style={{ maxWidth: '600px' }}>
+            <div className={styles.header}>
+              <h2>Import Plugin</h2>
+              <Button variant="ghost" onClick={() => { setShowImportModal(false); setImportData(''); setImportFile(null); }}>×</Button>
+            </div>
+            
+            <div style={{ padding: '1rem' }}>
+              {/* ZIP file preview */}
+              {importFile && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <h4 style={{ marginBottom: '0.5rem' }}>ZIP Package Selected:</h4>
+                  <div style={{ 
+                    background: 'var(--bg-secondary)', 
+                    padding: '1rem', 
+                    borderRadius: '8px',
+                    marginBottom: '1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '1rem'
+                  }}>
+                    <span style={{ fontSize: '2rem' }}>📦</span>
+                    <div>
+                      <p><strong>File:</strong> {importFile.name}</p>
+                      <p><strong>Size:</strong> {(importFile.size / 1024).toFixed(1)} KB</p>
+                      <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                        Following PORTABLE_PLUGIN_SYSTEM format
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* JSON preview */}
+              {!importFile && importData && (
+                <div style={{ marginBottom: '1rem' }}>
+                  <h4 style={{ marginBottom: '0.5rem' }}>Plugin Preview:</h4>
+                  {(() => {
+                    try {
+                      const pkg = JSON.parse(importData);
+                      return (
+                        <div style={{ 
+                          background: 'var(--bg-secondary)', 
+                          padding: '1rem', 
+                          borderRadius: '8px',
+                          marginBottom: '1rem'
+                        }}>
+                          <p><strong>Name:</strong> {pkg.plugin?.name || 'Unknown'}</p>
+                          <p><strong>ID:</strong> {pkg.plugin?.id || 'Unknown'}</p>
+                          <p><strong>Version:</strong> {pkg.plugin?.version || 'Unknown'}</p>
+                          <p><strong>Author:</strong> {pkg.plugin?.author || 'Unknown'}</p>
+                          <p><strong>Description:</strong> {pkg.plugin?.description || 'No description'}</p>
+                          {pkg.documentation && (
+                            <p><strong>Documentation:</strong> {pkg.documentation.length} entries</p>
+                          )}
+                          {pkg.exportedAt && (
+                            <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)' }}>
+                              Exported: {new Date(pkg.exportedAt).toLocaleString()}
+                            </p>
+                          )}
+                        </div>
+                      );
+                    } catch {
+                      return <p style={{ color: 'var(--error)' }}>Invalid JSON format</p>;
+                    }
+                  })()}
+                </div>
+              )}
+              
+              {/* Show textarea only for JSON, not for ZIP */}
+              {!importFile && (
+                <Textarea
+                  value={importData}
+                  onChange={(e) => setImportData(e.target.value)}
+                  placeholder="Paste plugin JSON package here or select a .zip file above..."
+                  fullWidth
+                  rows={10}
+                  style={{ fontFamily: 'monospace', fontSize: '12px' }}
+                />
+              )}
+              
+              <div className={styles.formActions} style={{ marginTop: '1rem' }}>
+                <Button
+                  variant="primary"
+                  onClick={handleImportPlugin}
+                  disabled={actionLoading === 'import' || (!importFile && !importData.trim())}
+                >
+                  {actionLoading === 'import' ? 'Importing...' : (importFile ? 'Import ZIP Package' : 'Import Plugin')}
+                </Button>
+                <Button
+                  variant="secondary"
+                  onClick={() => { setShowImportModal(false); setImportData(''); setImportFile(null); }}
+                >
+                  Cancel
+                </Button>
+              </div>
+            </div>
           </div>
         </div>
       )}

@@ -1,0 +1,29 @@
+{
+  "name": "@cas/packages",
+  "version": "1.0.0",
+  "description": "CAS Core Packages",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "npm run build --workspaces",
+    "dev": "npm run dev --workspaces",
+    "test": "npm run test --workspaces",
+    "clean": "npm run clean --workspaces",
+    "lint": "eslint packages/*/src --ext .ts",
+    "type-check": "tsc --noEmit"
+  },
+  "workspaces": [
+    "core-api",
+    "cli"
+  ],
+  "devDependencies": {
+    "@types/node": "^20.10.0",
+    "@typescript-eslint/eslint-plugin": "^6.14.0",
+    "@typescript-eslint/parser": "^6.14.0",
+    "eslint": "^8.55.0",
+    "typescript": "^5.2.2"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}

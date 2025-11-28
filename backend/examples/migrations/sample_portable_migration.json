@@ -1,0 +1,205 @@
+{
+  "format": "portable-migration-v1",
+  "version": "1.0.0",
+  "migration": {
+    "id": "migration_rag-plugin_1.1.0",
+    "pluginId": "rag-retrieval",
+    "version": "1.1.0",
+    "name": "Add Vector Index Support",
+    "description": "Add vector indexing capabilities for improved semantic search performance",
+    "type": "schema",
+    "dependencies": [],
+    "conflicts": [],
+    "category": "feature",
+    "estimatedDuration": 120,
+    "riskLevel": "medium",
+    "requiresBackup": false,
+    "databaseEngines": ["postgresql", "mysql"],
+    "author": "System",
+    "minSystemVersion": "1.0.0",
+    "maxSystemVersion": null,
+    "steps": {
+      "up": [
+        {
+          "id": "create_vector_extension",
+          "type": "extension",
+          "name": "Create Vector Extension",
+          "description": "Enable pgvector extension for vector operations",
+          "sql": {
+            "postgresql": "CREATE EXTENSION IF NOT EXISTS vector;",
+            "mysql": "-- MySQL does not require vector extension"
+          },
+          "transactional": true,
+          "rollbackSupported": true,
+          "skipOnError": false,
+          "timeout": 30,
+          "dependencies": [],
+          "preValidation": "SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM pg_extension WHERE extname = 'vector');",
+          "postValidation": "SELECT 1 FROM pg_extension WHERE extname = 'vector';",
+          "expectedChanges": {
+            "tables": 0,
+            "indexes": 0
+          }
+        },
+        {
+          "id": "create_vector_table",
+          "type": "schema",
+          "name": "Create Vector Embeddings Table",
+          "description": "Create table for storing document vector embeddings",
+          "sql": {
+            "universal": "CREATE TABLE IF NOT EXISTS plugin.rag_vector_embeddings (\n  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),\n  document_id UUID NOT NULL REFERENCES plugin.rag_documents(id) ON DELETE CASCADE,\n  collection_id UUID NOT NULL REFERENCES plugin.rag_collections(id) ON DELETE CASCADE,\n  embedding vector(1536),\n  model_version VARCHAR(50) NOT NULL DEFAULT 'text-embedding-ada-002',\n  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),\n  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()\n);",
+            "mysql": "CREATE TABLE IF NOT EXISTS plugin.rag_vector_embeddings (\n  id CHAR(36) PRIMARY KEY DEFAULT (UUID()),\n  document_id CHAR(36) NOT NULL,\n  collection_id CHAR(36) NOT NULL,\n  embedding JSON NOT NULL,\n  model_version VARCHAR(50) NOT NULL DEFAULT 'text-embedding-ada-002',\n  created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP,\n  updated_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,\n  INDEX idx_document_id (document_id),\n  INDEX idx_collection_id (collection_id),\n  INDEX idx_model_version (model_version)\n);"
+          },
+          "transactional": true,
+          "rollbackSupported": true,
+          "skipOnError": false,
+          "timeout": 60,
+          "dependencies": ["create_vector_extension"],
+          "postValidation": "SELECT COUNT(*) as table_exists FROM information_schema.tables WHERE table_schema = 'plugin' AND table_name = 'rag_vector_embeddings';",
+          "expectedChanges": {
+            "tables": 1,
+            "indexes": 0
+          }
+        },
+        {
+          "id": "create_vector_index",
+          "type": "index",
+          "name": "Create Vector Index",
+          "description": "Create HNSW index for fast vector similarity search",
+          "sql": {
+            "postgresql": "CREATE INDEX CONCURRENTLY IF NOT EXISTS idx_rag_embeddings_vector ON plugin.rag_vector_embeddings USING hnsw (embedding vector_cosine_ops);",
+            "mysql": "CREATE INDEX idx_rag_embeddings_model ON plugin.rag_vector_embeddings (model_version, created_at);"
+          },
+          "transactional": false,
+          "rollbackSupported": true,
+          "skipOnError": false,
+          "timeout": 300,
+          "dependencies": ["create_vector_table"],
+          "postValidation": "SELECT COUNT(*) as index_exists FROM pg_indexes WHERE indexname = 'idx_rag_embeddings_vector';",
+          "expectedChanges": {
+            "tables": 0,
+            "indexes": 1
+          }
+        },
+        {
+          "id": "migrate_existing_embeddings",
+          "type": "data",
+          "name": "Migrate Existing Embeddings",
+          "description": "Migrate existing document embeddings to new vector table",
+          "transform": {
+            "source": "plugin.rag_documents",
+            "target": "plugin.rag_vector_embeddings",
+            "mapping": [
+              {
+                "source": "id",
+                "target": "document_id",
+                "required": true
+              },
+              {
+                "source": "collection_id",
+                "target": "collection_id",
+                "required": true
+              },
+              {
+                "source": "embedding",
+                "target": "embedding",
+                "transform": {
+                  "type": "function",
+                  "definition": "json_to_vector"
+                },
+                "required": true
+              },
+              {
+                "source": "model_version",
+                "target": "model_version",
+                "defaultValue": "text-embedding-ada-002",
+                "required": true
+              }
+            ],
+            "filter": "embedding IS NOT NULL",
+            "batchSize": 1000,
+            "validation": [
+              {
+                "field": "document_id",
+                "rule": "document_id IS NOT NULL",
+                "message": "Document ID cannot be null",
+                "severity": "error"
+              },
+              {
+                "field": "embedding",
+                "rule": "embedding IS NOT NULL",
+                "message": "Embedding cannot be null",
+                "severity": "error"
+              }
+            ]
+          },
+          "transactional": true,
+          "rollbackSupported": false,
+          "skipOnError": false,
+          "timeout": 600,
+          "dependencies": ["create_vector_table"]
+        },
+        {
+          "id": "create_search_function",
+          "type": "function",
+          "name": "Create Vector Search Function",
+          "description": "Create function for efficient vector similarity search",
+          "sql": {
+            "universal": "CREATE OR REPLACE FUNCTION plugin.search_similar_documents(\n  p_collection_id UUID,\n  p_query_vector vector(1536),\n  p_limit INTEGER DEFAULT 10,\n  p_threshold FLOAT DEFAULT 0.7\n)\nRETURNS TABLE (\n  document_id UUID,\n  similarity FLOAT,\n  title VARCHAR(255)\n) AS $$\nBEGIN\n  RETURN QUERY\n  SELECT\n    ve.document_id,\n    1 - (ve.embedding <=> p_query_vector) as similarity,\n    d.title\n  FROM plugin.rag_vector_embeddings ve\n  JOIN plugin.rag_documents d ON ve.document_id = d.id\n  WHERE ve.collection_id = p_collection_id\n    AND 1 - (ve.embedding <=> p_query_vector) >= p_threshold\n  ORDER BY similarity DESC\n  LIMIT p_limit;\nEND;\n$$ LANGUAGE plpgsql;",
+            "mysql": "DELIMITER //\nCREATE PROCEDURE plugin.search_similar_documents(\n  IN p_collection_id CHAR(36),\n  IN p_query_limit INT DEFAULT 10\n)\nBEGIN\n  SELECT\n    ve.document_id,\n    d.title,\n    ve.model_version\n  FROM plugin.rag_vector_embeddings ve\n  JOIN plugin.rag_documents d ON ve.document_id = d.id\n  WHERE ve.collection_id = p_collection_id\n  ORDER BY ve.created_at DESC\n  LIMIT p_query_limit;\nEND //\nDELIMITER ;"
+          },
+          "transactional": true,
+          "rollbackSupported": true,
+          "skipOnError": false,
+          "timeout": 30,
+          "dependencies": ["create_vector_index"]
+        }
+      ],
+      "down": [
+        {
+          "id": "drop_search_function",
+          "type": "function",
+          "name": "Drop Vector Search Function",
+          "sql": {
+            "postgresql": "DROP FUNCTION IF EXISTS plugin.search_similar_documents CASCADE;",
+            "mysql": "DROP PROCEDURE IF EXISTS plugin.search_similar_documents;"
+          },
+          "transactional": true,
+          "rollbackSupported": false,
+          "skipOnError": false,
+          "timeout": 10
+        },
+        {
+          "id": "drop_vector_table",
+          "type": "schema",
+          "name": "Drop Vector Embeddings Table",
+          "sql": {
+            "universal": "DROP TABLE IF EXISTS plugin.rag_vector_embeddings CASCADE;"
+          },
+          "transactional": true,
+          "rollbackSupported": false,
+          "skipOnError": false,
+          "timeout": 60,
+          "requiresBackup": true
+        },
+        {
+          "id": "drop_vector_extension",
+          "type": "extension",
+          "name": "Drop Vector Extension",
+          "description": "Remove pgvector extension (only if no longer needed)",
+          "sql": {
+            "postgresql": "DROP EXTENSION IF EXISTS vector CASCADE;",
+            "mysql": "-- MySQL does not have vector extension"
+          },
+          "transactional": true,
+          "rollbackSupported": false,
+          "skipOnError": true,
+          "timeout": 30,
+          "preValidation": "SELECT 1 WHERE NOT EXISTS (SELECT 1 FROM information_schema.columns WHERE column_name = 'embedding' AND table_schema = 'plugin');"
+        }
+      ]
+    },
+    "createdAt": "2025-11-28T10:00:00.000Z",
+    "updatedAt": "2025-11-28T10:00:00.000Z"
+  }
+}

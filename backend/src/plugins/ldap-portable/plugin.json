@@ -1,0 +1,104 @@
+{
+  "id": "ldap-auth",
+  "name": "LDAP Authentication",
+  "version": "1.0.0",
+  "description": "LDAP directory authentication plugin with user import capabilities",
+  "author": "CAS Development Team",
+  "license": "MIT",
+  "entry": "backend/dist/index.js",
+  "status": "enabled",
+  "isSystem": true,
+  "category": "authentication",
+  "keywords": [
+    "ldap",
+    "authentication",
+    "directory",
+    "active-directory",
+    "user-import"
+  ],
+  "permissions": [
+    "ldap:configure",
+    "ldap:test",
+    "ldap:import",
+    "ldap:authenticate",
+    "user:create",
+    "user:update"
+  ],
+  "compatibility": {
+    "casVersion": ">=1.0.0",
+    "nodeVersion": ">=18.0.0",
+    "dependencies": {
+      "@cas/core-api": "^1.0.0"
+    }
+  },
+  "endpoints": {
+    "status": "/api/plugins/ldap/status",
+    "configure": "/api/plugins/ldap/configure",
+    "test": "/api/plugins/ldap/test",
+    "import": "/api/plugins/ldap/import",
+    "authenticate": "/api/plugins/ldap/authenticate"
+  },
+  "database": {
+    "schema": "plugin",
+    "tables": [
+      "ldap_configurations",
+      "ldap_user_imports"
+    ],
+    "migrations": [
+      "20251128_create_ldap_tables.sql"
+    ]
+  },
+  "configSchema": {
+    "serverurl": {
+      "type": "string",
+      "required": true,
+      "description": "LDAP server URL (e.g., ldap://ldap.example.com)"
+    },
+    "basedn": {
+      "type": "string",
+      "required": true,
+      "description": "Base DN for LDAP searches (e.g., dc=example,dc=com)"
+    },
+    "binddn": {
+      "type": "string",
+      "required": true,
+      "description": "Bind DN for LDAP authentication"
+    },
+    "bindpassword": {
+      "type": "string",
+      "required": true,
+      "sensitive": true,
+      "description": "Bind password for LDAP authentication"
+    },
+    "searchfilter": {
+      "type": "string",
+      "required": false,
+      "default": "(objectClass=person)",
+      "description": "LDAP search filter"
+    },
+    "searchattribute": {
+      "type": "string",
+      "required": false,
+      "default": "uid",
+      "description": "LDAP attribute for username matching"
+    },
+    "groupattribute": {
+      "type": "string",
+      "required": false,
+      "default": "memberOf",
+      "description": "LDAP attribute for group membership"
+    },
+    "issecure": {
+      "type": "boolean",
+      "required": false,
+      "default": false,
+      "description": "Use LDAPS (secure connection)"
+    },
+    "port": {
+      "type": "number",
+      "required": false,
+      "default": 389,
+      "description": "LDAP server port"
+    }
+  }
+}

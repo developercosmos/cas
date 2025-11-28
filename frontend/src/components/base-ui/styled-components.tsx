@@ -198,23 +198,23 @@ const StyledButton = styled.button<ButtonProps>`
     box-shadow: 0 0 0 2px ${tokens.colors.bg.primary}, 0 0 0 4px ${tokens.colors.accent.primary};
   }
 
-  /* Factory.ai Primary Button */
+  /* Factory.ai Primary Button - WCAG AA Compliant */
   ${props => props.variant === 'primary' && `
-    background: linear-gradient(135deg, ${tokens.colors.accent.primary} 0%, #EA580C 100%);
+    background: linear-gradient(135deg, #B45309 0%, #9A3412 100%);
     color: white;
     border-color: transparent;
-    box-shadow: 0 2px 8px rgba(230, 126, 34, 0.3);
+    box-shadow: 0 2px 8px rgba(180, 83, 9, 0.3);
     font-weight: 600;
 
     &:hover:not(:disabled) {
-      background: linear-gradient(135deg, ${tokens.colors.accent.hover} 0%, #DC2626 100%);
+      background: linear-gradient(135deg, #92400E 0%, #7C2D12 100%);
       transform: translateY(-1px);
-      box-shadow: 0 4px 12px rgba(230, 126, 34, 0.4);
+      box-shadow: 0 4px 12px rgba(180, 83, 9, 0.4);
     }
 
     &:active:not(:disabled) {
       transform: translateY(0) scale(0.98);
-      box-shadow: 0 2px 6px rgba(230, 126, 34, 0.3);
+      box-shadow: 0 2px 6px rgba(180, 83, 9, 0.3);
     }
 
     /* Dark mode: Factory.ai style - glass morphism with white border */
@@ -243,17 +243,17 @@ const StyledButton = styled.button<ButtonProps>`
     }
   `}
 
-  /* Factory.ai Secondary Button */
+  /* Factory.ai Secondary Button - WCAG AA Compliant */
   ${props => props.variant === 'secondary' && `
-    background: ${tokens.colors.bg.tertiary};
-    color: ${tokens.colors.text.primary};
-    border-color: ${tokens.colors.border.default};
+    background: #f9fafb;
+    color: #111827;
+    border-color: #d1d5db;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
     font-weight: 500;
 
     &:hover:not(:disabled) {
-      background: ${tokens.colors.bg.secondary};
-      border-color: ${tokens.colors.accent.primary};
+      background: #f3f4f6;
+      border-color: #9ca3af;
       transform: translateY(-1px);
       box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
     }
@@ -266,7 +266,7 @@ const StyledButton = styled.button<ButtonProps>`
     /* Dark mode: Factory.ai style - subtle glass with border */
     [data-theme='dark'] & {
       background: rgba(255, 255, 255, 0.05);
-      color: rgba(255, 255, 255, 0.9);
+      color: rgba(255, 255, 255, 0.95);
       border: 1px solid rgba(255, 255, 255, 0.15);
       font-weight: 500;
       letter-spacing: -0.01em;
@@ -289,16 +289,16 @@ const StyledButton = styled.button<ButtonProps>`
     }
   `}
 
-  /* Factory.ai Ghost Button */
+  /* Factory.ai Ghost Button - WCAG AA Compliant */
   ${props => props.variant === 'ghost' && `
     background: transparent;
-    color: ${tokens.colors.text.secondary};
+    color: #374151;
     border-color: transparent;
     font-weight: 500;
 
     &:hover:not(:disabled) {
-      background: ${tokens.colors.bg.tertiary};
-      color: ${tokens.colors.text.primary};
+      background: #f3f4f6;
+      color: #111827;
       transform: translateY(-1px);
     }
 
@@ -309,7 +309,7 @@ const StyledButton = styled.button<ButtonProps>`
     /* Dark mode: Factory.ai style - minimal glass on hover */
     [data-theme='dark'] & {
       background: transparent;
-      color: rgba(255, 255, 255, 0.7);
+      color: rgba(255, 255, 255, 0.85);
       border-color: transparent;
       font-weight: 500;
       letter-spacing: -0.01em;
