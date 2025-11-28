@@ -4,6 +4,7 @@ import { PluginAdminService } from '../../services/PluginAdminService';
 import { PluginDocumentationService } from '../../services/PluginDocumentationService';
 import LdapUserManager from '../LdapUserManager';
 import LdapTreeBrowser from '../LdapTreeBrowser';
+import RAGConfiguration from '../RAGConfiguration/RAGConfiguration';
 
 // Dynamic API URL that works for both localhost and network access
 const getApiBaseUrl = () => {
@@ -56,6 +57,8 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
   const [ldapConfigId, setLdapConfigId] = useState<string | null>(null);
   const [showTreeBrowser, setShowTreeBrowser] = useState(false);
   const [ldapServerConfig, setLdapServerConfig] = useState<any>(null);
+  const [showRAGConfig, setShowRAGConfig] = useState(false);
+  const [ragConfig, setRAGConfig] = useState<any>(null);
 
   // Install form state
   const [installForm, setInstallForm] = useState<PluginInstallRequest>({
@@ -98,6 +101,34 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
     };
 
     loadLdapConfig();
+  }, []);
+
+  // Load saved RAG configuration
+  useEffect(() => {
+    const loadRAGConfig = async () => {
+      try {
+        const token = localStorage.getItem('auth_token');
+        if (!token) return;
+
+        const response = await fetch(`${API_BASE}/api/plugins/rag-retrieval/status`, {
+          headers: {
+            'Authorization': `Bearer ${token}`
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.plugin?.configuration) {
+            setRAGConfig(data.plugin.configuration);
+            console.log('🤖 RAG Configuration loaded:', data.plugin.configuration);
+          }
+        }
+      } catch (error) {
+        console.error('Failed to load RAG config:', error);
+      }
+    };
+
+    loadRAGConfig();
   }, []);
 
   const loadPlugins = async () => {
@@ -751,6 +782,58 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                           </div>
                         </form>
                       </>
+                    ) : plugin.id === 'rag-retrieval' ? (
+                      <>
+                        <h4>RAG Plugin Configuration</h4>
+                        <div className={styles.configActions}>
+                          <button 
+                            onClick={() => setShowRAGConfig(true)}
+                            className={styles.primaryButton}
+                          >
+                            Open Configuration
+                          </button>
+                          <button 
+                            onClick={() => {
+                              // Test current RAG configuration
+                              const testRAGConfig = async () => {
+                                try {
+                                  const token = localStorage.getItem('auth_token');
+                                  if (!token) {
+                                    alert('Authentication token not found');
+                                    return;
+                                  }
+
+                                  const response = await fetch(`${API_BASE}/api/plugins/rag-retrieval/test`, {
+                                    method: 'POST',
+                                    headers: {
+                                      'Content-Type': 'application/json',
+                                      'Authorization': `Bearer ${token}`
+                                    },
+                                    body: JSON.stringify(ragConfig || {})
+                                  });
+
+                                  const result = await response.json();
+                                  if (result.success) {
+                                    alert('✅ RAG configuration test successful!');
+                                  } else {
+                                    alert('❌ RAG configuration test failed: ' + (result.message || 'Unknown error'));
+                                  }
+                                } catch (error) {
+                                  console.error('RAG test error:', error);
+                                  alert('Failed to test RAG configuration');
+                                }
+                              };
+
+                              setActionLoading(plugin.id);
+                              testRAGConfig().finally(() => setActionLoading(null));
+                            }}
+                            disabled={actionLoading === plugin.id}
+                            className={styles.secondaryButton}
+                          >
+                            {actionLoading === plugin.id ? 'Testing...' : 'Test'}
+                          </button>
+                        </div>
+                      </>
                     ) : (
                       <>
                         <h4>Plugin Configuration</h4>
@@ -1323,6 +1406,22 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
           }}
           onClose={() => setShowTreeBrowser(false)}
         />
+      )}
+
+      {/* RAG Configuration Modal */}
+      {showRAGConfig && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <RAGConfiguration
+              configId="rag-retrieval"
+              onClose={() => setShowRAGConfig(false)}
+              onSave={(newConfig) => {
+                setRAGConfig(newConfig);
+                console.log('🤖 RAG Configuration saved:', newConfig);
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

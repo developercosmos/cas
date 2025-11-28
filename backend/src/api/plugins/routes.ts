@@ -27,75 +27,75 @@ const pluginRegistry = new Map<string, PluginManifest>([
   }],
 ]);
 
-// Constitution: Plugin status storage (persists across requests)
-const pluginStatusMap = new Map<string, string>([
-  ['core.text-block', 'active'],
-  ['ldap-auth', 'disabled'],
-  ['rag-retrieval', 'active']
-]);
-
 router.get('/', async (req, res) => {
   try {
-    // Constitution: Load LDAP plugin dynamically
+    // Load LDAP plugin dynamically
     const ldapPlugin = await pluginService.getAuthPlugin('ldap-auth');
 
-    const plugins = [
-      {
-        id: 'core.text-block',
-        name: 'Text Block',
-        version: '1.0.0',
-        description: 'Basic text editing block',
-        author: 'Dashboard Team',
-        permissions: ['storage.read', 'storage.write'],
-        status: pluginStatusMap.get('core.text-block') || 'active'
-      },
-      {
-        id: 'ldap-auth',
-        name: 'LDAP Authentication',
-        version: '1.0.0',
-        description: 'LDAP directory authentication plugin',
-        author: 'System',
-        permissions: ['auth.ldap'],
-        status: pluginStatusMap.get('ldap-auth') || 'disabled',
-        isSystem: true,
-        routes: ldapPlugin ? {
-          configure: '/api/plugins/ldap/configure',
-          test: '/api/plugins/ldap/test',
-          import: '/api/plugins/ldap/import',
-          authenticate: '/api/plugins/ldap/authenticate'
-        } : null
-      },
-      {
-        id: 'rag-retrieval',
-        name: 'RAG Document Intelligence',
-        version: '1.0.0',
-        description: 'Retrieval-Augmented Generation for document analysis and intelligent chat (English & Bahasa Indonesia)',
-        author: 'System',
-        permissions: ['document:upload', 'chat:create', 'collection:manage', 'rag:configure'],
-        status: pluginStatusMap.get('rag-retrieval') || 'active',
-        isSystem: true,
-        icon: '🧠',
-        capabilities: {
-          multilingual: true,
-          languages: ['English', 'Bahasa Indonesia', '100+ languages'],
-          vectorSearch: true,
-          semanticSearch: true,
-          chatInterface: true,
-          documentProcessing: true
-        },
-        routes: {
-          status: '/api/plugins/rag/status',
-          configure: '/api/plugins/rag/configure',
-          test: '/api/plugins/rag/test',
-          aiStatus: '/api/plugins/rag/ai/status',
-          aiTest: '/api/plugins/rag/ai/test',
-          collections: '/api/plugins/rag/collections',
-          documents: '/api/plugins/rag/documents',
-          sessions: '/api/plugins/rag/sessions',
-          chat: '/api/plugins/rag/chat'
-        }
+    // Load plugin configurations from database to get current status
+    const pluginConfigs = await DatabaseService.query<any>(
+      'SELECT pluginid, pluginname, pluginversion, plugindescription, pluginauthor, pluginstatus FROM plugin.plugin_configurations ORDER BY pluginid'
+    );
+
+    // Build plugins array from database
+    const plugins = pluginConfigs.map(config => {
+      const basePlugin = {
+        id: config.pluginid,
+        name: config.pluginname,
+        version: config.pluginversion,
+        description: config.plugindescription,
+        author: config.pluginauthor,
+        status: config.pluginstatus || 'disabled'
+      };
+
+      // Add plugin-specific metadata
+      if (config.pluginid === 'core.text-block') {
+        return {
+          ...basePlugin,
+          permissions: ['storage.read', 'storage.write']
+        };
+      } else if (config.pluginid === 'ldap-auth') {
+        return {
+          ...basePlugin,
+          permissions: ['auth.ldap'],
+          isSystem: true,
+          routes: ldapPlugin ? {
+            configure: '/api/plugins/ldap/configure',
+            test: '/api/plugins/ldap/test',
+            import: '/api/plugins/ldap/import',
+            authenticate: '/api/plugins/ldap/authenticate'
+          } : null
+        };
+      } else if (config.pluginid === 'rag-retrieval') {
+        return {
+          ...basePlugin,
+          permissions: ['document:upload', 'chat:create', 'collection:manage', 'rag:configure'],
+          isSystem: true,
+          icon: '🧠',
+          capabilities: {
+            multilingual: true,
+            languages: ['English', 'Bahasa Indonesia', '100+ languages'],
+            vectorSearch: true,
+            semanticSearch: true,
+            chatInterface: true,
+            documentProcessing: true
+          },
+          routes: {
+            status: '/api/plugins/rag/status',
+            configure: '/api/plugins/rag/configure',
+            test: '/api/plugins/rag/test',
+            aiStatus: '/api/plugins/rag/ai/status',
+            aiTest: '/api/plugins/rag/ai/test',
+            collections: '/api/plugins/rag/collections',
+            documents: '/api/plugins/rag/documents',
+            sessions: '/api/plugins/rag/sessions',
+            chat: '/api/plugins/rag/chat'
+          }
+        };
       }
-    ];
+
+      return basePlugin;
+    });
 
     res.json({
       success: true,
@@ -128,73 +128,83 @@ router.get('/:id', (req, res) => {
   res.json(plugin);
 });
 
-// Constitution: Enable/disable plugin endpoints
+// Enable/disable plugin endpoints - saves to database
 router.post('/:id/enable', async (req, res) => {
   const pluginId = req.params.id;
   
-  // Constitution: Plugin metadata for response
-  const pluginMeta = {
-    'core.text-block': { name: 'Text Block', version: '1.0.0' },
-    'ldap-auth': { name: 'LDAP Authentication', version: '1.0.0' },
-    'rag-retrieval': { name: 'RAG Document Intelligence', version: '1.0.0' }
-  };
-  
-  const meta = pluginMeta[pluginId as keyof typeof pluginMeta];
-  
-  if (!meta) {
-    return res.status(404).json({ success: false, message: 'Plugin not found' });
-  }
-  
-  // Constitution: Update plugin status in persistent map
-  pluginStatusMap.set(pluginId, 'active');
-  
-  console.log(`✅ Plugin enabled: ${pluginId} -> active`);
-  console.log(`📊 Current status map:`, Array.from(pluginStatusMap.entries()));
-  
-  res.json({ 
-    success: true, 
-    message: `Plugin ${meta.name} enabled successfully`,
-    plugin: {
-      id: pluginId,
-      name: meta.name,
-      version: meta.version,
-      status: 'active'
+  try {
+    // Update plugin status in database
+    const result = await DatabaseService.query<any>(
+      'UPDATE plugin.plugin_configurations SET pluginstatus = $1, updatedat = NOW() WHERE pluginid = $2 RETURNING pluginid, pluginname, pluginversion, pluginstatus',
+      ['active', pluginId]
+    );
+
+    if (result.length === 0) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Plugin not found' 
+      });
     }
-  });
+
+    const plugin = result[0];
+    console.log(`✅ Plugin enabled in database: ${pluginId} -> active`);
+    
+    res.json({ 
+      success: true, 
+      message: `Plugin ${plugin.pluginname} enabled successfully`,
+      plugin: {
+        id: plugin.pluginid,
+        name: plugin.pluginname,
+        version: plugin.pluginversion,
+        status: plugin.pluginstatus
+      }
+    });
+  } catch (error) {
+    console.error(`❌ Error enabling plugin ${pluginId}:`, error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to enable plugin'
+    });
+  }
 });
 
 router.post('/:id/disable', async (req, res) => {
   const pluginId = req.params.id;
   
-  // Constitution: Plugin metadata for response
-  const pluginMeta = {
-    'core.text-block': { name: 'Text Block', version: '1.0.0' },
-    'ldap-auth': { name: 'LDAP Authentication', version: '1.0.0' },
-    'rag-retrieval': { name: 'RAG Document Intelligence', version: '1.0.0' }
-  };
-  
-  const meta = pluginMeta[pluginId as keyof typeof pluginMeta];
-  
-  if (!meta) {
-    return res.status(404).json({ success: false, message: 'Plugin not found' });
-  }
-  
-  // Constitution: Update plugin status in persistent map
-  pluginStatusMap.set(pluginId, 'disabled');
-  
-  console.log(`⚠️ Plugin disabled: ${pluginId} -> disabled`);
-  console.log(`📊 Current status map:`, Array.from(pluginStatusMap.entries()));
-  
-  res.json({ 
-    success: true, 
-    message: `Plugin ${meta.name} disabled successfully`,
-    plugin: {
-      id: pluginId,
-      name: meta.name,
-      version: meta.version,
-      status: 'disabled'
+  try {
+    // Update plugin status in database
+    const result = await DatabaseService.query<any>(
+      'UPDATE plugin.plugin_configurations SET pluginstatus = $1, updatedat = NOW() WHERE pluginid = $2 RETURNING pluginid, pluginname, pluginversion, pluginstatus',
+      ['disabled', pluginId]
+    );
+
+    if (result.length === 0) {
+      return res.status(404).json({ 
+        success: false,
+        message: 'Plugin not found' 
+      });
     }
-  });
+
+    const plugin = result[0];
+    console.log(`⚠️ Plugin disabled in database: ${pluginId} -> disabled`);
+    
+    res.json({ 
+      success: true, 
+      message: `Plugin ${plugin.pluginname} disabled successfully`,
+      plugin: {
+        id: plugin.pluginid,
+        name: plugin.pluginname,
+        version: plugin.pluginversion,
+        status: plugin.pluginstatus
+      }
+    });
+  } catch (error) {
+    console.error(`❌ Error disabling plugin ${pluginId}:`, error);
+    res.status(500).json({
+      success: false,
+      message: 'Failed to disable plugin'
+    });
+  }
 });
 
 router.post('/', (req, res) => {
@@ -232,25 +242,10 @@ router.get('/:id/docs', async (req, res) => {
     const { id } = req.params;
     const { language = 'en', includeVersions = 'false' } = req.query;
 
-    // Get plugin configuration UUID from plugin ID
-    const pluginConfig = await DatabaseService.queryOne<{ id: string }>(
-      'SELECT Id FROM plugin.plugin_configurations WHERE PluginId = $1',
-      [id]
-    );
-
-    // If plugin doesn't have configuration entry, return empty array
-    // This allows the frontend to handle it gracefully and show fallback documentation
-    if (!pluginConfig) {
-      console.log(`⚠️ Plugin ${id} not found in plugin_configurations, returning empty docs`);
-      return res.json({
-        success: true,
-        data: []
-      });
-    }
-
-    // Get documentation from database
+    // Get documentation from database using plugin string ID (e.g., 'core.text-block')
+    // The PluginDocumentationService will handle UUID resolution internally
     const docs = await PluginDocumentationService.getByPluginId(
-      pluginConfig.id,
+      id, // Use the plugin string ID directly
       language as string,
       includeVersions === 'true'
     );

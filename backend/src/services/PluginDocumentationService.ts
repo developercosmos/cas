@@ -182,27 +182,35 @@ export class PluginDocumentationService {
     language: string = 'en', 
     includeVersions: boolean = false
   ): Promise<PluginDocumentation[]> {
-    // First resolve the pluginId to the internal UUID
+    // First resolve the pluginId (string like 'core.text-block') to the internal UUID
     const pluginConfig = await DatabaseService.queryOne<{ id: string }>(
-      'SELECT Id FROM plugin.plugin_configurations WHERE PluginId = $1',
+      'SELECT id FROM plugin.plugin_configurations WHERE pluginid = $1',
       [pluginId]
     );
 
     if (!pluginConfig) {
-      return []; // Plugin not found, return empty array
+      // Plugin config not found - this is an error, not a fallback scenario
+      console.error(`❌ Plugin configuration not found for: ${pluginId}`);
+      throw new Error(`Plugin '${pluginId}' not found in database. Please ensure plugin is properly configured.`);
     }
 
     const results = await DatabaseService.query<any>(
       `SELECT 
-        Id, PluginId, DocumentType, Title, Content, ContentFormat, Language, 
-        Version, IsCurrent, OrderIndex, Metadata, CreatedAt, UpdatedAt
+        id, pluginid, documenttype, title, content, contentformat, language, 
+        version, iscurrent, orderindex, metadata, createdat, updatedat
        FROM plugin.plugin_md_documentation
-       WHERE PluginId = $1
-       AND Language = $2
-       AND ($3 OR IsCurrent = TRUE)
-       ORDER BY OrderIndex, DocumentType, Version DESC`,
+       WHERE pluginid = $1
+       AND language = $2
+       AND ($3 OR iscurrent = TRUE)
+       ORDER BY orderindex, documenttype, version DESC`,
       [pluginConfig.id, language, includeVersions]
     );
+
+    // If no documentation found, this is also an error
+    if (results.length === 0) {
+      console.warn(`⚠️  No documentation found for plugin: ${pluginId} (language: ${language})`);
+      throw new Error(`No documentation available for plugin '${pluginId}'. Please seed documentation using the migration script.`);
+    }
 
     return results.map(doc => this.mapToDocumentation(doc));
   }
@@ -421,20 +429,21 @@ export class PluginDocumentationService {
       }
     }
     
+    // Handle both uppercase and lowercase column names from database
     return {
-      id: row.id,
-      pluginId: row.pluginid,
-      documentType: row.documenttype,
-      title: row.title,
-      content: row.content,
-      contentFormat: row.contentformat,
-      language: row.language,
-      version: row.version,
-      isCurrent: row.iscurrent,
-      orderIndex: row.orderindex,
+      id: row.id || row.Id,
+      pluginId: row.pluginid || row.PluginId || row.pluginId,
+      documentType: row.documenttype || row.DocumentType,
+      title: row.title || row.Title,
+      content: row.content || row.Content,
+      contentFormat: row.contentformat || row.ContentFormat || 'markdown',
+      language: row.language || row.Language || 'en',
+      version: row.version || row.Version,
+      isCurrent: Boolean(row.iscurrent !== undefined ? row.iscurrent : row.IsCurrent),
+      orderIndex: Number(row.orderindex !== undefined ? row.orderindex : row.OrderIndex) || 0,
       metadata,
-      createdAt: row.createdat,
-      updatedAt: row.updatedat
+      createdAt: row.createdat || row.CreatedAt,
+      updatedAt: row.updatedat || row.UpdatedAt
     };
   }
 }
