@@ -197,3 +197,29 @@
 .menuItem:hover svg {
   color: var(--accent-primary);
 }
+/* Logo button styles */
+.logoButton {
+  background: none;
+  border: none;
+  padding: 4px;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.logoButton:hover {
+  background: var(--background-secondary);
+  transform: scale(1.05);
+}
+
+.logoButton:focus {
+  outline: 2px solid var(--accent-primary);
+  outline-offset: 2px;
+}
+
+.logoButton:active {
+  transform: scale(0.95);
+}

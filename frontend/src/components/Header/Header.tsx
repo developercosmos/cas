@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import PluginManager from '@/components/PluginManager';
+import NavigationManager from '@/components/NavigationManager';
 import { AuthService } from '@/services/AuthService';
 import { Button } from '@/components/base-ui/styled-components';
 import styles from './Header.module.css';
@@ -18,10 +19,19 @@ export const Header: React.FC<HeaderProps> = ({
 }) => {
   const [showPluginManager, setShowPluginManager] = useState(false);
   const [showUserMenu, setShowUserMenu] = useState(false);
+  const [showNavigation, setShowNavigation] = useState(false);
 
   const handleLogout = () => {
     AuthService.removeToken();
     window.location.href = '/login';
+  };
+
+  const handleLogoClick = () => {
+    setShowNavigation(true);
+  };
+
+  const handleNavigationClose = () => {
+    setShowNavigation(false);
   };
 
   return (
@@ -29,18 +39,27 @@ export const Header: React.FC<HeaderProps> = ({
       <header className={styles.header}>
         <div className={styles.container}>
           <div className={styles.left}>
-            <div className={styles.logo}>
-              <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <rect width="32" height="32" rx="8" fill="var(--accent-primary)" />
-                <path
-                  d="M16 8L24 14V22C24 23.1046 23.1046 24 22 24H10C8.89543 24 8 23.1046 8 22V14L16 8Z"
-                  stroke="white"
-                  strokeWidth="2"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
+            {/* Logo with click handler */}
+            <button
+              className={styles.logoButton}
+              onClick={handleLogoClick}
+              title="Open navigation (Ctrl+K)"
+              aria-label="Open navigation menu"
+              data-testid="logo-button"
+            >
+              <div className={styles.logo}>
+                <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect width="32" height="32" rx="8" fill="var(--accent-primary)" />
+                  <path
+                    d="M16 8L24 14V22C24 23.1046 23.1046 24 22 24H10C8.89543 24 8 23.1046 8 22V14L16 8Z"
+                    stroke="white"
+                    strokeWidth="2"
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                  />
+                </svg>
+              </div>
+            </button>
             <h1 className={styles.title}>{logoText}</h1>
           </div>
 
@@ -115,9 +134,15 @@ export const Header: React.FC<HeaderProps> = ({
         </div>
       </header>
 
+      {/* Plugin Manager Modal */}
       {showPluginManager && (
         <PluginManager onClose={() => setShowPluginManager(false)} />
       )}
+
+      {/* Navigation Modal */}
+      <NavigationManager isOpen={showNavigation} onClose={handleNavigationClose} />
     </>
   );
 };
+
+export default Header;
