@@ -1,0 +1,134 @@
+{
+  "name": "user-access-management",
+  "version": "1.0.0",
+  "description": "User Access Rights & Authorization Management System",
+  "author": "CAS Development Team",
+  "license": "MIT",
+  "main": "main.js",
+  "keywords": ["access", "authorization", "rbac", "roles", "permissions"],
+  "category": "system",
+  "isSystem": true,
+  "dependencies": {
+    "express": "^4.18.2",
+    "uuid": "^9.0.0"
+  },
+  "permissions": [
+    {
+      "name": "user_access.admin",
+      "description": "Admin access to user access management",
+      "resourceType": "system"
+    },
+    {
+      "name": "user_access.roles.create",
+      "description": "Create new roles",
+      "resourceType": "action"
+    },
+    {
+      "name": "user_access.roles.edit",
+      "description": "Edit existing roles",
+      "resourceType": "action"
+    },
+    {
+      "name": "user_access.roles.delete",
+      "description": "Delete roles",
+      "resourceType": "action"
+    },
+    {
+      "name": "user_access.roles.assign",
+      "description": "Assign roles to users",
+      "resourceType": "action"
+    },
+    {
+      "name": "user_access.users.manage",
+      "description": "Manage user access assignments",
+      "resourceType": "action"
+    }
+  ],
+  "configuration": {
+    "defaultRoles": [
+      {
+        "name": "admin",
+        "description": "System administrator with full access",
+        "isSystem": true
+      },
+      {
+        "name": "manager",
+        "description": "Manager with limited administrative access",
+        "isSystem": false
+      },
+      {
+        "name": "user",
+        "description": "Standard user with basic access",
+        "isSystem": false
+      }
+    ],
+    "maxRolesPerUser": 10,
+    "roleHierarchy": {
+      "admin": 100,
+      "manager": 50,
+      "user": 10
+    }
+  },
+  "apis": [
+    {
+      "endpoint": "/api/user-access/roles",
+      "method": "GET",
+      "description": "List all roles"
+    },
+    {
+      "endpoint": "/api/user-access/roles",
+      "method": "POST",
+      "description": "Create new role"
+    },
+    {
+      "endpoint": "/api/user-access/roles/:id",
+      "method": "PUT",
+      "description": "Update role"
+    },
+    {
+      "endpoint": "/api/user-access/roles/:id",
+      "method": "DELETE",
+      "description": "Delete role"
+    },
+    {
+      "endpoint": "/api/user-access/roles/:id/permissions",
+      "method": "GET",
+      "description": "Get role permissions"
+    },
+    {
+      "endpoint": "/api/user-access/roles/:id/permissions",
+      "method": "POST",
+      "description": "Add permission to role"
+    },
+    {
+      "endpoint": "/api/user-access/roles/:id/permissions/:permissionId",
+      "method": "DELETE",
+      "description": "Remove permission from role"
+    },
+    {
+      "endpoint": "/api/user-access/users/:id/roles",
+      "method": "GET",
+      "description": "Get user roles"
+    },
+    {
+      "endpoint": "/api/user-access/users/:id/roles",
+      "method": "POST",
+      "description": "Assign role to user"
+    },
+    {
+      "endpoint": "/api/user-access/users/:id/roles/:roleId",
+      "method": "DELETE",
+      "description": "Remove role from user"
+    },
+    {
+      "endpoint": "/api/user-access/users/:id/permissions",
+      "method": "GET",
+      "description": "Get user effective permissions"
+    }
+  ],
+  "documentation": {
+    "readme": "README.md",
+    "api": "API_DOCUMENTATION.md",
+    "configuration": "CONFIGURATION.md"
+  }
+}

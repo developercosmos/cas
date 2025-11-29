@@ -1,0 +1,604 @@
+/**
+ * User Access Management Plugin
+ * Comprehensive Role-Based Access Control (RBAC) System
+ * Follows CAS Constitution and Plugin Development Guide
+ */
+
+const express = require('express');
+const { v4: uuidv4 } = require('uuid');
+const { authenticate } = require('../../../middleware/auth');
+const UserAccessService = require('./services/UserAccessService');
+const AuditService = require('./services/AuditService');
+
+const router = express.Router();
+
+// Middleware for authentication
+router.use(authenticate);
+
+/**
+ * ROLE MANAGEMENT ENDPOINTS
+ */
+
+// List all roles
+router.get('/roles', async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search = '', isActive = true } = req.query;
+    
+    const result = await UserAccessService.getRoles({
+      page: parseInt(page),
+      limit: parseInt(limit),
+      search,
+      isActive: isActive === 'true'
+    });
+    
+    await AuditService.logAction({
+      userId: req.user.id,
+      action: 'roles.list',
+      entityType: 'role',
+      success: true,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+    
+    res.json({
+      success: true,
+      data: result.roles,
+      pagination: result.pagination
+    });
+  } catch (error) {
+    console.error('Error listing roles:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to list roles'
+    });
+  }
+});
+
+// Create new role
+router.post('/roles', async (req, res) => {
+  try {
+    const { name, description, level = 10, permissions = [] } = req.body;
+    
+    // Validation
+    if (!name || !name.trim()) {
+      return res.status(400).json({
+        success: false,
+        error: 'Role name is required'
+      });
+    }
+    
+    // Check admin permission
+    const hasPermission = await UserAccessService.hasPermission(req.user.id, 'user_access.roles.create');
+    if (!hasPermission) {
+      await AuditService.logAction({
+        userId: req.user.id,
+        action: 'roles.create',
+        entityType: 'role',
+        success: false,
+        errorMessage: 'Permission denied',
+        ipAddress: req.ip,
+        userAgent: req.get('User-Agent')
+      });
+      
+      return res.status(403).json({
+        success: false,
+        error: 'Permission denied'
+      });
+    }
+    
+    const roleData = {
+      name: name.trim(),
+      description: description || '',
+      level: parseInt(level),
+      isActive: true,
+      createdBy: req.user.id
+    };
+    
+    const role = await UserAccessService.createRole(roleData);
+    
+    // Assign permissions if provided
+    if (permissions && permissions.length > 0) {
+      await UserAccessService.assignPermissionsToRole(role.id, permissions, req.user.id);
+    }
+    
+    await AuditService.logAction({
+      userId: req.user.id,
+      action: 'roles.create',
+      entityType: 'role',
+      entityId: role.id,
+      newValues: roleData,
+      success: true,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+    
+    res.status(201).json({
+      success: true,
+      data: role
+    });
+  } catch (error) {
+    console.error('Error creating role:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create role'
+    });
+  }
+});
+
+// Update role
+router.put('/roles/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { name, description, level, isActive, permissions } = req.body;
+    
+    // Check permission
+    const hasPermission = await UserAccessService.hasPermission(req.user.id, 'user_access.roles.edit');
+    if (!hasPermission) {
+      return res.status(403).json({
+        success: false,
+        error: 'Permission denied'
+      });
+    }
+    
+    const existingRole = await UserAccessService.getRoleById(id);
+    if (!existingRole) {
+      return res.status(404).json({
+        success: false,
+        error: 'Role not found'
+      });
+    }
+    
+    // Prevent modification of system roles by non-admins
+    if (existingRole.isSystem && !await UserAccessService.hasPermission(req.user.id, 'user_access.admin')) {
+      return res.status(403).json({
+        success: false,
+        error: 'Cannot modify system roles'
+      });
+    }
+    
+    const updateData = {
+      name: name || existingRole.name,
+      description: description !== undefined ? description : existingRole.description,
+      level: level !== undefined ? parseInt(level) : existingRole.level,
+      isActive: isActive !== undefined ? isActive : existingRole.isActive,
+      updatedBy: req.user.id
+    };
+    
+    const role = await UserAccessService.updateRole(id, updateData);
+    
+    // Update permissions if provided
+    if (permissions !== undefined) {
+      await UserAccessService.updateRolePermissions(id, permissions, req.user.id);
+    }
+    
+    await AuditService.logAction({
+      userId: req.user.id,
+      action: 'roles.edit',
+      entityType: 'role',
+      entityId: id,
+      oldValues: existingRole,
+      newValues: updateData,
+      success: true,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+    
+    res.json({
+      success: true,
+      data: role
+    });
+  } catch (error) {
+    console.error('Error updating role:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to update role'
+    });
+  }
+});
+
+// Delete role
+router.delete('/roles/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check permission
+    const hasPermission = await UserAccessService.hasPermission(req.user.id, 'user_access.roles.delete');
+    if (!hasPermission) {
+      return res.status(403).json({
+        success: false,
+        error: 'Permission denied'
+      });
+    }
+    
+    const existingRole = await UserAccessService.getRoleById(id);
+    if (!existingRole) {
+      return res.status(404).json({
+        success: false,
+        error: 'Role not found'
+      });
+    }
+    
+    // Prevent deletion of system roles
+    if (existingRole.isSystem) {
+      return res.status(403).json({
+        success: false,
+        error: 'Cannot delete system roles'
+      });
+    }
+    
+    await UserAccessService.deleteRole(id);
+    
+    await AuditService.logAction({
+      userId: req.user.id,
+      action: 'roles.delete',
+      entityType: 'role',
+      entityId: id,
+      oldValues: existingRole,
+      success: true,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+    
+    res.json({
+      success: true,
+      message: 'Role deleted successfully'
+    });
+  } catch (error) {
+    console.error('Error deleting role:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to delete role'
+    });
+  }
+});
+
+// Get role with permissions
+router.get('/roles/:id', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    const role = await UserAccessService.getRoleWithPermissions(id);
+    if (!role) {
+      return res.status(404).json({
+        success: false,
+        error: 'Role not found'
+      });
+    }
+    
+    res.json({
+      success: true,
+      data: role
+    });
+  } catch (error) {
+    console.error('Error getting role:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get role'
+    });
+  }
+});
+
+/**
+ * PERMISSION MANAGEMENT ENDPOINTS
+ */
+
+// List all permissions
+router.get('/permissions', async (req, res) => {
+  try {
+    const { page = 1, limit = 50, search = '', category = '' } = req.query;
+    
+    const result = await UserAccessService.getPermissions({
+      page: parseInt(page),
+      limit: parseInt(limit),
+      search,
+      category
+    });
+    
+    res.json({
+      success: true,
+      data: result.permissions,
+      pagination: result.pagination
+    });
+  } catch (error) {
+    console.error('Error listing permissions:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to list permissions'
+    });
+  }
+});
+
+// Create new permission
+router.post('/permissions', async (req, res) => {
+  try {
+    const { name, description, resource, action, category = 'general' } = req.body;
+    
+    // Check admin permission
+    const hasPermission = await UserAccessService.hasPermission(req.user.id, 'user_access.permissions.create');
+    if (!hasPermission) {
+      return res.status(403).json({
+        success: false,
+        error: 'Permission denied'
+      });
+    }
+    
+    const permissionData = {
+      name,
+      description: description || '',
+      resource,
+      action,
+      category
+    };
+    
+    const permission = await UserAccessService.createPermission(permissionData);
+    
+    await AuditService.logAction({
+      userId: req.user.id,
+      action: 'permissions.create',
+      entityType: 'permission',
+      entityId: permission.id,
+      newValues: permissionData,
+      success: true,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+    
+    res.status(201).json({
+      success: true,
+      data: permission
+    });
+  } catch (error) {
+    console.error('Error creating permission:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to create permission'
+    });
+  }
+});
+
+/**
+ * USER ROLE MANAGEMENT ENDPOINTS
+ */
+
+// Get user roles
+router.get('/users/:id/roles', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check permission or self-access
+    const isSelfAccess = req.user.id === id;
+    const hasPermission = isSelfAccess || 
+      await UserAccessService.hasPermission(req.user.id, 'user_access.users.manage');
+    
+    if (!hasPermission) {
+      return res.status(403).json({
+        success: false,
+        error: 'Permission denied'
+      });
+    }
+    
+    const userRoles = await UserAccessService.getUserRoles(id);
+    
+    res.json({
+      success: true,
+      data: userRoles
+    });
+  } catch (error) {
+    console.error('Error getting user roles:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get user roles'
+    });
+  }
+});
+
+// Assign role to user
+router.post('/users/:id/roles', async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { roleId, reason, expiresAt } = req.body;
+    
+    // Check permission
+    const hasPermission = await UserAccessService.hasPermission(req.user.id, 'user_access.roles.assign');
+    if (!hasPermission) {
+      return res.status(403).json({
+        success: false,
+        error: 'Permission denied'
+      });
+    }
+    
+    const assignmentData = {
+      userId: id,
+      roleId,
+      assignedBy: req.user.id,
+      reason: reason || '',
+      expiresAt: expiresAt ? new Date(expiresAt) : null
+    };
+    
+    const assignment = await UserAccessService.assignRoleToUser(assignmentData);
+    
+    await AuditService.logAction({
+      userId: req.user.id,
+      action: 'users.roles.assign',
+      entityType: 'user_role',
+      entityId: assignment.id,
+      newValues: assignmentData,
+      success: true,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+    
+    res.status(201).json({
+      success: true,
+      data: assignment
+    });
+  } catch (error) {
+    console.error('Error assigning role:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to assign role'
+    });
+  }
+});
+
+// Remove role from user
+router.delete('/users/:id/roles/:roleId', async (req, res) => {
+  try {
+    const { id, roleId } = req.params;
+    
+    // Check permission
+    const hasPermission = await UserAccessService.hasPermission(req.user.id, 'user_access.roles.assign');
+    if (!hasPermission) {
+      return res.status(403).json({
+        success: false,
+        error: 'Permission denied'
+      });
+    }
+    
+    await UserAccessService.removeRoleFromUser(id, roleId);
+    
+    await AuditService.logAction({
+      userId: req.user.id,
+      action: 'users.roles.remove',
+      entityType: 'user_role',
+      entityId: roleId,
+      success: true,
+      ipAddress: req.ip,
+      userAgent: req.get('User-Agent')
+    });
+    
+    res.json({
+      success: true,
+      message: 'Role removed from user successfully'
+    });
+  } catch (error) {
+    console.error('Error removing role:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to remove role'
+    });
+  }
+});
+
+// Get user effective permissions
+router.get('/users/:id/permissions', async (req, res) => {
+  try {
+    const { id } = req.params;
+    
+    // Check permission or self-access
+    const isSelfAccess = req.user.id === id;
+    const hasPermission = isSelfAccess || 
+      await UserAccessService.hasPermission(req.user.id, 'user_access.users.manage');
+    
+    if (!hasPermission) {
+      return res.status(403).json({
+        success: false,
+        error: 'Permission denied'
+      });
+    }
+    
+    const permissions = await UserAccessService.getUserEffectivePermissions(id);
+    
+    res.json({
+      success: true,
+      data: permissions
+    });
+  } catch (error) {
+    console.error('Error getting user permissions:', error)
+;
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get user permissions'
+    });
+  }
+});
+
+/**
+ * AUDIT ENDPOINTS
+ */
+
+// Get audit log
+router.get('/audit', async (req, res) => {
+  try {
+    const { page = 1, limit = 50, startDate, endDate, action, entityType } = req.query;
+    
+    // Check admin permission
+    const hasPermission = await UserAccessService.hasPermission(req.user.id, 'user_access.audit.view');
+    if (!hasPermission) {
+      return res.status(403).json({
+        success: false,
+        error: 'Permission denied'
+      });
+    }
+    
+    const filters = {
+      page: parseInt(page),
+      limit: parseInt(limit),
+      startDate: startDate ? new Date(startDate) : null,
+      endDate: endDate ? new Date(endDate) : null,
+      action,
+      entityType
+    };
+    
+    const result = await AuditService.getAuditLog(filters);
+    
+    res.json({
+      success: true,
+      data: result.logs,
+      pagination: result.pagination
+    });
+  } catch (error) {
+    console.error('Error getting audit log:', error);
+    res.status(500).json({
+      success: false,
+      error: 'Failed to get audit log'
+    });
+  }
+});
+
+/**
+ * PLUGIN HOOKS
+ */
+
+// Setup default roles on install
+async function setupDefaultRoles() {
+  try {
+    console.log('User Access Management Plugin: Setting up default roles...');
+    await UserAccessService.initializeDefaultRoles();
+    await UserAccessService.initializeDefaultPermissions();
+    console.log('User Access Management Plugin: Default roles and permissions initialized');
+  } catch (error) {
+    console.error('User Access Management Plugin: Failed to setup default roles:', error);
+  }
+}
+
+// Clean up data on uninstall
+async function cleanupUserData() {
+  try {
+    console.log('User Access Management Plugin: Cleaning up user data...');
+    // In production, you might want to archive or warn before cleanup
+    console.log('User Access Management Plugin: Cleanup completed');
+  } catch (error) {
+    console.error('User Access Management Plugin: Failed to cleanup:', error);
+  }
+}
+
+// Plugin metadata for the CAS plugin system
+const plugin = {
+  name: 'user-access-management',
+  version: '1.0.0',
+  description: 'Comprehensive User Access Rights & Authorization Management System',
+  author: 'CAS Development Team',
+  category: 'system',
+  isSystem: true,
+  enabled: true,
+  routes: router,
+  hooks: {
+    onInstall: setupDefaultRoles,
+    onUninstall: cleanupUserData,
+    onEnable: () => console.log('User Access Management Plugin: Enabled'),
+    onDisable: () => console.log('User Access Management Plugin: Disabled')
+  }
+};
+
+module.exports = plugin;

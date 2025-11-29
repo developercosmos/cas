@@ -4,6 +4,7 @@ import { Canvas } from '@/components/Canvas';
 import { AuthService } from '@/services/AuthService';
 import { AccessibilityTestRunner } from '@/components/accessibility/AccessibilityTestRunner';
 import AccessibilityTestPage from '@/pages/AccessibilityTestPage';
+import UserAccessManagementPage from '@/pages/UserAccessManagementPage';
 import '@/styles/global.css';
 import { useState, useEffect } from 'react';
 
@@ -14,6 +15,7 @@ function App() {
   const token = AuthService.getToken();
   const [ldapEnabled, setLdapEnabled] = useState(false);
   const [showAccessibilityTest, setShowAccessibilityTest] = useState(false);
+  const [showUserAccessManagement, setShowUserAccessManagement] = useState(false);
 
   // Check if LDAP plugin is enabled
   useEffect(() => {
@@ -48,6 +50,10 @@ function App() {
       if (e.ctrlKey && e.shiftKey && e.key === 'A') {
         setShowAccessibilityTest(!showAccessibilityTest);
       }
+      // Press Ctrl+Shift+U to toggle User Access Management page
+      if (e.ctrlKey && e.shiftKey && e.key === 'U') {
+        setShowUserAccessManagement(!showUserAccessManagement);
+      }
     };
 
     window.addEventListener('keydown', handleKeyPress);
@@ -60,6 +66,17 @@ function App() {
       <ThemeProvider>
         <div>
           <AccessibilityTestPage />
+        </div>
+      </ThemeProvider>
+    );
+  }
+
+  // If showing User Access Management page
+  if (showUserAccessManagement) {
+    return (
+      <ThemeProvider>
+        <div>
+          <UserAccessManagementPage />
         </div>
       </ThemeProvider>
     );

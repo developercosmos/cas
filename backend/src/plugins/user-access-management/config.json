@@ -1,0 +1,117 @@
+{
+  "id": "user-access-management",
+  "name": "User Access Management",
+  "version": "1.0.0",
+  "description": "Comprehensive user access rights and authorization management system with role-based access control (RBAC)",
+  "author": "CAS Development Team",
+  "license": "MIT",
+  "category": "system",
+  "isSystem": true,
+  "enabled": true,
+  "entry": "main.js",
+  "configuration": {
+    "defaultRoles": [
+      {
+        "name": "admin",
+        "description": "System administrator with full access to all system resources",
+        "isSystem": true,
+        "level": 100,
+        "permissions": ["*"]
+      },
+      {
+        "name": "manager",
+        "description": "Manager with administrative access to specific areas",
+        "isSystem": false,
+        "level": 50,
+        "permissions": []
+      },
+      {
+        "name": "supervisor",
+        "description": "Supervisor with limited management capabilities",
+        "isSystem": false,
+        "level": 25,
+        "permissions": []
+      },
+      {
+        "name": "user",
+        "description": "Standard user with basic system access",
+        "isSystem": false,
+        "level": 10,
+        "permissions": []
+      }
+    ],
+    "maxRolesPerUser": 10,
+    "sessionTimeout": 3600,
+    "permissionCache": {
+      "enabled": true,
+      "ttl": 300
+    },
+    "audit": {
+      "enabled": true,
+      "logLevel": "info",
+      "retentionDays": 90
+    },
+    "security": {
+      "requireAdminApproval": true,
+      "selfRoleAssignment": false,
+      "roleHierarchy": true
+    }
+  },
+  "database": {
+    "tables": [
+      "uam_md_roles",
+      "uam_md_permissions",
+      "uam_md_role_permissions",
+      "uam_tx_user_roles",
+      "uam_tx_audit_log"
+    ],
+    "migrations": [
+      "20251129_create_uam_tables.sql"
+    ]
+  },
+  "routes": {
+    "prefix": "/api/user-access",
+    "middleware": ["authenticate"],
+    "endpoints": {
+      "roles": {
+        "GET": "List all roles with pagination",
+        "POST": "Create new role (requires admin permission)"
+      },
+      "roles/:id": {
+        "GET": "Get role details",
+        "PUT": "Update role (requires admin or owner permission)",
+        "DELETE": "Delete role (requires admin permission)"
+      },
+      "roles/:id/permissions": {
+        "GET": "Get role permissions",
+        "POST": "Add permission to role (requires admin permission)"
+      },
+      "roles/:id/permissions/:permissionId": {
+        "DELETE": "Remove permission from role (requires admin permission)"
+      },
+      "permissions": {
+        "GET": "List all available permissions",
+        "POST": "Create new permission (requires admin permission)"
+      },
+      "users/:id/roles": {
+        "GET": "Get user roles",
+        "POST": "Assign role to user (requires admin permission)",
+        "DELETE": "Remove role from user (requires admin permission)"
+      },
+      "users/:id/permissions": {
+        "GET": "Get user effective permissions (consolidated from all roles)"
+      },
+      "audit": {
+        "GET": "Get audit log (requires admin permission)"
+      }
+    }
+  },
+  "hooks": {
+    "onInstall": "setupDefaultRoles",
+    "onUninstall": "cleanupUserData",
+    "onEnable": "enableAuditLogging",
+    "onDisable": "disableAuditLogging",
+    "onUserLogin": "refreshUserPermissions",
+    "onUserLogout": "clearPermissionCache"
+  }
+}

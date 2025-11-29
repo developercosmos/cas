@@ -1,0 +1,468 @@
+/**
+ * User Access Management Component
+ * Simplified version for quick build
+ * Follows CAS Constitution and Plugin Development Standards
+ */
+
+import React, { useState, useEffect } from 'react';
+import { Button, Input } from '../base-ui/styled-components';
+import styles from './UserAccessManager.module.css';
+
+interface Role {
+  id: string;
+  name: string;
+  description: string;
+  isSystem: boolean;
+  level: number;
+  isActive: boolean;
+  userCount?: number;
+  createdAt: string;
+  updatedAt: string;
+}
+
+const UserAccessManager: React.FC = () => {
+  // State management
+  const [activeTab, setActiveTab] = useState<'roles' | 'permissions' | 'users' | 'audit'>('roles');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Roles state
+  const [roles, setRoles] = useState<Role[]>([]);
+  const [rolePagination, setRolePagination] = useState({
+    page: 1,
+    limit: 20,
+    total: 0,
+    totalPages: 0,
+    hasNext: false,
+    hasPrev: false
+  });
+  const [roleSearch, setRoleSearch] = useState('');
+  const [showActiveRolesOnly, setShowActiveRolesOnly] = useState(true);
+  const [showRoleForm, setShowRoleForm] = useState(false);
+  const [editingRole, setEditingRole] = useState<Role | null>(null);
+
+  // Form states
+  const [roleForm, setRoleForm] = useState({
+    name: '',
+    description: '',
+    level: 10,
+    isActive: true,
+    permissions: [] as string[]
+  });
+
+  // API helper functions
+  const getApiBaseUrl = () => {
+    if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
+      return 'http://localhost:4000';
+    }
+    return `${window.location.protocol}//${window.location.hostname}:4000`;
+  };
+
+  const getAuthToken = () => {
+    const token = localStorage.getItem('auth_token') || sessionStorage.getItem('auth_token');
+    return token;
+  };
+
+  const apiCall = async (endpoint: string, options: RequestInit = {}) => {
+    const token = getAuthToken();
+    if (!token) {
+      throw new Error('Authentication required');
+    }
+
+    const response = await fetch(`${getApiBaseUrl()}${endpoint}`, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
+        ...options.headers
+      },
+      ...options
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+    }
+
+    return response.json();
+  };
+
+  // Load roles
+  const loadRoles = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const params = new URLSearchParams({
+        page: rolePagination.page.toString(),
+        limit: rolePagination.limit.toString(),
+        search: roleSearch,
+        isActive: showActiveRolesOnly.toString()
+      });
+
+      const response = await apiCall(`/api/user-access/roles?${params}`);
+      
+      if (response.success) {
+        setRoles(response.data);
+        setRolePagination(response.pagination);
+      } else {
+        throw new Error(response.error || 'Failed to load roles');
+      }
+    } catch (err) {
+      console.error('Error loading roles:', err);
+      setError(err instanceof Error ? err.message : 'Failed to load roles');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Create or update role
+  const saveRole = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const method = editingRole ? 'PUT' : 'POST';
+      const endpoint = editingRole 
+        ? `/api/user-access/roles/${editingRole.id}`
+        : '/api/user-access/roles';
+
+      const response = await apiCall(endpoint, {
+        method,
+        body: JSON.stringify({
+          ...roleForm,
+          permissions: roleForm.permissions
+        })
+      });
+
+      if (response.success) {
+        await loadRoles();
+        setShowRoleForm(false);
+        setEditingRole(null);
+        setRoleForm({
+          name: '',
+          description: '',
+          level: 10,
+          isActive: true,
+          permissions: []
+        });
+      } else {
+        throw new Error(response.error || 'Failed to save role');
+      }
+    } catch (err) {
+      console.error('Error saving role:', err);
+      setError(err instanceof Error ? err.message : 'Failed to save role');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Delete role
+  const deleteRole = async (role: Role) => {
+    if (role.isSystem) {
+      setError('Cannot delete system roles');
+      return;
+    }
+
+    if (!confirm(`Are you sure you want to delete role "${role.name}"?`)) {
+      return;
+    }
+
+    try {
+      setLoading(true);
+      setError(null);
+
+      const response = await apiCall(`/api/user-access/roles/${role.id}`, {
+        method: 'DELETE'
+      });
+
+      if (response.success) {
+        await loadRoles();
+      } else {
+        throw new Error(response.error || 'Failed to delete role');
+      }
+    } catch (err) {
+      console.error('Error deleting role:', err);
+      setError(err instanceof Error ? err.message : 'Failed to delete role');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Effects
+  useEffect(() => {
+    if (activeTab === 'roles') {
+      loadRoles();
+    }
+  }, [activeTab]);
+
+  useEffect(() => {
+    if (activeTab === 'roles') {
+      loadRoles();
+    }
+  }, [rolePagination.page, roleSearch, showActiveRolesOnly]);
+
+  return (
+    <div className={styles.container}>
+      {/* Header */}
+      <div className={styles.header}>
+        <h2>🔐 User Access Management</h2>
+        <Button variant="ghost" onClick={() => window.history.back()}>
+          ×
+        </Button>
+      </div>
+
+      {/* Error Display */}
+      {error && (
+        <div className={styles.error}>
+          {error}
+          <Button variant="ghost" onClick={() => setError(null)}>
+            ×
+          </Button>
+        </div>
+      )}
+
+      {/* Tab Navigation */}
+      <div className={styles.tabs}>
+        <button
+          className={`${styles.tab} ${activeTab === 'roles' ? styles.active : ''}`}
+          onClick={() => setActiveTab('roles')}
+        >
+          🎭 Roles
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'permissions' ? styles.active : ''}`}
+          onClick={() => setActiveTab('permissions')}
+        >
+          📋 Permissions
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'users' ? styles.active : ''}`}
+          onClick={() => setActiveTab('users')}
+        >
+          👥 Users
+        </button>
+        <button
+          className={`${styles.tab} ${activeTab === 'audit' ? styles.active : ''}`}
+          onClick={() => setActiveTab('audit')}
+        >
+          📊 Audit Log
+        </button>
+      </div>
+
+      {/* Roles Tab */}
+      {activeTab === 'roles' && (
+        <div className={styles.tabContent}>
+          {/* Controls */}
+          <div className={styles.controls}>
+            <div className={styles.searchControls}>
+              <Input
+                placeholder="Search roles..."
+                value={roleSearch}
+                onChange={(e) => setRoleSearch(e.target.value)}
+                fullWidth
+              />
+              <label className={styles.checkbox}>
+                <input
+                  type="checkbox"
+                  checked={showActiveRolesOnly}
+                  onChange={(e) => setShowActiveRolesOnly(e.target.checked)}
+                />
+                Active only
+              </label>
+            </div>
+            <Button
+              variant="primary"
+              onClick={() => setShowRoleForm(true)}
+            >
+              + Create Role
+            </Button>
+          </div>
+
+          {/* Roles List */}
+          <div className={styles.rolesList}>
+            {roles.map((role) => (
+              <div key={role.id} className={styles.roleCard}>
+                <div className={styles.roleHeader}>
+                  <h3>{role.name}</h3>
+                  <div className={styles.roleBadges}>
+                    {role.isSystem && (
+                      <span className={styles.systemBadge}>System</span>
+                    )}
+                    {role.isActive ? (
+                      <span className={styles.activeBadge}>Active</span>
+                    ) : (
+                      <span className={styles.inactiveBadge}>Inactive</span>
+                    )}
+                  </div>
+                </div>
+                <p>{role.description}</p>
+                <div className={styles.roleMeta}>
+                  <span>Level: {role.level}</span>
+                  <span>Users: {role.userCount || 0}</span>
+                  <span>Created: {new Date(role.createdAt).toLocaleDateString()}</span>
+                </div>
+                <div className={styles.roleActions}>
+                  <Button
+                    size="sm"
+                    variant="secondary"
+                    onClick={() => {
+                      setEditingRole(role);
+                      setRoleForm({
+                        name: role.name,
+                        description: role.description,
+                        level: role.level,
+                        isActive: role.isActive,
+                        permissions: []
+                      });
+                      setShowRoleForm(true);
+                    }}
+                  >
+                    Edit
+                  </Button>
+                  {!role.isSystem && (
+                    <Button
+                      size="sm"
+                      variant="danger"
+                      onClick={() => deleteRole(role)}
+                      disabled={loading}
+                    >
+                      Delete
+                    </Button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* Pagination */}
+          {rolePagination.totalPages > 1 && (
+            <div className={styles.pagination}>
+              <Button
+                variant="secondary"
+                onClick={() => setRolePagination(prev => ({ ...prev, page: Math.max(1, prev.page - 1) }))}
+                disabled={!rolePagination.hasPrev || loading}
+              >
+                Previous
+              </Button>
+              <span className={styles.pageInfo}>
+                Page {rolePagination.page} of {rolePagination.totalPages}
+              </span>
+              <Button
+                variant="secondary"
+                onClick={() => setRolePagination(prev => ({ ...prev, page: Math.min(prev.page + 1, prev.totalPages) }))}
+                disabled={!rolePagination.hasNext || loading}
+              >
+                Next
+              </Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Placeholder for other tabs */}
+      {activeTab === 'permissions' && (
+        <div className={styles.tabContent}>
+          <div className={styles.comingSoon}>
+            <h3>📋 Permission Management</h3>
+            <p>Advanced permission management coming soon...</p>
+            <p>This tab will allow administrators to create and manage fine-grained permissions for the system.</p>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'users' && (
+        <div className={styles.tabContent}>
+          <div className={styles.comingSoon}>
+            <h3>👥 User Access Management</h3>
+            <p>User role assignment and management coming soon...</p>
+            <p>This tab will allow administrators to assign roles to users and manage their access rights.</p>
+          </div>
+        </div>
+      )}
+
+      {activeTab === 'audit' && (
+        <div className={styles.tabContent}>
+          <div className={styles.comingSoon}>
+            <h3>📊 Audit Log</h3>
+            <p>Audit log and reporting coming soon...</p>
+            <p>This tab will show detailed audit trail of all access management changes and user activities.</p>
+          </div>
+        </div>
+      )}
+
+      {/* Role Form Modal */}
+      {showRoleForm && (
+        <div className={styles.modalOverlay}>
+          <div className={styles.modalContent}>
+            <div className={styles.modalHeader}>
+              <h3>{editingRole ? 'Edit Role' : 'Create New Role'}</h3>
+              <Button variant="ghost" onClick={() => setShowRoleForm(false)}>
+                ×
+              </Button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.formGroup}>
+                <label>Role Name *</label>
+                <Input
+                  value={roleForm.name}
+                  onChange={(e) => setRoleForm({ ...roleForm, name: e.target.value })}
+                  placeholder="e.g., Manager"
+                  fullWidth
+                  disabled={editingRole?.isSystem}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Description</label>
+                <textarea
+                  value={roleForm.description}
+                  onChange={(e) => setRoleForm({ ...roleForm, description: e.target.value })}
+                  placeholder="Role description and responsibilities"
+                  style={{ width: '100%', minHeight: '80px', padding: '8px', borderRadius: '6px', border: '1px solid var(--border-color)' }}
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label>Access Level</label>
+                <Input
+                  type="number"
+                  value={roleForm.level}
+                  onChange={(e) => setRoleForm({ ...roleForm, level: parseInt(e.target.value) || 0 })}
+                  min="0"
+                  max="100"
+                  fullWidth
+                />
+              </div>
+              <div className={styles.formGroup}>
+                <label className={styles.checkbox}>
+                  <input
+                    type="checkbox"
+                    checked={roleForm.isActive}
+                    onChange={(e) => setRoleForm({ ...roleForm, isActive: e.target.checked })}
+                  />
+                  Active
+                </label>
+              </div>
+            </div>
+            <div className={styles.modalFooter}>
+              <Button
+                variant="secondary"
+                onClick={() => setShowRoleForm(false)}
+                disabled={loading}
+              >
+                Cancel
+              </Button>
+              <Button
+                variant="primary"
+                onClick={saveRole}
+                disabled={loading || !roleForm.name.trim()}
+              >
+                {loading ? 'Saving...' : (editingRole ? 'Update' : 'Create')}
+              </Button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+export default UserAccessManager;

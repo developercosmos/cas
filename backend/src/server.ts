@@ -116,6 +116,19 @@ async function initializeApp() {
       console.error('❌ Failed to register RAG plugin routes:', error);
     }
   })();
+
+  // Constitution: Load User Access Management plugin routes dynamically
+  (async () => {
+    try {
+      const userAccessRoutes = await import('./api/user-access/routes.js');
+      if (userAccessRoutes.default) {
+        app.use('/api/user-access', userAccessRoutes.default);
+        console.log('🔐 User Access Management plugin routes registered: /api/user-access');
+      }
+    } catch (error) {
+      console.error('❌ Failed to register User Access Management plugin routes:', error);
+    }
+  })();
     
     // Error handling
     app.use((err: any, req: express.Request, res: express.Response, next: express.NextFunction) => {

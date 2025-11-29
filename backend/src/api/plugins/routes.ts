@@ -108,6 +108,41 @@ router.get('/', async (req, res) => {
             chat: '/api/plugins/rag/chat'
           }
         };
+      } else if (config.pluginid === 'user-access-management') {
+        return {
+          ...basePlugin,
+          permissions: [
+            'user_access.admin',
+            'user_access.roles.create',
+            'user_access.roles.edit',
+            'user_access.roles.delete',
+            'user_access.roles.assign',
+            'user_access.users.manage',
+            'user_access.permissions.create',
+            'user_access.permissions.view',
+            'user_access.audit.view'
+          ],
+          isSystem: true,
+          icon: '🔐',
+          capabilities: {
+            rbac: true,
+            roleManagement: true,
+            userManagement: true,
+            permissionManagement: true,
+            auditLogging: true,
+            multiRoleAssignment: true,
+            permissionHierarchy: true,
+            userAccessReporting: true,
+            enterpriseCompliance: true
+          },
+          routes: {
+            manage: '/api/user-access',
+            roles: '/api/user-access/roles',
+            permissions: '/api/user-access/permissions',
+            users: '/api/user-access/users',
+            audit: '/api/user-access/audit'
+          }
+        };
       }
 
       return basePlugin;
@@ -135,6 +170,10 @@ try {
 } catch (error) {
   console.error('❌ Failed to register LDAP plugin routes:', error);
 }
+
+// Constitution: Load User Access Management plugin routes
+// Note: User Access Management routes will be registered separately
+console.log('🔐 User Access Management plugin available: /api/user-access');
 
 router.get('/:id', (req, res) => {
   const plugin = pluginRegistry.get(req.params.id);
