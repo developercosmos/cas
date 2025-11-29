@@ -88,7 +88,6 @@ class MenuNavigationPlugin implements Plugin {
     this.navigationService = new NavigationService(services.database);
 
     await this.createDatabaseSchema(services.database);
-    await this.registerPluginInDatabase(services.database);
 
     this.router = createRoutes(
       this.navigationService,
