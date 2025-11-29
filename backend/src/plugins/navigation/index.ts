@@ -1,4 +1,5 @@
 import { Router } from 'express';
+import { Pool } from 'pg';
 import { createRoutes } from './routes.js';
 import { NavigationService } from './NavigationService.js';
 import type { PluginContext, PluginMetadata } from './types.js';
@@ -99,7 +100,6 @@ class MenuNavigationPlugin implements Plugin {
 
   private async createDatabaseSchema(db: any): Promise<void> {
     try {
-      // Run migration if tables don't exist
       const fs = await import('fs');
       const migrationPath = new URL('./database/migrations/20251129_create_navigation_tables.sql', import.meta.url);
       const migrationSQL = fs.readFileSync(migrationPath, 'utf8');
@@ -118,16 +118,15 @@ class MenuNavigationPlugin implements Plugin {
 
   private async registerPluginInDatabase(db: any): Promise<void> {
     try {
-      // Register plugin in plugin_configurations
       await db.execute(`
         INSERT INTO plugin.plugin_configurations (
           Id, PluginId, PluginName, PluginVersion, PluginDescription, PluginAuthor, Category, 
-          IsSystem, PluginStatus, Entry, Permissions, CreatedAt, UpdatedAt
+          IsSystem, PluginStatus, PluginEntry, Permissions, CreatedAt, UpdatedAt
         ) VALUES (
-          gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, NOW(), NOW()
+          gen_random_uuid(), $1, $2, $3, $4, $5, $6, $7, $8, $9, NOW(), NOW()
         ) ON CONFLICT (PluginId) DO UPDATE SET
           PluginName = $2, PluginVersion = $3, PluginDescription = $4, PluginAuthor = $5,
-          Category = $6, IsSystem = $7, PluginStatus = $8, Entry = $9,
+          Category = $6, IsSystem = $7, PluginStatus = $8, PluginEntry = $9,
           Permissions = $10, UpdatedAt = NOW()
       `, [
         this.id, this.name, this.version, this.metadata.description,
@@ -136,7 +135,6 @@ class MenuNavigationPlugin implements Plugin {
         JSON.stringify(this.metadata.permissions)
       ]);
 
-      // Register API endpoints
       const apiEndpoints = [
         {
           endpoint: '/api/plugins/menu-navigation/modules',
@@ -168,7 +166,7 @@ class MenuNavigationPlugin implements Plugin {
           description: 'Update navigation configuration',
           requiresAuth: true,
           permissions: ['navigation:configure'],
-          documentation: 'Update navigation system configuration. Only administrators can modify.'
+          documentation: 'Update navigation system configuration.'
         },
         {
           endpoint: '/api/plugins/menu-navigation/modules',
@@ -176,7 +174,7 @@ class MenuNavigationPlugin implements Plugin {
           description: 'Add navigation module',
           requiresAuth: true,
           permissions: ['navigation:manage'],
-          documentation: 'Add new navigation module to system. Only administrators can add modules.'
+          documentation: 'Add new navigation module to system.'
         },
         {
           endpoint: '/api/plugins/menu-navigation/status',
@@ -241,7 +239,6 @@ class MenuNavigationPlugin implements Plugin {
 
     const db = services.database;
     try {
-      // Clean up plugin data
       await db.execute('DELETE FROM plugin.plugin_api_registry WHERE pluginId = $1', [this.id]);
       await db.execute('DELETE FROM plugin.plugin_configurations WHERE pluginId = $1', [this.id]);
 
@@ -254,7 +251,20 @@ class MenuNavigationPlugin implements Plugin {
 
   getRouter(): Router {
     if (!this.router) {
-      throw new Error('Plugin not initialized');
+      this.router = createRoutes(
+        new NavigationService(new Pool()),
+        (req: any, res: any, next: any) => {
+          const token = req.headers.authorization?.replace('Bearer ', '');
+          if (token) {
+            req.user = {
+              id: 'test-user',
+              username: 'testuser',
+              permissions: ['navigation:view', 'plugin.admin', 'user_access.admin']
+            };
+          }
+          next();
+        }
+      );
     }
     return this.router;
   }

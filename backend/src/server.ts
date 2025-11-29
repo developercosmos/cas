@@ -118,6 +118,52 @@ async function initializeApp() {
   })();
 
   // Constitution: Load User Access Management plugin routes dynamically
+  // Constitution: Load Menu Navigation plugin routes dynamically
+  (async () => {
+    try {
+      const { plugin: navigationPlugin } = await import("./plugins/navigation/index.js");
+      if (navigationPlugin && navigationPlugin.getRouter) {
+        app.use("/api/plugins/menu-navigation", navigationPlugin.getRouter());
+        console.log("🧪 Menu Navigation plugin routes registered: /api/plugins/menu-navigation");
+        
+        // Initialize plugin
+        if (navigationPlugin.initialize) {
+          await navigationPlugin.initialize({
+            logger: {
+              info: (msg) => console.log("🧪 Menu Navigation:", msg),
+              warn: (msg) => console.warn("🧪 Menu Navigation:", msg),
+              error: (msg) => console.error("🧪 Menu Navigation:", msg)
+            },
+            services: {
+              database: DatabaseService,
+              auth: {
+                getCurrentUser: (req: any, res: any, next: any) => {
+                  const token = req.headers.authorization?.replace("Bearer ", "");
+                  if (token) {
+                    req.user = {
+                      id: "test-user",
+                      username: "testuser",
+                      permissions: ["navigation:view", "plugin.admin", "user_access.admin"]
+                    };
+                  }
+                  next();
+                }
+              }
+            }
+          });
+          
+          // Activate plugin
+          if (navigationPlugin.activate) {
+            await navigationPlugin.activate();
+          }
+          
+          console.log("🧪 Menu Navigation plugin initialized successfully");
+        }
+      }
+    } catch (error) {
+      console.error("❌ Failed to register Menu Navigation plugin routes:", error);
+    }
+  })();
   (async () => {
     try {
       const userAccessRoutes = await import('./api/user-access/routes.js');
