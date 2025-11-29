@@ -244,7 +244,46 @@ CREATE TABLE IF NOT EXISTS plugin.{plugin}_md_config (
 
 ### XI. Plugin API Design Standards
 
-Plugin APIs MUST follow RESTful conventions and CAS architectural principles.
+Plugin APIs MUST follow RESTful conventions and CAS architectural principles, and MUST register with central API registry.
+
+#### API Registration
+All plugins MUST register their API endpoints in central `plugin.plugin_api_registry` table for inter-plugin communication and discoverability:
+
+**Required Registration Entries**:
+```sql
+INSERT INTO plugin.plugin_api_registry (
+    id,
+    pluginId,
+    apiEndpoint,
+    httpMethod,
+    description,
+    requiresAuth,
+    requiredPermissions,
+    documentation,
+    isActive,
+    createdAt,
+    updatedAt
+) VALUES (
+    gen_random_uuid(),
+    (SELECT Id FROM plugin.plugin_configurations WHERE PluginId = 'your-plugin-id'),
+    '/api/plugins/your-plugin-id/status',
+    'GET',
+    'Plugin health check and statistics',
+    true,
+    ['plugin.view'],
+    'Returns plugin status and basic statistics',
+    true,
+    NOW(),
+    NOW()
+);
+```
+
+**Registration Requirements**:
+- All public endpoints MUST be registered with HTTP method and path
+- Registration MUST include required permissions for access control
+- Registration MUST include clear description and documentation
+- API registry MUST be updated when endpoints change
+- Deprecated endpoints MUST be marked as inactive
 
 #### Authentication & Authorization
 - All plugin endpoints MUST use the `authenticate` middleware
@@ -282,6 +321,12 @@ Plugin APIs MUST follow RESTful conventions and CAS architectural principles.
 - Deprecated endpoints MUST remain functional for at least one MAJOR version
 - Deprecation notices MUST be documented and logged
 
+#### Inter-Plugin Communication
+- Plugins MAY call other plugins' registered APIs via `PluginCommunicationService`
+- API calls MUST be logged in `plugin.plugin_communication_audit` table
+- Permission checks MUST be enforced for cross-plugin API access
+- Failed API calls MUST be handled gracefully with fallback behavior
+
 ### XII. Plugin Testing Requirements
 
 All plugins MUST include comprehensive testing as per TDD principles.
@@ -314,9 +359,72 @@ Plugins MUST test:
 
 ### XIII. Plugin Documentation Standards
 
-All plugins MUST provide comprehensive documentation following established patterns.
+All plugins MUST provide comprehensive documentation following established patterns and MUST register documentation with the central documentation system.
 
-#### Required Documentation Files
+#### Database Documentation Registration
+All plugins MUST register their documentation in the central `plugin.plugin_md_documentation` table during installation:
+
+**Required Documentation Records**:
+1. **README Documentation** (REQUIRED)
+   - `documentType`: 'readme'
+   - `title`: '{Plugin Name} Plugin - README'
+   - Content: Complete plugin overview and usage guide
+   - `isCurrent`: true (primary documentation)
+   - `orderIndex`: 0 (displayed first)
+
+2. **API Documentation** (RECOMMENDED)
+   - `documentType`: 'api_documentation' or 'api_docs'
+   - `title`: '{Plugin Name} API Documentation'
+   - Content: Complete API reference with examples
+   - `isCurrent`: true
+
+3. **Configuration Documentation** (OPTIONAL if configurable)
+   - `documentType`: 'configuration' or 'config'
+   - `title`: '{Plugin Name} Configuration Guide'
+   - Content: Configuration options and examples
+   - `isCurrent`: true
+
+**Database Schema Requirements**:
+```sql
+INSERT INTO plugin.plugin_md_documentation (
+    id,
+    pluginId,
+    title,
+    content,
+    contentFormat,
+    documentType,
+    language,
+    version,
+    isCurrent,
+    orderIndex,
+    metadata,
+    createdAt,
+    updatedAt
+) VALUES (
+    gen_random_uuid(),  -- UUID for primary key
+    (SELECT Id FROM plugin.plugin_configurations WHERE PluginId = 'your-plugin-id'),
+    'Your Plugin Name Plugin - README',
+    '# Plugin Documentation Content...',
+    'markdown',  -- or 'html', 'json'
+    'readme',    -- document type identifier
+    'en',         -- language code
+    '1.0.0',     -- plugin version
+    true,          -- is current version
+    0,             -- display order
+    '{}',          -- metadata JSON
+    NOW(),         -- created timestamp
+    NOW()          -- updated timestamp
+);
+```
+
+#### Documentation Access Endpoints
+Plugins MUST make documentation available through the standardized central documentation system:
+- **Primary Access**: `GET /api/plugins/{plugin-id}/docs` - All documentation for plugin
+- **By Type**: `GET /api/plugins/{plugin-id}/docs/{type}` - Specific documentation type
+- **Search**: `GET /api/plugins/{plugin-id}/docs/search?q=query` - Search within plugin docs
+- **Summary**: `GET /api/plugins/docs/summary` - All plugins documentation summary
+
+#### Required Documentation Files (Development)
 1. **{PLUGIN}_PLUGIN_DOCUMENTATION.md** (Primary guide)
    - Overview and architecture
    - Installation and setup instructions
@@ -352,6 +460,7 @@ All plugins MUST provide comprehensive documentation following established patte
 - Examples MUST be copy-paste ready and tested
 - Code samples MUST use proper syntax highlighting
 - Screenshots MUST be current and high-quality
+- Documentation MUST be registered in central documentation system for proper loading
 
 ### XIV. Plugin Configuration Management
 
@@ -564,4 +673,4 @@ This constitution supersedes all other development practices and documentation. 
 
 All pull requests and code reviews MUST verify compliance with these constitutional principles. Any complexity or deviation from these principles MUST be explicitly justified with documented business or technical requirements. Use spec.md files for runtime development guidance aligned with these principles.
 
-**Version**: 1.3.0 | **Ratified**: 2025-11-19 | **Last Amended**: 2025-11-28
+**Version**: 1.4.0 | **Ratified**: 2025-11-19 | **Last Amended**: 2025-11-29

@@ -10,7 +10,7 @@ This directory contains all system plugins for the CAS platform.
 
 ## Plugin Structure
 
-Each plugin follows the standardized structure:
+Each plugin follows standardized structure:
 ```
 plugin-name/
 ├── package.json
@@ -27,4 +27,20 @@ plugin-name/
 
 ## Development Guidelines
 
-Follow the constitution.md and PORTABLE_PLUGIN_SYSTEM_IMPLEMENTATION_GUIDE.md for plugin development standards.
+Follow constitution.md and PLUGIN_DEVELOPMENT_GUIDE.md for comprehensive plugin development standards, including:
+- Architecture requirements and best practices
+- Database integration and naming conventions  
+- API development and registration requirements
+- Documentation standards and database registration
+- Frontend integration guidelines
+- Testing requirements and deployment procedures
+
+### Quick Reference
+- **Constitution**: Core architectural principles and requirements
+- **Development Guide**: Step-by-step implementation guide
+- **API Registration**: Required database registration patterns
+- **Documentation Standards**: Central documentation system requirements
+
+**Additional Resources**:
+- PORTABLE_PLUGIN_SYSTEM_IMPLEMENTATION_GUIDE.md: Package externalization strategy
+- constitution.md: Constitutional requirements and standards

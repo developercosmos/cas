@@ -422,53 +422,8 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
 
       let docs;
       
-      // Special handling for User Access Management plugin
-      if (plugin.id === 'user-access-management') {
-        // Try to load documentation from plugin's own endpoint
-        // This may fail if API proxy is not configured (e.g., in preview mode)
-        try {
-          const response = await fetch('/api/user-access/docs', {
-            headers: {
-              'Authorization': `Bearer ${getAuthToken()}`,
-              'Content-Type': 'application/json'
-            }
-          });
-          
-          // Check if response is actually JSON (not HTML error page)
-          const contentType = response.headers.get('content-type');
-          if (!contentType || !contentType.includes('application/json')) {
-            throw new Error('API returned non-JSON response - likely proxy not configured');
-          }
-          
-          if (!response.ok) {
-            throw new Error('Failed to load plugin documentation');
-          }
-          
-          const result = await response.json();
-          if (result.success) {
-            docs = [
-              {
-                id: 'user-access-management-docs',
-                pluginId: plugin.id,
-                title: result.data.title,
-                content: result.data.file ? result.data.file : JSON.stringify(result.data, null, 2),
-                documentType: 'API_DOCUMENTATION',
-                language: 'en',
-                version: result.data.version
-              }
-            ];
-          } else {
-            throw new Error(result.error || 'Failed to load documentation');
-          }
-        } catch (apiError) {
-          // If API call fails, immediately use fallback instead of trying central docs
-          console.warn('User Access Management API not available, using fallback:', apiError);
-          throw apiError; // Re-throw to trigger the catch block with fallback
-        }
-      } else {
-        // Load from central documentation service
-        docs = await PluginDocumentationService.getByPluginId(plugin.id, 'en', false);
-      }
+      // Load from central documentation service for all plugins
+      docs = await PluginDocumentationService.getByPluginId(plugin.id, 'en', false);
 
       if (docs.length > 0) {
         // Group documentation by type for easier display
@@ -492,84 +447,7 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
       }
     } catch (error) {
       console.error('Failed to load plugin documentation:', error);
-      
-      // Special handling for User Access Management plugin
-      if (plugin.id === 'user-access-management') {
-        // Provide fallback documentation (emoji-free to avoid JSON parsing issues)
-        const fallbackDoc = {
-          readme: {  // Changed from 'README' to 'readme' to match other plugins
-            id: 'user-access-management-fallback',
-            pluginId: plugin.id,
-            title: 'User Access Management Documentation',
-            contentFormat: 'markdown',  // Moved up here for consistency
-            content: `# ${plugin.name}
-
-${plugin.description}
-
-**Version:** ${plugin.version}
-
-## Access Documentation
-
-For complete API documentation and user guides:
-
-1. **Plugin Manager**: Documentation is available via API endpoints
-2. **API Endpoints**: All endpoints are documented at /api/user-access/docs
-3. **Configuration**: Check plugin settings in Plugin Manager
-
-## API Reference
-
-The plugin provides comprehensive RESTful APIs:
-
-**Base URL**: /api/user-access
-
-**Authentication**: JWT Bearer token required
-
-**Key Endpoints**:
-- GET /api/user-access/health - Health check
-- GET /api/user-access/config - Plugin configuration  
-- GET /api/user-access/docs - Complete API documentation
-- GET /api/user-access/roles - Role management
-- GET /api/user-access/permissions - Permission management
-- GET /api/user-access/users/:id/roles - User role assignments
-- GET /api/user-access/audit - Audit log access
-
-## Security Features
-
-- JWT Authentication required for all endpoints
-- Role-Based Access Control (RBAC)
-- Granular Permission Validation
-- Comprehensive Audit Logging
-- Input Sanitization and Validation
-
-## Access Methods
-
-1. **Plugin Manager**: Find "User Access Management" in System plugins, click "Manage Access"
-2. **Direct Access**: Navigate to /user-access-management (requires authentication)
-3. **API Direct**: Use the /api/user-access endpoints with proper authentication
-
-## Quick Start
-
-1. Enable the plugin in Plugin Manager
-2. Configure roles and permissions via the API or UI
-3. Assign users to roles
-4. Monitor access via audit logs
-
----
-
-**Production-ready enterprise access control for CAS platform**`,
-            documentType: "README",
-            language: "en",
-            version: plugin.version || "1.0.0"
-          }
-        };
-        
-        console.log('Setting fallback documentation:', fallbackDoc);
-        setDocumentationContent(fallbackDoc);
-        setDocumentationError("Central documentation unavailable. For complete documentation, use the API endpoints directly at /api/user-access/docs");
-      } else {
-        // For other plugins, just show generic error
-        setDocumentationError(error instanceof Error ? error.message : 'Failed to load documentation');
-      }
+      setDocumentationError(error instanceof Error ? error.message : 'Failed to load documentation');
     } finally {
       setDocumentationLoading(false);
     }
