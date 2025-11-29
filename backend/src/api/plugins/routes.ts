@@ -1,8 +1,11 @@
 import { Router } from 'express';
 import { authenticate, AuthRequest } from '../../middleware/auth.js';
+import { requireSystemPluginAdmin } from '../../middleware/admin.js';
 import { PluginService } from '../../services/PluginService.js';
 import { PluginDocumentationService } from '../../services/PluginDocumentationService.js';
 import { DatabaseService } from '../../services/DatabaseService.js';
+import { RbacPermissionService } from '../../services/RbacPermissionService.js';
+import { PluginCommunicationService } from '../../services/PluginCommunicationService.js';
 import archiver from 'archiver';
 import AdmZip from 'adm-zip';
 import * as fs from 'fs';
@@ -15,6 +18,8 @@ const __dirname = path.dirname(__filename);
 
 const router = Router();
 const pluginService = new PluginService();
+const rbacService = new RbacPermissionService();
+const communicationService = new PluginCommunicationService();
 
 interface PluginManifest {
   id: string;
@@ -43,7 +48,7 @@ router.get('/', async (req, res) => {
 
     // Load plugin configurations from database to get current status
     const pluginConfigs = await DatabaseService.query<any>(
-      'SELECT pluginid, pluginname, pluginversion, plugindescription, pluginauthor, pluginstatus FROM plugin.plugin_configurations ORDER BY pluginid'
+      'SELECT pluginid, pluginname, pluginversion, plugindescription, pluginauthor, pluginstatus, Category, IsSystem FROM plugin.plugin_configurations ORDER BY pluginid'
     );
 
     // Build plugins array from database
@@ -54,7 +59,9 @@ router.get('/', async (req, res) => {
         version: config.pluginversion,
         description: config.plugindescription,
         author: config.pluginauthor,
-        status: config.pluginstatus || 'disabled'
+        status: config.pluginstatus || 'disabled',
+        category: config.category || 'application',
+        isSystem: config.issystem || false
       };
 
       // Add plugin-specific metadata
@@ -187,7 +194,7 @@ router.get('/:id/status', async (req, res) => {
 });
 
 // Enable/disable plugin endpoints - saves to database
-router.post('/:id/enable', async (req, res) => {
+router.post('/:id/enable', authenticate, requireSystemPluginAdmin, async (req, res) => {
   const pluginId = req.params.id;
   
   try {
@@ -226,7 +233,7 @@ router.post('/:id/enable', async (req, res) => {
   }
 });
 
-router.post('/:id/disable', async (req, res) => {
+router.post('/:id/disable', authenticate, requireSystemPluginAdmin, async (req, res) => {
   const pluginId = req.params.id;
   
   try {
@@ -1618,6 +1625,304 @@ router.get('/docs/summary', authenticate, async (req: AuthRequest, res) => {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get documentation summary'
+    });
+  }
+});
+
+// RBAC Management endpoints
+
+// Get available permissions for a plugin
+router.get('/:id/permissions', authenticate, async (req: AuthRequest, res) => {
+  const { id: pluginId } = req.params;
+  
+  try {
+    const permissions = await rbacService.getAvailablePermissions(pluginId);
+    
+    res.json({
+      success: true,
+      data: permissions
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get permissions'
+    });
+  }
+});
+
+// Get user permissions for a plugin
+router.get('/:id/user-permissions', authenticate, async (req: AuthRequest, res) => {
+  const { id: pluginId } = req.params;
+  const { userId } = req.query;
+  
+  try {
+    // If userId not provided, use current user's permissions
+    const targetUserId = userId ? String(userId) : req.user?.id;
+    
+    if (!targetUserId) {
+      return res.status(400).json({
+        success: false,
+        error: 'User ID required'
+      });
+    }
+
+    const permissions = await rbacService.getUserPermissions(pluginId, targetUserId);
+    
+    res.json({
+      success: true,
+      data: permissions
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get user permissions'
+    });
+  }
+});
+
+// Grant permission to user
+router.post('/:id/grant-permission', authenticate, requireSystemPluginAdmin, async (req: AuthRequest, res) => {
+  const { id: pluginId } = req.params;
+  const { userId, permissionName } = req.body;
+  
+  if (!userId || !permissionName) {
+    return res.status(400).json({
+      success: false,
+      error: 'User ID and permission name required'
+    });
+  }
+
+  try {
+    await rbacService.grantPluginPermission(pluginId, userId, permissionName, req.user?.id);
+    
+    res.json({
+      success: true,
+      message: `Permission ${permissionName} granted to user ${userId}`
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to grant permission'
+    });
+  }
+});
+
+// Revoke permission from user
+router.post('/:id/revoke-permission', authenticate, requireSystemPluginAdmin, async (req: AuthRequest, res) => {
+  const { id: pluginId } = req.params;
+  const { userId, permissionName } = req.body;
+  
+  if (!userId || !permissionName) {
+    return res.status(400).json({
+      success: false,
+      error: 'User ID and permission name required'
+    });
+  }
+
+  try {
+    await rbacService.revokePluginPermission(pluginId, userId, permissionName);
+    
+    res.json({
+      success: true,
+      message: `Permission ${permissionName} revoked from user ${userId}`
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to revoke permission'
+    });
+  }
+});
+
+// API Registry endpoints
+
+// Get available APIs for a plugin
+router.get('/:id/apis', authenticate, async (req: AuthRequest, res) => {
+  const { id: pluginId } = req.params;
+  
+  try {
+    const apis = await communicationService.getAvailableApis(pluginId);
+    
+    res.json({
+      success: true,
+      data: apis
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get APIs'
+    });
+  }
+});
+
+// Communication endpoint for plugins to call other plugins
+router.post('/communicate', authenticate, async (req: AuthRequest, res) => {
+  const { fromPluginId, toPluginId, apiPath, method, data } = req.body;
+  
+  if (!fromPluginId || !toPluginId || !apiPath || !method) {
+    return res.status(400).json({
+      success: false,
+      error: 'From plugin ID, to plugin ID, API path, and method required'
+    });
+  }
+
+  try {
+    const result = await communicationService.callPluginApi({
+      fromPluginId,
+      toPluginId,
+      userId: req.user?.id || '',
+      apiPath,
+      method,
+      data
+    });
+    
+    res.json(result);
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to call plugin API'
+    });
+  }
+});
+
+// Get communication history for a plugin
+router.get('/:id/communication-history', authenticate, async (req: AuthRequest, res) => {
+  const { id: pluginId } = req.params;
+  const { limit = 50 } = req.query;
+  
+  try {
+    const history = await communicationService.getCommunicationHistory(
+      pluginId, 
+      parseInt(limit as string)
+    );
+    
+    res.json({
+      success: true,
+      data: history
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get communication history'
+    });
+  }
+});
+
+// Get communication statistics
+router.get('/communication-stats', authenticate, async (req: AuthRequest, res) => {
+  const { pluginId } = req.query;
+  
+  try {
+    const stats = await communicationService.getCommunicationStats(
+      pluginId ? String(pluginId) : undefined
+    );
+    
+    res.json({
+      success: true,
+      data: stats
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get communication stats'
+    });
+  }
+});
+
+// RBAC endpoints for application plugins to expose detailed permissions
+
+// Get field permissions for a plugin
+router.get('/:id/rbac/fields', authenticate, async (req: AuthRequest, res) => {
+  const { id: pluginId } = req.params;
+  
+  try {
+    const allPermissions = await rbacService.getAvailablePermissions(pluginId);
+    const fieldPermissions = allPermissions.filter(p => p.resourceType === 'field');
+    
+    res.json({
+      success: true,
+      data: fieldPermissions
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get field permissions'
+    });
+  }
+});
+
+// Get object permissions for a plugin
+router.get('/:id/rbac/objects', authenticate, async (req: AuthRequest, res) => {
+  const { id: pluginId } = req.params;
+  
+  try {
+    const allPermissions = await rbacService.getAvailablePermissions(pluginId);
+    const objectPermissions = allPermissions.filter(p => p.resourceType === 'object');
+    
+    res.json({
+      success: true,
+      data: objectPermissions
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get object permissions'
+    });
+  }
+});
+
+// Get data permissions for a plugin
+router.get('/:id/rbac/data', authenticate, async (req: AuthRequest, res) => {
+  const { id: pluginId } = req.params;
+  
+  try {
+    const allPermissions = await rbacService.getAvailablePermissions(pluginId);
+    const dataPermissions = allPermissions.filter(p => p.resourceType === 'data');
+    
+    res.json({
+      success: true,
+      data: dataPermissions
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to get data permissions'
+    });
+  }
+});
+
+// Check specific permission for current user
+router.post('/:id/rbac/check', authenticate, async (req: AuthRequest, res) => {
+  const { id: pluginId } = req.params;
+  const { permission, resourceId } = req.body;
+  
+  if (!permission) {
+    return res.status(400).json({
+      success: false,
+      error: 'Permission name required'
+    });
+  }
+
+  try {
+    const hasPermission = await rbacService.checkPermission(
+      req.user?.id || '',
+      permission,
+      resourceId
+    );
+    
+    res.json({
+      success: true,
+      data: {
+        hasPermission,
+        permission,
+        resourceId,
+        userId: req.user?.id
+      }
+    });
+  } catch (error) {
+    res.status(500).json({
+      success: false,
+      error: error instanceof Error ? error.message : 'Failed to check permission'
     });
   }
 });

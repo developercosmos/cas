@@ -93,10 +93,12 @@ export class PluginAdminService {
 
   // Enable a plugin
   static async enablePlugin(id: string): Promise<{ success: boolean; message: string; plugin?: PluginMetadata }> {
+    const token = localStorage.getItem('auth_token');
     const response = await fetch(`${API_BASE}/api/plugins/${id}/enable`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` })
       }
     });
     
@@ -110,10 +112,12 @@ export class PluginAdminService {
 
   // Disable a plugin
   static async disablePlugin(id: string): Promise<{ success: boolean; message: string; plugin?: PluginMetadata }> {
+    const token = localStorage.getItem('auth_token');
     const response = await fetch(`${API_BASE}/api/plugins/${id}/disable`, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` })
       }
     });
     

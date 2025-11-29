@@ -23,17 +23,137 @@ const API_BASE = getApiBaseUrl();
 
 // Constitution: Ensure authentication token is available and valid
 const getAuthToken = () => {
-  const token = localStorage.getItem('auth_token');
+  // Try to get from localStorage first
+  let token = localStorage.getItem('auth_token');
+  
+  // If not in localStorage, try session storage
   if (!token) {
-    // Try to get from session storage as backup
     const sessionToken = sessionStorage.getItem('auth_token');
     if (sessionToken) {
       localStorage.setItem('auth_token', sessionToken);
-      return sessionToken;
+      token = sessionToken;
     }
+  }
+  
+  // If still no token, return null
+  if (!token) {
+    console.error('No authentication token found');
     return null;
   }
+  
+  // Log token for debugging (remove in production)
+  console.log('Using auth token:', token.substring(0, 20) + '...');
+  
   return token;
+};
+
+// Enhanced Markdown Processor
+const processMarkdown = (markdown: string): string => {
+  let html = markdown;
+  
+  // Code blocks (```code```)
+  html = html.replace(/```[\s\S]*?```/g, (match: string) => {
+    const code = match.replace(/```/g, '').trim();
+    return `<pre><code>${code}</code></pre>`;
+  });
+  
+  // Inline code (`code`)
+  html = html.replace(/`([^`]+)`/g, '<code>$1</code>');
+  
+  // Headers (# ## ### #### ##### ######)
+  html = html
+    .replace(/^###### (.*$)/gm, '<h6>$1</h6>')
+    .replace(/^##### (.*$)/gm, '<h5>$1</h5>')
+    .replace(/^#### (.*$)/gm, '<h4>$1</h4>')
+    .replace(/^### (.*$)/gm, '<h3>$1</h3>')
+    .replace(/^## (.*$)/gm, '<h2>$1</h2>')
+    .replace(/^# (.*$)/gm, '<h1>$1</h1>');
+  
+  // Bold text (**bold** and __bold__)
+  html = html
+    .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+    .replace(/__([^_]+)__/g, '<strong>$1</strong>');
+  
+  // Italic text (*italic* and _italic_)
+  html = html
+    .replace(/\*([^*]+)\*/g, '<em>$1</em>')
+    .replace(/_([^_]+)_/g, '<em>$1</em>');
+  
+  // Strikethrough text (~~text~~)
+  html = html.replace(/~~([^~]+)~~/g, '<del>$1</del>');
+  
+  // Links [text](url)
+  html = html.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" rel="noopener noreferrer">$1</a>');
+  
+  // Unordered lists (* item and - item)
+  html = html.replace(/^[ \t]*[*-] (.+)$/gm, '<li>$1</li>');
+  
+  // Simple list conversion - wrap consecutive <li> in <ul>
+  html = html.replace(/(<li>.*<\/li>)(\s*<li>.*<\/li>)*/g, (match: string) => {
+    return `<ul>${match}</ul>`;
+  });
+  
+  // Ordered lists (1. item)
+  html = html.replace(/^[ \t]*\d+\. (.+)$/gm, '<li>$1</li>');
+  
+  // Ordered list conversion - wrap consecutive <li> in <ol>
+  html = html.replace(/(<li>.*<\/li>)(\s*<li>.*<\/li>)*/g, (match: string) => {
+    return `<ol>${match}</ol>`;
+  });
+  
+  // Blockquotes (> text)
+  html = html.replace(/^> (.+)$/gm, '<blockquote>$1</blockquote>');
+  
+  // Horizontal rules (--- and ***)
+  html = html.replace(/^[ \t]*(-{3,})$/gm, '<hr>');
+  html = html.replace(/^[ \t]*(\*{3,})$/gm, '<hr>');
+  
+  // Line breaks (two spaces at end)
+  html = html.replace(/  \n/g, '<br>');
+  
+  // Convert double newlines to paragraphs (skip headers, lists, code blocks)
+  const lines = html.split('\n');
+  const result: string[] = [];
+  let inParagraph = false;
+  
+  for (let i = 0; i < lines.length; i++) {
+    const line = lines[i].trim();
+    
+    // Skip empty lines
+    if (!line) {
+      if (inParagraph) {
+        result.push('</p>');
+        inParagraph = false;
+      }
+      continue;
+    }
+    
+    // Skip if line starts with HTML tag (h1-6, ul, ol, li, blockquote, pre, hr)
+    if (line.match(/^<h[1-6]|<ul|<ol|<li|<blockquote|<pre|<hr>/)) {
+      if (inParagraph) {
+        result.push('</p>');
+        inParagraph = false;
+      }
+      result.push(line);
+      continue;
+    }
+    
+    // Start paragraph if not already in one
+    if (!inParagraph) {
+      result.push('<p>');
+      inParagraph = true;
+    }
+    
+    // Add line content
+    result.push(line);
+  }
+  
+  // Close any open paragraph
+  if (inParagraph) {
+    result.push('</p>');
+  }
+  
+  return result.join('\n');
 };
 
 import styles from './PluginManager.module.css';
@@ -63,6 +183,18 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
   const [showImportModal, setShowImportModal] = useState(false);
   const [importData, setImportData] = useState<string>('');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  
+  // New RBAC state
+  const [categoryFilter, setCategoryFilter] = useState<'all' | 'system' | 'application'>('all');
+  const [showRbacModal, setShowRbacModal] = useState(false);
+  const [showApiModal, setShowApiModal] = useState(false);
+  const [showPermissionsModal, setShowPermissionsModal] = useState(false);
+  const [selectedPluginRbac, setSelectedPluginRbac] = useState<any>(null);
+  const [selectedPluginApis, setSelectedPluginApis] = useState<any[]>([]);
+  const [userPermissions, setUserPermissions] = useState<any[]>([]);
+  const [rbacLoading, setRbacLoading] = useState(false);
+  const [apiLoading, setApiLoading] = useState(false);
+  const [permissionsLoading, setPermissionsLoading] = useState(false);
 
   // Install form state
   const [installForm, setInstallForm] = useState<PluginInstallRequest>({
@@ -153,6 +285,135 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
       setLoading(false);
     }
   };
+
+  // New RBAC functions
+  const loadPluginPermissions = async (pluginId: string) => {
+    try {
+      setRbacLoading(true);
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(`${API_BASE}/api/plugins/${pluginId}/permissions`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setSelectedPluginRbac(data.data);
+          setShowRbacModal(true);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load plugin permissions:', error);
+    } finally {
+      setRbacLoading(false);
+    }
+  };
+
+  const loadPluginApis = async (pluginId: string) => {
+    try {
+      setApiLoading(true);
+      const token = localStorage.getItem('auth_token');
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      const response = await fetch(`${API_BASE}/api/plugins/${pluginId}/apis`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const data = await response.json();
+        if (data.success) {
+          setSelectedPluginApis(data.data);
+          setShowApiModal(true);
+        }
+      }
+    } catch (error) {
+      console.error('Failed to load plugin APIs:', error);
+    } finally {
+      setApiLoading(false);
+    }
+  };
+
+  const loadUserPermissions = async (pluginId: string) => {
+    try {
+      setPermissionsLoading(true);
+      const token = getAuthToken();
+      if (!token) {
+        throw new Error('Authentication required');
+      }
+
+      console.log('Loading user permissions for:', pluginId);
+      const response = await fetch(`${API_BASE}/api/plugins/${pluginId}/user-permissions`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      console.log('User permissions response status:', response.status);
+      
+      if (!response.ok) {
+        const errorText = await response.text();
+        console.error('Failed response:', errorText);
+        throw new Error(`HTTP ${response.status}: ${errorText}`);
+      }
+
+      const data = await response.json();
+      console.log('User permissions data:', data);
+      
+      if (data.success) {
+        setUserPermissions(data.data);
+        setShowPermissionsModal(true);
+      } else {
+        throw new Error(data.error || 'Failed to load permissions');
+      }
+    } catch (error) {
+      console.error('Failed to load user permissions:', error);
+      alert('Failed to load user permissions: ' + (error instanceof Error ? error.message : 'Unknown error'));
+    } finally {
+      setPermissionsLoading(false);
+    }
+  };
+
+  // const grantPermission = async (pluginId: string, userId: string, permissionName: string) => {
+  //   try {
+  //     const token = localStorage.getItem('auth_token');
+  //     if (!token) {
+  //       throw new Error('Authentication required');
+  //     }
+
+  //     const response = await fetch(`${API_BASE}/api/plugins/${pluginId}/grant-permission`, {
+  //       method: 'POST',
+  //       headers: {
+  //         'Authorization': `Bearer ${token}`,
+  //         'Content-Type': 'application/json'
+  //       },
+  //       body: JSON.stringify({ userId, permissionName })
+  //     });
+
+  //     if (response.ok) {
+  //       const data = await response.json();
+  //       if (data.success) {
+  //         console.log('Permission granted successfully');
+  //         // Reload permissions
+  //         loadUserPermissions(pluginId);
+  //       }
+  //     }
+  //   } catch (error) {
+  //     console.error('Failed to grant permission:', error);
+  //   }
+  // };
+  // TODO: Add UI for granting permissions to users
+  // grantPermission('plugin-id', 'user-uuid', 'permission.name');
 
   const loadPluginDocumentation = async (plugin: PluginMetadata) => {
     try {
@@ -484,6 +745,14 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
     }
   };
 
+  // Filter plugins by category
+  const filteredPlugins = plugins.filter(plugin => {
+    if (categoryFilter === 'all') return true;
+    if (categoryFilter === 'system') return plugin.isSystem || plugin.category === 'system';
+    if (categoryFilter === 'application') return !plugin.isSystem && plugin.category !== 'system';
+    return true;
+  });
+
   if (loading) {
     return (
       <div className={styles.overlay}>
@@ -510,19 +779,24 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
         )}
 
         <div className={styles.actions}>
-          <Button
-            variant="primary"
+          <button
+            className={styles.actionButton}
+            style={{ 
+              background: 'linear-gradient(135deg, #B45309 0%, #9A3412 100%)',
+              color: 'white',
+              border: 'none'
+            }}
             onClick={() => setShowInstallForm(true)}
           >
             Install Plugin
-          </Button>
-          <Button 
-            variant="secondary" 
+          </button>
+          <button 
+            className={styles.actionButton}
             onClick={() => fileInputRef.current?.click()}
             disabled={actionLoading !== null}
           >
             Import Plugin
-          </Button>
+          </button>
           <input
             type="file"
             ref={fileInputRef}
@@ -530,9 +804,13 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
             accept=".zip,.json"
             style={{ display: 'none' }}
           />
-          <Button variant="secondary" onClick={loadPlugins} disabled={actionLoading !== null}>
+          <button 
+            className={styles.actionButton}
+            onClick={loadPlugins} 
+            disabled={actionLoading !== null}
+          >
             Refresh
-          </Button>
+          </button>
         </div>
 
         {showInstallForm && (
@@ -615,11 +893,34 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
           </div>
         )}
 
+        <div className={styles.pluginControls}>
+          <div className={styles.categoryFilter}>
+            <button 
+              className={`${styles.actionButton} ${categoryFilter === 'all' ? styles.active : ''}`}
+              onClick={() => setCategoryFilter('all')}
+            >
+              All
+            </button>
+            <button 
+              className={`${styles.actionButton} ${categoryFilter === 'system' ? styles.active : ''}`}
+              onClick={() => setCategoryFilter('system')}
+            >
+              System
+            </button>
+            <button 
+              className={`${styles.actionButton} ${categoryFilter === 'application' ? styles.active : ''}`}
+              onClick={() => setCategoryFilter('application')}
+            >
+              Applications
+            </button>
+          </div>
+        </div>
+
         <div className={styles.pluginList}>
-          {plugins.length === 0 ? (
-            <div className={styles.empty}>No plugins installed</div>
+          {filteredPlugins.length === 0 ? (
+            <div className={styles.empty}>No plugins found in category: {categoryFilter}</div>
           ) : (
-            plugins.map((plugin) => (
+            filteredPlugins.map((plugin) => (
               <div key={plugin.id || `plugin-${Math.random()}`} className={styles.pluginCard}>
                 <div className={styles.pluginInfo}>
                   <h3>{plugin.name}</h3>
@@ -635,58 +936,86 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                 </div>
                 <div className={styles.pluginActions}>
                   {plugin.status === 'active' ? (
-                    <Button
-                      size="sm"
+                    <button
+                      className={styles.actionButton}
+                      style={{ 
+                        background: 'linear-gradient(135deg, #6B7280 0%, #4B5563 100%)',
+                        color: 'white',
+                        border: 'none'
+                      }}
                       onClick={() => handleToggleStatus(plugin.id, false)}
                       disabled={actionLoading === plugin.id}
                     >
                       {actionLoading === plugin.id ? '...' : 'Disable'}
-                    </Button>
+                    </button>
                   ) : (
-                    <Button
-                      size="sm"
+                    <button
+                      className={styles.actionButton}
+                      style={{ 
+                        background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                        color: 'white',
+                        border: 'none'
+                      }}
                       onClick={() => handleToggleStatus(plugin.id, true)}
                       disabled={actionLoading === plugin.id}
                     >
                       {actionLoading === plugin.id ? '...' : 'Enable'}
-                    </Button>
+                    </button>
                   )}
-                  <Button
-                    size="sm"
-                    variant="ghost"
+                  <button
+                    className={styles.actionButton}
                     onClick={() => setEditingConfig(editingConfig === plugin.id ? null : plugin.id)}
                   >
                     {editingConfig === plugin.id ? 'Hide' : 'Config'}
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="secondary"
+                  </button>
+                  <button
+                    className={styles.actionButton}
                     onClick={() => {
                       setDocumentationModal(plugin);
                       loadPluginDocumentation(plugin);
                     }}
                   >
                     📚 Docs
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
+                  </button>
+                  <button
+                    className={styles.actionButton}
+                    onClick={() => loadPluginPermissions(plugin.id)}
+                    disabled={rbacLoading}
+                  >
+                    {rbacLoading ? '...' : '🔐 RBAC'}
+                  </button>
+                  <button
+                    className={styles.actionButton}
+                    onClick={() => loadPluginApis(plugin.id)}
+                    disabled={apiLoading}
+                  >
+                    {apiLoading ? '...' : '🔌 APIs'}
+                  </button>
+                  <button
+                    className={styles.actionButton}
+                    onClick={() => loadUserPermissions(plugin.id)}
+                    disabled={permissionsLoading}
+                  >
+                    {permissionsLoading ? '...' : '👤 My Permissions'}
+                  </button>
+                  <button
+                    className={styles.actionButton}
                     onClick={() => handleExportPlugin(plugin.id)}
                     disabled={actionLoading === `export-${plugin.id}`}
                   >
                     {actionLoading === `export-${plugin.id}` ? '...' : '📦 Export'}
-                  </Button>
+                  </button>
                   {plugin.id === 'ldap-auth' && (
                     <>
-                      <Button
-                        size="sm"
+                      <button
+                        className={styles.actionButton}
                         onClick={() => handleLdapAction('test')}
                         disabled={actionLoading === 'ldap-test'}
                       >
                         {actionLoading === 'ldap-test' ? '...' : 'Test LDAP'}
-                      </Button>
-                      <Button
-                        size="sm"
+                      </button>
+                      <button
+                        className={styles.actionButton}
                         onClick={async () => {
                           try {
                             const token = getAuthToken();
@@ -717,18 +1046,22 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                         }}
                       >
                         👥 Manage Users
-                      </Button>
+                      </button>
                     </>
                   )}
                   {!plugin.isSystem && (
-                    <Button
-                      size="sm"
-                      variant="danger"
+                    <button
+                      className={styles.actionButton}
+                      style={{ 
+                        background: 'linear-gradient(135deg, #DC2626 0%, #EF4444 100%)',
+                        color: 'white',
+                        border: 'none'
+                      }}
                       onClick={() => handleUninstall(plugin.id)}
                       disabled={actionLoading === plugin.id}
                     >
                       {actionLoading === plugin.id ? '...' : 'Uninstall'}
-                    </Button>
+                    </button>
                   )}
                 </div>
 
@@ -1146,81 +1479,7 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                     <section key={docType} className={styles.documentationSection}>
                       <h3>{doc.title || docType.charAt(0).toUpperCase() + docType.slice(1)}</h3>
                       {doc.contentFormat === 'markdown' ? (
-                        <div dangerouslySetInnerHTML={{ __html:
-                          (() => {
-                            let html = doc.content;
-
-                            // First convert lists to preserve them from paragraph processing
-                            html = html.replace(/(?:^\* (.*$)\n?)+/gm, (match: string) => {
-                              const items = match.trim().split('\n').map((line: string) =>
-                                line.replace(/^\* (.*)$/, '<li>$1</li>')
-                              ).join('');
-                              return `<ul>${items}</ul>`;
-                            });
-
-                            html = html.replace(/(?:^- (.*$)\n?)+/gm, (match: string) => {
-                              const items = match.trim().split('\n').map((line: string) =>
-                                line.replace(/^- (.*)$/, '<li>$1</li>')
-                              ).join('');
-                              return `<ul>${items}</ul>`;
-                            });
-
-                            // Process headers
-                            html = html
-                              .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-                              .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-                              .replace(/^### (.*$)/gm, '<h3>$1</h3>');
-
-                            // Process bold text
-                            html = html
-                              .replace(/^\*\*(.*)\*\*/gm, '<strong>$1</strong>')
-                              .replace(/\*\*(.*)\*\*/gm, '<strong>$1</strong>');
-
-                            // Process inline code
-                            html = html.replace(/`([^`]+)`/gm, '<code>$1</code>');
-
-                            // Split into lines and process paragraphs, skipping lists and headers
-                            const lines = html.split('\n');
-                            const result: string[] = [];
-                            let inParagraph = false;
-
-                            for (let i = 0; i < lines.length; i++) {
-                              const line = lines[i].trim();
-
-                              // Skip empty lines
-                              if (!line) {
-                                if (inParagraph) {
-                                  result.push('</p>');
-                                  inParagraph = false;
-                                }
-                                continue;
-                              }
-
-                              // Don't wrap lists, headers, or already processed HTML in paragraphs
-                              if (line.match(/^<[hul]/) || line.match(/^<(h[1-6]|ul|li)/)) {
-                                if (inParagraph) {
-                                  result.push('</p>');
-                                  inParagraph = false;
-                                }
-                                result.push(line);
-                              } else {
-                                // Regular text line - add to paragraph or create new one
-                                if (!inParagraph) {
-                                  result.push('<p>');
-                                  inParagraph = true;
-                                }
-                                result.push(line);
-                              }
-                            }
-
-                            // Close any open paragraph
-                            if (inParagraph) {
-                              result.push('</p>');
-                            }
-
-                            return result.join('\n');
-                          })()
-                        }} />
+                        <div className={styles.markdownContent} dangerouslySetInnerHTML={{ __html: processMarkdown(doc.content) }} />
                       ) : (
                         <div dangerouslySetInnerHTML={{ __html: doc.content }} />
                       )}
@@ -1757,6 +2016,119 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                   Cancel
                 </Button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* RBAC Modal */}
+      {showRbacModal && selectedPluginRbac && (
+        <div className={styles.overlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h3>🔐 RBAC Permissions - {selectedPluginRbac[0]?.name || 'Plugin'}</h3>
+              <Button variant="ghost" onClick={() => setShowRbacModal(false)}>×</Button>
+            </div>
+            <div className={styles.modalBody}>
+              <div className={styles.permissionGroups}>
+                <h4>Field Permissions</h4>
+                {selectedPluginRbac.filter((p: any) => p.resourceType === 'field').map((perm: any, idx: number) => (
+                  <div key={idx} className={styles.permission}>
+                    <span className={styles.permName}>{perm.name}</span>
+                    <span className={styles.permDesc}>{perm.description}</span>
+                  </div>
+                ))}
+                
+                <h4>Object Permissions</h4>
+                {selectedPluginRbac.filter((p: any) => p.resourceType === 'object').map((perm: any, idx: number) => (
+                  <div key={idx} className={styles.permission}>
+                    <span className={styles.permName}>{perm.name}</span>
+                    <span className={styles.permDesc}>{perm.description}</span>
+                  </div>
+                ))}
+                
+                <h4>Data Permissions</h4>
+                {selectedPluginRbac.filter((p: any) => p.resourceType === 'data').map((perm: any, idx: number) => (
+                  <div key={idx} className={styles.permission}>
+                    <span className={styles.permName}>{perm.name}</span>
+                    <span className={styles.permDesc}>{perm.description}</span>
+                  </div>
+                ))}
+                
+                <h4>Action Permissions</h4>
+                {selectedPluginRbac.filter((p: any) => p.resourceType === 'action').map((perm: any, idx: number) => (
+                  <div key={idx} className={styles.permission}>
+                    <span className={styles.permName}>{perm.name}</span>
+                    <span className={styles.permDesc}>{perm.description}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* API Registry Modal */}
+      {showApiModal && (
+        <div className={styles.overlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h3>🔌 API Registry</h3>
+              <Button variant="ghost" onClick={() => setShowApiModal(false)}>×</Button>
+            </div>
+            <div className={styles.modalBody}>
+              {selectedPluginApis.length === 0 ? (
+                <p>No APIs registered for this plugin.</p>
+              ) : (
+                <div className={styles.apiList}>
+                  {selectedPluginApis.map((api: any, idx: number) => (
+                    <div key={idx} className={styles.apiCard}>
+                      <div className={styles.apiMethod}>{api.httpMethod}</div>
+                      <div className={styles.apiPath}>{api.apiPath}</div>
+                      <div className={styles.apiDesc}>{api.apiDescription}</div>
+                      <div className={styles.apiPerms}>
+                        {api.requiredPermissions.length > 0 ? (
+                          <span>Requires: {api.requiredPermissions.join(', ')}</span>
+                        ) : (
+                          <span>Public API</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* User Permissions Modal */}
+      {showPermissionsModal && (
+        <div className={styles.overlay}>
+          <div className={styles.modal}>
+            <div className={styles.modalHeader}>
+              <h3>👤 My Permissions</h3>
+              <Button variant="ghost" onClick={() => setShowPermissionsModal(false)}>×</Button>
+            </div>
+            <div className={styles.modalBody}>
+              {userPermissions.length === 0 ? (
+                <p>You have no permissions granted for this plugin.</p>
+              ) : (
+                <div className={styles.permissionGroups}>
+                  {userPermissions.map((perm: any, idx: number) => (
+                    <div key={idx} className={styles.userPermission}>
+                      <span className={`${styles.permStatus} ${perm.isgranted ? styles.granted : styles.denied}`}>
+                        {perm.isgranted ? '✅' : '❌'}
+                      </span>
+                      <span className={styles.permName}>{perm.permissionname}</span>
+                      <span className={styles.permDesc}>{perm.permissionname}</span>
+                      {perm.resourceid && (
+                        <span className={styles.permResource}>Resource: {perm.resourceid}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         </div>

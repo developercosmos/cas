@@ -80,6 +80,7 @@ export interface PluginMetadata {
   updatedAt: string;
   config?: Record<string, any>;
   isSystem?: boolean;
+  category?: 'system' | 'application';
   routes?: Record<string, string>;
 }
 
