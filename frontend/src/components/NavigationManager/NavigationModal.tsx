@@ -235,8 +235,8 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
         </div>
 
         <div className={styles.modalBody}>
-          {/* Search Bar */}
-          <div className={styles.searchContainer}>
+          {/* Search Bar and Sort */}
+          <div className={styles.searchSortContainer}>
             <div className={styles.searchInputWrapper}>
               <svg 
                 width="20" 
@@ -258,20 +258,18 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
                 onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
-          </div>
-
-          {/* Sort Options */}
-          <div className={styles.sortContainer}>
-            <span className={styles.sortLabel}>Sort by:</span>
-            <select
-              className={styles.sortSelect}
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value as 'name' | 'plugin' | 'sortOrder')}
-            >
-              <option value="sortOrder">Order</option>
-              <option value="name">Name</option>
-              <option value="plugin">Plugin</option>
-            </select>
+            <div className={styles.sortContainer}>
+              <span className={styles.sortLabel}>Sort:</span>
+              <select
+                className={styles.sortSelect}
+                value={sortBy}
+                onChange={(e) => setSortBy(e.target.value as 'name' | 'plugin' | 'sortOrder')}
+              >
+                <option value="sortOrder">Order</option>
+                <option value="name">Name</option>
+                <option value="plugin">Plugin</option>
+              </select>
+            </div>
           </div>
 
           {/* Modules List */}
