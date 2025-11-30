@@ -37,24 +37,6 @@ export class PluginService {
     };
     
     this.configs.set(defaultConfig.id, defaultConfig);
-
-    // Constitution: Load Menu Navigation plugin
-    const navigationPlugin = {
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      entry: '/src/plugins/navigation/index.ts',
-      status: 'active',
-      isSystem: true,
-      createdAt: new Date(),
-      updatedAt: new Date()
-    };
-    this.plugins.set(navigationPlugin.id, navigationPlugin);
-
-    // Constitution: Load Menu Navigation plugin
   }
 
   async listPlugins(): Promise<PluginMetadata[]> {

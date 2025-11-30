@@ -1,5 +1,7 @@
-export { NavigationManager } from './NavigationManager';
-export { NavigationModal } from './NavigationModal';
-export type { NavigationManagerProps } from './NavigationManager';
-// Adding default export for Header.tsx import
-export { default as NavigationManager } from './NavigationManager';
+import { NavigationManager } from './NavigationManager';
+import { NavigationModal } from './NavigationModal';
+import type { NavigationManagerProps } from './NavigationManager';
+
+export default NavigationManager;
+export { NavigationModal };
+export type { NavigationManagerProps };
