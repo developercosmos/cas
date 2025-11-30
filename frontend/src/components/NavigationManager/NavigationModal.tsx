@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { NavigationApiService, NavigationModule } from '@/services/NavigationService';
 import { LdapDialog } from '@/components/LdapDialog';
 import styles from './styles.module.css';
@@ -23,6 +23,22 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
   const [ldapInitialTab, setLdapInitialTab] = useState<'config' | 'test' | 'users'>('config');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // Load modules when modal opens
+  const loadModules = async () => {
+    try {
+      setLoading(true);
+      const response = await NavigationApiService.getModules();
+      if (response.success) {
+        setModules(response.data);
+        setFilteredModules(response.data);
+      }
+    } catch (error) {
+      console.error('Error loading modules:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Detect dark mode
   useEffect(() => {
