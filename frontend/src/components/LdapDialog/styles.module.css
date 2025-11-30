@@ -1,6 +1,6 @@
 .modalOverlay {
   position: fixed;
-  top: 0;
+  top: 60px; /* Start below header to allow clicking logo */
   left: 0;
   right: 0;
   bottom: 0;
@@ -9,6 +9,7 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  pointer-events: auto;
 }
 
 .modalContent {
@@ -96,25 +97,73 @@
   font-size: 1.25rem;
   font-weight: 600;
   color: var(--text-primary);
+  flex: 1;
 }
 
+.windowControls {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.minimizeButton,
 .closeButton {
   background: var(--background-primary);
   border: 1px solid var(--border-primary);
   color: var(--text-secondary);
   cursor: pointer;
   padding: 6px;
-  border-radius: 6px;
+  border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
   transition: all 0.2s ease;
   opacity: 1;
+  width: 28px;
+  height: 28px;
+}
+
+.minimizeButton:hover {
+  background: #fbbf24;
+  border-color: #f59e0b;
+  color: #000;
 }
 
 .closeButton:hover {
-  background: var(--background-secondary);
-  color: var(--text-primary);
+  background: #ef4444;
+  border-color: #dc2626;
+  color: #fff;
+}
+
+/* Minimized state */
+.minimized {
+  height: auto !important;
+  min-height: 0;
+}
+
+.minimized .modalHeader {
+  border-bottom: none;
+  border-radius: 4px;
+  padding: 4px 12px;
+}
+
+.minimized .modalTitle {
+  font-size: 0.85rem;
+}
+
+.minimized .dragHandle {
+  display: none;
+}
+
+.minimized .windowControls {
+  gap: 2px;
+}
+
+.minimized .minimizeButton,
+.minimized .closeButton {
+  width: 22px;
+  height: 22px;
+  padding: 4px;
 }
 
 /* Tabs */
@@ -306,4 +355,81 @@
     color: var(--text-primary);
     border-color: var(--border-primary);
   }
+}
+
+/* Resize handles */
+.resizeHandleN,
+.resizeHandleS,
+.resizeHandleE,
+.resizeHandleW,
+.resizeHandleNE,
+.resizeHandleNW,
+.resizeHandleSE,
+.resizeHandleSW {
+  position: absolute;
+  z-index: 10;
+}
+
+.resizeHandleN {
+  top: -4px;
+  left: 8px;
+  right: 8px;
+  height: 8px;
+  cursor: n-resize;
+}
+
+.resizeHandleS {
+  bottom: -4px;
+  left: 8px;
+  right: 8px;
+  height: 8px;
+  cursor: s-resize;
+}
+
+.resizeHandleE {
+  right: -4px;
+  top: 8px;
+  bottom: 8px;
+  width: 8px;
+  cursor: e-resize;
+}
+
+.resizeHandleW {
+  left: -4px;
+  top: 8px;
+  bottom: 8px;
+  width: 8px;
+  cursor: w-resize;
+}
+
+.resizeHandleNE {
+  top: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: ne-resize;
+}
+
+.resizeHandleNW {
+  top: -4px;
+  left: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: nw-resize;
+}
+
+.resizeHandleSE {
+  bottom: -4px;
+  right: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: se-resize;
+}
+
+.resizeHandleSW {
+  bottom: -4px;
+  left: -4px;
+  width: 12px;
+  height: 12px;
+  cursor: sw-resize;
 }

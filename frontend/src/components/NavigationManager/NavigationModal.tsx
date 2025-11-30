@@ -1,14 +1,45 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { NavigationApiService, NavigationModule } from '@/services/NavigationService';
-import { LdapDialog } from '@/components/LdapDialog';
 import styles from './styles.module.css';
 
 interface NavigationModalProps {
   isOpen: boolean;
   onClose: () => void;
+  onOpenLdapDialog?: (tab: 'config' | 'test' | 'users') => void;
 }
 
-export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClose }) => {
+interface WindowState {
+  width: number;
+  height: number;
+  x: number;
+  y: number;
+}
+
+const STORAGE_KEY = 'nav_modal_window_state';
+const DEFAULT_SIZE = { width: 800, height: 500 };
+const MIN_SIZE = { width: 400, height: 300 };
+
+const getStoredWindowState = (): WindowState | null => {
+  try {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) {
+      return JSON.parse(stored);
+    }
+  } catch (e) {
+    console.error('Error reading window state:', e);
+  }
+  return null;
+};
+
+const saveWindowState = (state: WindowState) => {
+  try {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+  } catch (e) {
+    console.error('Error saving window state:', e);
+  }
+};
+
+export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClose, onOpenLdapDialog }) => {
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredModules, setFilteredModules] = useState<NavigationModule[]>([]);
   const [originalModules, setOriginalModules] = useState<NavigationModule[]>([]);
@@ -16,11 +47,13 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
   const [sortBy, setSortBy] = useState<'name' | 'plugin' | 'sortOrder'>('sortOrder');
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [size, setSize] = useState(DEFAULT_SIZE);
   const [isDragging, setIsDragging] = useState(false);
+  const [isResizing, setIsResizing] = useState(false);
+  const [resizeDirection, setResizeDirection] = useState('');
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
-  const [isDraggable, setIsDraggable] = useState(false);
-  const [showLdapDialog, setShowLdapDialog] = useState(false);
-  const [ldapInitialTab, setLdapInitialTab] = useState<'config' | 'test' | 'users'>('config');
+  const [isMinimized, setIsMinimized] = useState(false);
+  const [preMinimizeState, setPreMinimizeState] = useState<{ position: { x: number; y: number }; size: { width: number; height: number } } | null>(null);
   const searchInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -47,15 +80,43 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
   useEffect(() => {
     if (isOpen) {
       loadModules();
+      setIsMinimized(false);
       // Focus search input
       setTimeout(() => searchInputRef.current?.focus(), 100);
-      // Center modal initially
-      setPosition({ x: 0, y: 0 });
-      setIsDraggable(true);
-    } else {
-      setIsDraggable(false);
+      
+      // Load stored state
+      const stored = getStoredWindowState();
+      if (stored) {
+        setSize({ width: stored.width, height: stored.height });
+        setPosition({ x: stored.x, y: stored.y });
+      } else {
+        // Center the window
+        const centerX = (window.innerWidth - DEFAULT_SIZE.width) / 2;
+        const centerY = (window.innerHeight - DEFAULT_SIZE.height) / 2;
+        setPosition({ x: Math.max(0, centerX), y: Math.max(60, centerY) });
+        setSize(DEFAULT_SIZE);
+      }
     }
   }, [isOpen]);
+
+  // Save window state when size or position changes
+  const saveState = useCallback(() => {
+    if (!isMinimized && position.x !== 0 && position.y !== 0) {
+      saveWindowState({
+        width: size.width,
+        height: size.height,
+        x: position.x,
+        y: position.y
+      });
+    }
+  }, [size, position, isMinimized]);
+
+  useEffect(() => {
+    if (isOpen && !isMinimized) {
+      const timeoutId = setTimeout(saveState, 500);
+      return () => clearTimeout(timeoutId);
+    }
+  }, [isOpen, saveState, isMinimized]);
 
   // Load modules function
   const loadModules = async () => {
@@ -77,40 +138,90 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
 
   // Handle mouse down on header for dragging
   const handleMouseDown = (e: React.MouseEvent) => {
-    if (!modalRef.current || !isDraggable) return;
+    if (!modalRef.current || isMinimized) return;
     
-    const rect = modalRef.current.getBoundingClientRect();
     setDragStart({
-      x: e.clientX - rect.left,
-      y: e.clientY - rect.top
+      x: e.clientX - position.x,
+      y: e.clientY - position.y
     });
     setIsDragging(true);
     e.preventDefault();
   };
 
-  // Handle mouse move for dragging
+  // Handle resize start
+  const handleResizeStart = (e: React.MouseEvent, direction: string) => {
+    if (isMinimized) return;
+    e.preventDefault();
+    e.stopPropagation();
+    setIsResizing(true);
+    setResizeDirection(direction);
+    setDragStart({ x: e.clientX, y: e.clientY });
+  };
+
+  // Handle mouse move for dragging and resizing
   useEffect(() => {
     const handleMouseMove = (e: MouseEvent) => {
-      if (!isDragging || !modalRef.current) return;
+      if (isDragging && !isMinimized) {
+        const newX = e.clientX - dragStart.x;
+        const newY = e.clientY - dragStart.y;
+        
+        // Constrain to viewport bounds
+        const maxX = window.innerWidth - size.width;
+        const maxY = window.innerHeight - size.height;
+        
+        setPosition({
+          x: Math.max(0, Math.min(newX, maxX)),
+          y: Math.max(60, Math.min(newY, maxY))
+        });
+      }
       
-      const newX = e.clientX - dragStart.x;
-      const newY = e.clientY - dragStart.y;
-      
-      // Constrain to viewport bounds
-      const maxX = window.innerWidth - modalRef.current.offsetWidth;
-      const maxY = window.innerHeight - modalRef.current.offsetHeight;
-      
-      setPosition({
-        x: Math.max(0, Math.min(newX, maxX)),
-        y: Math.max(0, Math.min(newY, maxY))
-      });
+      if (isResizing && !isMinimized) {
+        const deltaX = e.clientX - dragStart.x;
+        const deltaY = e.clientY - dragStart.y;
+        
+        let newWidth = size.width;
+        let newHeight = size.height;
+        let newX = position.x;
+        let newY = position.y;
+        
+        if (resizeDirection.includes('e')) {
+          newWidth = Math.max(MIN_SIZE.width, size.width + deltaX);
+        }
+        if (resizeDirection.includes('w')) {
+          const proposedWidth = size.width - deltaX;
+          if (proposedWidth >= MIN_SIZE.width) {
+            newWidth = proposedWidth;
+            newX = position.x + deltaX;
+          }
+        }
+        if (resizeDirection.includes('s')) {
+          newHeight = Math.max(MIN_SIZE.height, size.height + deltaY);
+        }
+        if (resizeDirection.includes('n')) {
+          const proposedHeight = size.height - deltaY;
+          if (proposedHeight >= MIN_SIZE.height) {
+            newHeight = proposedHeight;
+            newY = position.y + deltaY;
+          }
+        }
+        
+        // Constrain to viewport
+        newWidth = Math.min(newWidth, window.innerWidth - newX);
+        newHeight = Math.min(newHeight, window.innerHeight - newY);
+        
+        setSize({ width: newWidth, height: newHeight });
+        setPosition({ x: newX, y: newY });
+        setDragStart({ x: e.clientX, y: e.clientY });
+      }
     };
 
     const handleMouseUp = () => {
       setIsDragging(false);
+      setIsResizing(false);
+      setResizeDirection('');
     };
 
-    if (isDragging) {
+    if (isDragging || isResizing) {
       document.addEventListener('mousemove', handleMouseMove);
       document.addEventListener('mouseup', handleMouseUp);
       return () => {
@@ -118,7 +229,24 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
         document.removeEventListener('mouseup', handleMouseUp);
       };
     }
-  }, [isDragging, dragStart]);
+  }, [isDragging, isResizing, dragStart, size, position, resizeDirection, isMinimized]);
+
+  // Handle minimize/restore
+  const handleMinimize = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (isMinimized) {
+      // Restore
+      if (preMinimizeState) {
+        setPosition(preMinimizeState.position);
+        setSize(preMinimizeState.size);
+      }
+      setIsMinimized(false);
+    } else {
+      // Minimize
+      setPreMinimizeState({ position, size });
+      setIsMinimized(true);
+    }
+  };
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -135,7 +263,7 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
   }, [isOpen, onClose]);
 
   const handleModuleClick = (module: NavigationModule) => {
-    // Handle LDAP modules specially - open dialog instead of navigation
+    // Handle LDAP modules specially - open dialog without closing navigation
     if (module.pluginId === 'ldap-auth') {
       let initialTab: 'config' | 'test' | 'users' = 'config';
       
@@ -145,9 +273,12 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
         initialTab = 'users';
       }
       
-      setLdapInitialTab(initialTab);
-      setShowLdapDialog(true);
-      onClose(); // Close navigation modal
+      // Open LDAP dialog - navigation modal stays open, user can close it separately
+      if (onOpenLdapDialog) {
+        onOpenLdapDialog(initialTab);
+      }
+      // Close navigation modal after opening the dialog
+      onClose();
       return;
     }
 
@@ -182,22 +313,25 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
 
   return (
     <>
-      <div className={styles.modalOverlay} onClick={onClose} />
+      {!isMinimized && <div className={styles.modalOverlay} onClick={onClose} />}
       <div 
         ref={modalRef}
-        className={styles.modalContent}
+        className={`${styles.modalContent} ${isMinimized ? styles.minimized : ''}`}
         style={{
-          position: position.x === 0 && position.y === 0 ? 'fixed' : 'fixed',
-          left: position.x === 0 && position.y === 0 ? '50%' : position.x,
-          top: position.y === 0 && position.y === 0 ? '50%' : position.y,
-          transform: position.x === 0 && position.y === 0 ? 'translate(-50%, -50%)' : 'none',
-          cursor: isDragging ? 'grabbing' : 'default'
+          position: 'fixed',
+          left: isMinimized ? 300 : position.x,
+          top: isMinimized ? 'auto' : position.y,
+          bottom: isMinimized ? 10 : 'auto',
+          width: isMinimized ? 280 : size.width,
+          height: isMinimized ? 'auto' : size.height,
+          cursor: isDragging ? 'grabbing' : 'default',
         }}
       >
         <div 
-          className={`${styles.modalHeader} ${isDarkMode ? styles.darkHeader : styles.lightHeader} ${isDraggable ? styles.draggableHeader : ''}`}
-          style={{ cursor: isDraggable ? 'grab' : 'default' }}
-          onMouseDown={handleMouseDown}
+          className={`${styles.modalHeader} ${isDarkMode ? styles.darkHeader : styles.lightHeader}`}
+          style={{ cursor: isMinimized ? 'pointer' : 'grab' }}
+          onMouseDown={isMinimized ? undefined : handleMouseDown}
+          onClick={isMinimized ? handleMinimize : undefined}
         >
           <div className={styles.dragHandle}>
             <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
@@ -213,21 +347,43 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
             </svg>
           </div>
           <h2 className={styles.modalTitle}>Navigation</h2>
-          <button
-            className={styles.closeButton}
-            onClick={onClose}
-            onMouseDown={(e) => e.stopPropagation()}
-            aria-label="Close navigation"
-          >
-            <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-              <path d="M4 4L16 16M16 4L4 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </button>
+          <div className={styles.windowControls}>
+            <button
+              className={styles.minimizeButton}
+              onClick={handleMinimize}
+              onMouseDown={(e) => e.stopPropagation()}
+              aria-label={isMinimized ? "Restore window" : "Minimize window"}
+              title={isMinimized ? "Restore" : "Minimize"}
+            >
+              {isMinimized ? (
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <rect x="2" y="4" width="8" height="6" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                  <path d="M4 4V2H12V8H10" stroke="currentColor" strokeWidth="1.5" fill="none"/>
+                </svg>
+              ) : (
+                <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M2 10H12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+                </svg>
+              )}
+            </button>
+            <button
+              className={styles.closeButton}
+              onClick={onClose}
+              onMouseDown={(e) => e.stopPropagation()}
+              aria-label="Close navigation"
+            >
+              <svg width="14" height="14" viewBox="0 0 14 14" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M2 2L12 12M12 2L2 12" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
-        <div className={styles.modalBody}>
-          {/* Search Bar and Sort */}
-          <div className={styles.searchSortContainer}>
+        {!isMinimized && (
+          <>
+          <div className={styles.modalBody}>
+            {/* Search Bar and Sort */}
+            <div className={styles.searchSortContainer}>
             <div className={styles.searchInputWrapper}>
               <svg 
                 width="20" 
@@ -249,22 +405,22 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
                 onChange={(e) => handleSearch(e.target.value)}
               />
             </div>
-            <div className={styles.sortContainer}>
-              <span className={styles.sortLabel}>Sort:</span>
-              <select
-                className={styles.sortSelect}
-                value={sortBy}
-                onChange={(e) => setSortBy(e.target.value as 'name' | 'plugin' | 'sortOrder')}
-              >
-                <option value="sortOrder">Order</option>
-                <option value="name">Name</option>
-                <option value="plugin">Plugin</option>
-              </select>
+              <div className={styles.sortContainer}>
+                <span className={styles.sortLabel}>Sort:</span>
+                <select
+                  className={styles.sortSelect}
+                  value={sortBy}
+                  onChange={(e) => setSortBy(e.target.value as 'name' | 'plugin' | 'sortOrder')}
+                >
+                  <option value="sortOrder">Order</option>
+                  <option value="name">Name</option>
+                  <option value="plugin">Plugin</option>
+                </select>
+              </div>
             </div>
-          </div>
 
-          {/* Modules List */}
-          <div className={styles.modulesContainer}>
+            {/* Modules List */}
+            <div className={styles.modulesContainer}>
             {loading ? (
               <div className={styles.loadingContainer}>
                 <div className={styles.spinner}></div>
@@ -307,24 +463,29 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
                 )}
               </div>
             )}
+            </div>
           </div>
-        </div>
 
-        <div className={styles.modalFooter}>
-          <div className={styles.footerInfo}>
-            <span>Press <kbd>Esc</kbd> to close</span>
-            <span>•</span>
-            <span>Press <kbd>Ctrl+K</kbd> to open</span>
+          <div className={styles.modalFooter}>
+            <div className={styles.footerInfo}>
+              <span>Press <kbd>Esc</kbd> to close</span>
+              <span>•</span>
+              <span>Drag to move • Resize from edges</span>
+            </div>
           </div>
-        </div>
+
+          {/* Resize handles */}
+          <div className={styles.resizeHandleN} onMouseDown={(e) => handleResizeStart(e, 'n')} />
+          <div className={styles.resizeHandleS} onMouseDown={(e) => handleResizeStart(e, 's')} />
+          <div className={styles.resizeHandleE} onMouseDown={(e) => handleResizeStart(e, 'e')} />
+          <div className={styles.resizeHandleW} onMouseDown={(e) => handleResizeStart(e, 'w')} />
+          <div className={styles.resizeHandleNE} onMouseDown={(e) => handleResizeStart(e, 'ne')} />
+          <div className={styles.resizeHandleNW} onMouseDown={(e) => handleResizeStart(e, 'nw')} />
+          <div className={styles.resizeHandleSE} onMouseDown={(e) => handleResizeStart(e, 'se')} />
+          <div className={styles.resizeHandleSW} onMouseDown={(e) => handleResizeStart(e, 'sw')} />
+          </>
+        )}
       </div>
-
-      {/* LDAP Dialog */}
-      <LdapDialog 
-        isOpen={showLdapDialog}
-        onClose={() => setShowLdapDialog(false)}
-        initialTab={ldapInitialTab}
-      />
     </>
   );
 };

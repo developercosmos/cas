@@ -5,13 +5,11 @@ import { LdapDialog } from '@/components/LdapDialog';
 export interface NavigationManagerProps {
   isOpen?: boolean;
   onClose?: () => void;
-  directMenuId?: string; // ID of directly selected menu item
 }
 
 export const NavigationManager: React.FC<NavigationManagerProps> = ({
   isOpen: controlledOpen,
-  onClose: controlledClose,
-  directMenuId
+  onClose: controlledClose
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
   const [ldapDialogOpen, setLdapDialogOpen] = useState(false);
@@ -20,65 +18,14 @@ export const NavigationManager: React.FC<NavigationManagerProps> = ({
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const onClose = controlledClose || (() => setInternalOpen(false));
 
-  // Handle direct menu execution when directMenuId changes
-  useEffect(() => {
-    if (directMenuId) {
-      executeDirectMenu(directMenuId);
-    }
-  }, [directMenuId]);
-
-  const executeDirectMenu = async (moduleId: string) => {
-    try {
-      const token = localStorage.getItem('auth_token') || 'test-token';
-      
-      const response = await fetch('/api/plugins/menu-navigation/modules', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        const directModule = data.data.find((m: any) => m.id === moduleId);
-        
-        if (directModule) {
-          // Handle LDAP modules specially
-          if (directModule.pluginId === 'ldap-auth') {
-            let initialTab: 'config' | 'test' | 'users' = 'config';
-            
-            if (directModule.route?.includes('/test')) {
-              initialTab = 'test';
-            } else if (directModule.route?.includes('/users')) {
-              initialTab = 'users';
-            }
-            
-            setLdapInitialTab(initialTab);
-            setLdapDialogOpen(true);
-            return;
-          }
-
-          // Handle regular modules
-          if (directModule.route) {
-            window.location.href = directModule.route;
-          } else if (directModule.externalUrl) {
-            window.open(directModule.externalUrl, '_blank');
-          }
-        }
-      }
-    } catch (error) {
-      console.error('Error executing direct menu:', error);
-    }
-  };
-
   // Handle keyboard shortcut for regular navigation
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    // Ctrl+K or Cmd+K to open - only if no direct menu
-    if ((event.ctrlKey || event.metaKey) && event.key === 'k' && !directMenuId) {
+    // Ctrl+K or Cmd+K to open
+    if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
       event.preventDefault();
       setInternalOpen(true);
     }
-  }, [directMenuId]);
+  }, []);
 
   // Listen for keyboard shortcuts
   useEffect(() => {
@@ -86,23 +33,34 @@ export const NavigationManager: React.FC<NavigationManagerProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  // Render LDAP dialog if it's open
-  if (ldapDialogOpen) {
-    return (
+  // Handle opening LDAP dialog from NavigationModal
+  const handleOpenLdapDialog = (tab: 'config' | 'test' | 'users') => {
+    setLdapInitialTab(tab);
+    setLdapDialogOpen(true);
+  };
+
+  // Handle closing LDAP dialog
+  const handleCloseLdapDialog = () => {
+    setLdapDialogOpen(false);
+  };
+
+  return (
+    <>
+      {/* Navigation Modal */}
+      <NavigationModal 
+        isOpen={isOpen} 
+        onClose={onClose} 
+        onOpenLdapDialog={handleOpenLdapDialog}
+      />
+      
+      {/* LDAP Dialog - renders independently */}
       <LdapDialog 
         isOpen={ldapDialogOpen}
-        onClose={() => setLdapDialogOpen(false)}
+        onClose={handleCloseLdapDialog}
         initialTab={ldapInitialTab}
       />
-    );
-  }
-
-  // Don't render navigation modal if there's a direct menu
-  if (directMenuId) {
-    return null;
-  }
-
-  return <NavigationModal isOpen={isOpen} onClose={onClose} />;
+    </>
+  );
 };
 
 export default NavigationManager;

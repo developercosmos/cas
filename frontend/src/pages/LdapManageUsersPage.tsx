@@ -19,7 +19,7 @@ interface LdapConfigType {
 
 const LdapManageUsersPage: React.FC = () => {
   const [showUserManager, setShowUserManager] = useState(false);
-  const [configs, setConfigs] = useState<LdapConfigType[]>([]);
+  const [, setConfigs] = useState<LdapConfigType[]>([]);
   const [activeConfig, setActiveConfig] = useState<LdapConfigType | null>(null);
   const [stats, setStats] = useState({
     totalLdapUsers: 0,
@@ -60,30 +60,35 @@ const LdapManageUsersPage: React.FC = () => {
       const token = localStorage.getItem('auth_token');
       if (!token) return;
 
-      const [ldapResponse, importedResponse] = await Promise.all([
-        fetch('/api/ldap/users/stats', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }).catch(() => ({ ok: false })),
-        fetch('/api/ldap/imported-users/stats', {
-          headers: { 'Authorization': `Bearer ${token}` }
-        }).catch(() => ({ ok: false }))
-      ]);
-
       const newStats = { ...stats };
 
-      if (ldapResponse.ok) {
-        const ldapData = await ldapResponse.json();
-        if (ldapData.success) {
-          newStats.totalLdapUsers = ldapData.totalUsers || 0;
+      try {
+        const ldapResponse = await fetch('/api/ldap/users/stats', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (ldapResponse.ok) {
+          const ldapData = await ldapResponse.json();
+          if (ldapData.success) {
+            newStats.totalLdapUsers = ldapData.totalUsers || 0;
+          }
         }
+      } catch {
+        // Ignore LDAP stats errors
       }
 
-      if (importedResponse.ok) {
-        const importedData = await importedResponse.json();
-        if (importedData.success) {
-          newStats.importedUsers = importedData.totalUsers || 0;
-          newStats.lastImport = importedData.lastImport ? new Date(importedData.lastImport) : null;
+      try {
+        const importedResponse = await fetch('/api/ldap/imported-users/stats', {
+          headers: { 'Authorization': `Bearer ${token}` }
+        });
+        if (importedResponse.ok) {
+          const importedData = await importedResponse.json();
+          if (importedData.success) {
+            newStats.importedUsers = importedData.totalUsers || 0;
+            newStats.lastImport = importedData.lastImport ? new Date(importedData.lastImport) : null;
+          }
         }
+      } catch {
+        // Ignore imported users stats errors
       }
 
       setStats(newStats);
