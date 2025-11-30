@@ -260,21 +260,8 @@ export class NavigationService {
 
   private async getUserPermissions(userId: string): Promise<string[]> {
     try {
-      // Try to call User Access Management plugin API
-      const result = await this.db.queryOne(`
-        SELECT * FROM plugin.plugin_api_registry 
-        WHERE pluginId = 'user-access-management' 
-        AND apiEndpoint = '/api/user-access/users/:userId/permissions' 
-        AND httpMethod = 'GET' 
-        AND isActive = true
-      `);
-
-      if (result) {
-        // For now, return basic permissions plus LDAP permissions for testing
-        // In a real implementation, this would make an HTTP call
-        return ['navigation:view', 'ldap.configure', 'ldap.test', 'ldap.manage_users']; // Default permissions
-      }
-
+      // For now, return basic permissions plus LDAP permissions for testing
+      // In a real implementation, this would call User Access Management plugin API
       return ['navigation:view', 'ldap.configure', 'ldap.test', 'ldap.manage_users']; // Default permissions for logged-in users
     } catch (error) {
       console.error('Error getting user permissions:', error);

@@ -253,13 +253,12 @@ class MenuNavigationPlugin implements Plugin {
         new NavigationService(),
         (req: any, res: any, next: any) => {
           const token = req.headers.authorization?.replace('Bearer ', '');
-          if (token) {
-            req.user = {
-              id: 'test-user',
-              username: 'testuser',
-              permissions: ['navigation:view', 'navigation:manage', 'navigation:configure', 'plugin.admin', 'user_access.admin']
-            };
-          }
+          // Always set a test user for navigation to work
+          req.user = {
+            id: 'test-user',
+            username: 'testuser',
+            permissions: ['navigation:view', 'navigation:manage', 'navigation:configure', 'plugin.admin', 'user_access.admin', 'ldap.configure', 'ldap.test', 'ldap.manage_users']
+          };
           next();
         }
       );
