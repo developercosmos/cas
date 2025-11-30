@@ -4,11 +4,13 @@ import { NavigationModal } from './NavigationModal';
 export interface NavigationManagerProps {
   isOpen?: boolean;
   onClose?: () => void;
+  directMenuId?: string; // ID of directly selected menu item
 }
 
 export const NavigationManager: React.FC<NavigationManagerProps> = ({
   isOpen: controlledOpen,
-  onClose: controlledClose
+  onClose: controlledClose,
+  directMenuId
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
 
@@ -29,7 +31,7 @@ export const NavigationManager: React.FC<NavigationManagerProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  return <NavigationModal isOpen={isOpen} onClose={onClose} />;
+  return <NavigationModal isOpen={isOpen} onClose={onClose} directMenuId={directMenuId} />;
 };
 
 export default NavigationManager;

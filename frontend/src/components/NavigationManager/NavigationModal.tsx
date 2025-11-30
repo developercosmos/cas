@@ -6,9 +6,10 @@ import styles from './styles.module.css';
 interface NavigationModalProps {
   isOpen: boolean;
   onClose: () => void;
+  directMenuId?: string; // ID of directly selected menu item
 }
 
-export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClose }) => {
+export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClose, directMenuId }) => {
   const [modules, setModules] = useState<NavigationModule[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredModules, setFilteredModules] = useState<NavigationModule[]>([]);
@@ -45,10 +46,19 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
     return () => observer.disconnect();
   }, []);
 
-  // Load modules when modal opens
+  // Load modules when modal opens or direct menu is selected
   useEffect(() => {
     if (isOpen) {
-      loadModules();
+      loadModules().then(() => {
+        // If directMenuId is provided, handle direct menu selection
+        if (directMenuId) {
+          const directModule = modules.find(m => m.id === directMenuId);
+          if (directModule) {
+            // Handle direct menu without showing navigation
+            handleDirectMenuClick(directModule);
+          }
+        }
+      });
       // Focus search input
       setTimeout(() => searchInputRef.current?.focus(), 100);
       // Center modal initially
@@ -57,7 +67,7 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
     } else {
       setIsDraggable(false);
     }
-  }, [isOpen]);
+  }, [isOpen, directMenuId]);
 
   // Handle mouse down on header for dragging
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -165,8 +175,8 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
     }
   }, [isOpen, onClose]);
 
-  const handleModuleClick = (module: NavigationModule) => {
-    // Handle LDAP modules specially - open dialog instead of navigation
+  const handleDirectMenuClick = (module: NavigationModule) => {
+    // Handle LDAP modules specially - open dialog directly
     if (module.pluginId === 'ldap-auth') {
       let initialTab: 'config' | 'test' | 'users' = 'config';
       
@@ -183,6 +193,42 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
     }
 
     // Handle regular modules
+    if (module.route) {
+      window.location.href = module.route;
+    } else if (module.externalUrl) {
+      window.open(module.externalUrl, '_blank');
+    }
+  };
+
+  const handleModuleClick = (module: NavigationModule) => {
+    // Handle direct menu click without showing navigation
+    if (directMenuId) {
+      handleDirectMenuClick(module);
+      return;
+    }
+    
+    // Handle regular module click
+    handleRegularModuleClick(module);
+  };
+
+  const handleRegularModuleClick = (module: NavigationModule) => {
+    // Handle LDAP modules specially - open dialog instead of navigation
+    if (module.pluginId === 'ldap-auth') {
+      let initialTab: 'config' | 'test' | 'users' = 'config';
+      
+      if (module.route?.includes('/test')) {
+        initialTab = 'test';
+      } else if (module.route?.includes('/users')) {
+        initialTab = 'users';
+      }
+      
+      setLdapInitialTab(initialTab);
+      setShowLdapDialog(true);
+      onClose(); // Close navigation modal
+      return;
+    }
+
+    // Handle other modules
     if (module.route) {
       window.location.href = module.route;
     } else if (module.externalUrl) {
