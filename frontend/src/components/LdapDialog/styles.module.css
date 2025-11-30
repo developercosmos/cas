@@ -206,6 +206,30 @@
   min-height: 400px;
 }
 
+.infoMessage {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  text-align: center;
+  color: var(--text-secondary);
+  background: var(--background-tertiary);
+  border-radius: 8px;
+  padding: 40px;
+  margin: 20px;
+}
+
+[data-theme="light"] .infoMessage {
+  background: #f1f5f9;
+  color: #64748b;
+}
+
+[data-theme="dark"] .infoMessage {
+  background: #374151;
+  color: #94a3b8;
+}
+
 .modalFooter {
   padding: 4px 24px;
   border-top: 1px solid var(--accent-primary);

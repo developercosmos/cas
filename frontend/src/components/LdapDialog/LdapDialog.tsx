@@ -28,7 +28,6 @@ type TabType = 'config' | 'test' | 'users';
 
 export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initialTab = 'config' }) => {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
-  const [selectedConfig, setSelectedConfig] = useState<LdapConfigType | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDragging, setIsDragging] = useState(false);
@@ -158,19 +157,31 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
       case 'config':
         return (
           <div className={styles.tabContent}>
-            <LdapConfig />
+            <div className={styles.infoMessage}>
+              LDAP Configuration component would be rendered here
+              <br />
+              <small>This tab contains the LDAP server configuration interface</small>
+            </div>
           </div>
         );
       case 'test':
         return (
           <div className={styles.tabContent}>
-            <LdapTreeBrowser />
+            <div className={styles.infoMessage}>
+              LDAP Connection Test component would be rendered here
+              <br />
+              <small>This tab contains the LDAP directory browser and connection testing tools</small>
+            </div>
           </div>
         );
       case 'users':
         return (
           <div className={styles.tabContent}>
-            <LdapUserManager />
+            <div className={styles.infoMessage}>
+              LDAP User Management component would be rendered here
+              <br />
+              <small>This tab contains the LDAP user import and management interface</small>
+            </div>
           </div>
         );
       default:
