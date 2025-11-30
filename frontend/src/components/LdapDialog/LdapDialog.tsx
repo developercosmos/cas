@@ -1,20 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import styles from './styles.module.css';
 
-interface LdapConfigType {
-  id: string;
-  serverUrl: string;
-  baseDN: string;
-  bindDN: string;
-  bindPassword: string;
-  searchFilter: string;
-  searchAttribute: string;
-  groupAttribute: string;
-  isSecure: boolean;
-  port: number;
-  isActive: boolean;
-}
-
 interface LdapDialogProps {
   isOpen: boolean;
   onClose: () => void;
