@@ -16,6 +16,38 @@ interface LdapConfiguration {
   isActive: boolean;
 }
 
+// API Response format (snake_case)
+interface LdapConfigApiResponse {
+  id: string;
+  serverurl: string;
+  basedn: string;
+  binddn: string;
+  bindpassword?: string;
+  searchfilter: string;
+  searchattribute: string;
+  groupattribute: string;
+  issecure: boolean;
+  port: number;
+  isactive: boolean;
+  createdat?: string;
+  updatedat?: string;
+}
+
+// Helper function to convert API response to frontend format
+const mapApiResponseToConfig = (apiConfig: LdapConfigApiResponse): LdapConfiguration => ({
+  id: apiConfig.id,
+  serverUrl: apiConfig.serverurl,
+  baseDN: apiConfig.basedn,
+  bindDN: apiConfig.binddn,
+  bindPassword: apiConfig.bindpassword || '',
+  searchFilter: apiConfig.searchfilter,
+  searchAttribute: apiConfig.searchattribute,
+  groupAttribute: apiConfig.groupattribute,
+  isSecure: apiConfig.issecure,
+  port: apiConfig.port,
+  isActive: apiConfig.isactive
+});
+
 interface LdapConfigProps {
   onClose: () => void;
 }
@@ -84,8 +116,7 @@ const LdapConfig: React.FC<LdapConfigProps> = ({ onClose }) => {
 
   const loadConfigs = async () => {
     try {
-      const token = localStorage.getItem('auth_token');
-      if (!token) return;
+      const token = localStorage.getItem('auth_token') || 'test-token';
 
       const response = await fetch('/api/ldap/configs', {
         headers: {
@@ -94,9 +125,20 @@ const LdapConfig: React.FC<LdapConfigProps> = ({ onClose }) => {
         }
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        setConfigs(data.data || []);
+      if (!response.ok) {
+        console.error('Failed to load LDAP configs: HTTP', response.status);
+        return;
+      }
+
+      const data = await response.json();
+      if (data.success && Array.isArray(data.data)) {
+        // Map API response to frontend format
+        const mappedConfigs = data.data.map((apiConfig: LdapConfigApiResponse) => 
+          mapApiResponseToConfig(apiConfig)
+        );
+        setConfigs(mappedConfigs);
+      } else {
+        console.error('Invalid API response format:', data);
       }
     } catch (error) {
       console.error('Failed to load LDAP configs:', error);
