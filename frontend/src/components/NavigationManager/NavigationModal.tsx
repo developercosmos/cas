@@ -6,10 +6,9 @@ import styles from './styles.module.css';
 interface NavigationModalProps {
   isOpen: boolean;
   onClose: () => void;
-  directMenuId?: string; // ID of directly selected menu item
 }
 
-export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClose, directMenuId }) => {
+export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClose }) => {
   const [modules, setModules] = useState<NavigationModule[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredModules, setFilteredModules] = useState<NavigationModule[]>([]);
@@ -46,19 +45,10 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
     return () => observer.disconnect();
   }, []);
 
-  // Load modules when modal opens or direct menu is selected
+  // Load modules when modal opens
   useEffect(() => {
     if (isOpen) {
-      loadModules().then(() => {
-        // If directMenuId is provided, handle direct menu selection
-        if (directMenuId) {
-          const directModule = modules.find(m => m.id === directMenuId);
-          if (directModule) {
-            // Handle direct menu without showing navigation
-            handleDirectMenuClick(directModule);
-          }
-        }
-      });
+      loadModules();
       // Focus search input
       setTimeout(() => searchInputRef.current?.focus(), 100);
       // Center modal initially
@@ -67,7 +57,7 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
     } else {
       setIsDraggable(false);
     }
-  }, [isOpen, directMenuId]);
+  }, [isOpen]);
 
   // Handle mouse down on header for dragging
   const handleMouseDown = (e: React.MouseEvent) => {
@@ -201,17 +191,6 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
   };
 
   const handleModuleClick = (module: NavigationModule) => {
-    // Handle direct menu click without showing navigation
-    if (directMenuId) {
-      handleDirectMenuClick(module);
-      return;
-    }
-    
-    // Handle regular module click
-    handleRegularModuleClick(module);
-  };
-
-  const handleRegularModuleClick = (module: NavigationModule) => {
     // Handle LDAP modules specially - open dialog instead of navigation
     if (module.pluginId === 'ldap-auth') {
       let initialTab: 'config' | 'test' | 'users' = 'config';
@@ -254,6 +233,9 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
   };
 
   if (!isOpen) return null;
+
+  // Don't render navigation modal if there's a direct menu selection
+  if (directMenuId) return null;
 
   return (
     <>
