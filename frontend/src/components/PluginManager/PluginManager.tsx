@@ -3,8 +3,8 @@ import { PluginMetadata, PluginInstallRequest } from '../../types';
 import { PluginAdminService } from '../../services/PluginAdminService';
 import { PluginDocumentationService } from '../../services/PluginDocumentationService';
 import { Button, Input, Textarea } from '../base-ui/styled-components';
-import LdapUserManager from '../LdapUserManager';
-import LdapTreeBrowser from '../LdapTreeBrowser';
+import { LdapUserManager } from '../LdapUserManager';
+import { LdapTreeBrowser } from '../LdapTreeBrowser';
 import RAGConfiguration from '../RAGConfiguration/RAGConfiguration';
 
 // Dynamic API URL that works for both localhost and network access

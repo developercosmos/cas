@@ -1,8 +1,7 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import LdapConfig from '@/components/LdapConfig/LdapConfig';
 import LdapTreeBrowser from '@/components/LdapTreeBrowser/LdapTreeBrowser';
 import LdapUserManager from '@/components/LdapUserManager/LdapUserManager';
-import { Button } from '@/components/base-ui/styled-components';
 import styles from './styles.module.css';
 
 interface LdapConfigType {
@@ -29,7 +28,6 @@ type TabType = 'config' | 'test' | 'users';
 
 export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initialTab = 'config' }) => {
   const [activeTab, setActiveTab] = useState<TabType>(initialTab);
-  const [configs, setConfigs] = useState<LdapConfigType[]>([]);
   const [selectedConfig, setSelectedConfig] = useState<LdapConfigType | null>(null);
   const [isDarkMode, setIsDarkMode] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
@@ -60,7 +58,6 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
   // Load configs when dialog opens
   useEffect(() => {
     if (isOpen) {
-      loadConfigs();
       setActiveTab(initialTab);
       setPosition({ x: 0, y: 0 });
       setIsDraggable(true);
@@ -161,28 +158,19 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
       case 'config':
         return (
           <div className={styles.tabContent}>
-            <LdapConfig 
-              onConfigUpdate={loadConfigs}
-              selectedConfig={selectedConfig}
-            />
+            <LdapConfig />
           </div>
         );
       case 'test':
         return (
           <div className={styles.tabContent}>
-            <LdapTreeBrowser 
-              config={selectedConfig}
-              onConfigUpdate={loadConfigs}
-            />
+            <LdapTreeBrowser />
           </div>
         );
       case 'users':
         return (
           <div className={styles.tabContent}>
-            <LdapUserManager 
-              config={selectedConfig}
-              onConfigUpdate={loadConfigs}
-            />
+            <LdapUserManager />
           </div>
         );
       default:
