@@ -1,5 +1,24 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
+import LdapConfig from '../LdapConfig/LdapConfig';
+import LdapTreeBrowser from '../LdapTreeBrowser/LdapTreeBrowser';
+import LdapUserManager from '../LdapUserManager/LdapUserManager';
+import { Button } from '../base-ui/styled-components';
 import styles from './styles.module.css';
+
+// LDAP Configuration Interface (from existing LdapConfig)
+interface LdapConfiguration {
+  id: string;
+  serverUrl: string;
+  baseDN: string;
+  bindDN: string;
+  bindPassword: string;
+  searchFilter: string;
+  searchAttribute: string;
+  groupAttribute: string;
+  isSecure: boolean;
+  port: number;
+  isActive: boolean;
+}
 
 interface LdapDialogProps {
   isOpen: boolean;
@@ -49,9 +68,44 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
   const [isResizing, setIsResizing] = useState(false);
   const [resizeDirection, setResizeDirection] = useState('');
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+
+  // LDAP State Management
+  const [configs, setConfigs] = useState<LdapConfiguration[]>([]);
+  const [selectedConfig, setSelectedConfig] = useState<LdapConfiguration | null>(null);
+  const [showConfigForm, setShowConfigForm] = useState(false);
+  const [showTreeBrowser, setShowTreeBrowser] = useState(false);
+  const [showUserManager, setShowUserManager] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [preMinimizeState, setPreMinimizeState] = useState<{ position: { x: number; y: number }; size: { width: number; height: number } } | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
+
+  // LDAP Helper Functions
+  const loadConfigs = async () => {
+    try {
+        const response = await fetch('/api/ldap/configs', {
+          headers: {
+            'Authorization': `Bearer test-token`,
+            'Content-Type': 'application/json'
+          }
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setConfigs(data.data || []);
+          const activeConfig = (data.data || []).find((c: LdapConfiguration) => c.isActive);
+          setSelectedConfig(activeConfig || null);
+        }
+      } catch (error) {
+        console.error('Failed to load LDAP configs:', error);
+      }
+  };
+
+  // Load LDAP configs when dialog opens
+  useEffect(() => {
+    if (isOpen) {
+      loadConfigs();
+    }
+  }, [isOpen]);
 
   // Detect dark mode
   useEffect(() => {
@@ -247,32 +301,137 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
   const renderTabContent = () => {
     switch (activeTab) {
       case 'config':
+        if (showConfigForm) {
+          return (
+            <div className={styles.tabContent}>
+              <LdapConfig onClose={() => {
+                setShowConfigForm(false);
+                loadConfigs(); // Reload configs when closing
+              }} />
+            </div>
+          );
+        }
         return (
           <div className={styles.tabContent}>
-            <div className={styles.infoMessage}>
-              LDAP Configuration component would be rendered here
-              <br />
-              <small>This tab contains the LDAP server configuration interface</small>
+            <div style={{ padding: '2rem', textAlign: 'center' }}>
+              <h3>LDAP Configuration</h3>
+              <p>Manage LDAP server connections and authentication settings.</p>
+              <Button 
+                onClick={() => setShowConfigForm(true)}
+                style={{ margin: '1rem' }}
+              >
+                Configure LDAP
+              </Button>
+              {configs.length > 0 && (
+                <div style={{ marginTop: '2rem' }}>
+                  <h4>Existing Configurations</h4>
+                  {configs.map((config) => (
+                    <div key={config.id} style={{ 
+                      padding: '1rem', 
+                      margin: '0.5rem 0', 
+                      border: '1px solid var(--border-primary)',
+                      borderRadius: '0.5rem',
+                      background: 'var(--bg-section)'
+                    }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div>
+                          <strong>{config.serverUrl}</strong>
+                          <br />
+                          <small>{config.baseDN}</small>
+                        </div>
+                        <div style={{ 
+                          padding: '0.25rem 0.5rem', 
+                          borderRadius: '0.25rem',
+                          fontSize: '0.75rem',
+                          background: config.isActive ? 'var(--success, #28a745)' : 'var(--error, #dc2626)',
+                          color: 'white'
+                        }}>
+                          {config.isActive ? 'Active' : 'Inactive'}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           </div>
         );
       case 'test':
+        if (showTreeBrowser && selectedConfig) {
+          return (
+            <div className={styles.tabContent}>
+              <LdapTreeBrowser
+                onClose={() => {
+                  setShowTreeBrowser(false);
+                  loadConfigs(); // Reload configs when closing
+                }}
+                onSelect={(dn: string) => {
+                  console.log('Selected DN:', dn);
+                }}
+                currentBaseDn={selectedConfig.baseDN}
+                serverConfig={{
+                  serverurl: selectedConfig.serverUrl,
+                  basedn: selectedConfig.baseDN,
+                  binddn: selectedConfig.bindDN,
+                  bindpassword: selectedConfig.bindPassword,
+                  issecure: selectedConfig.isSecure,
+                  port: selectedConfig.port
+                }}
+              />
+            </div>
+          );
+        }
         return (
           <div className={styles.tabContent}>
-            <div className={styles.infoMessage}>
-              LDAP Connection Test component would be rendered here
-              <br />
-              <small>This tab contains the LDAP directory browser and connection testing tools</small>
+            <div style={{ padding: '2rem', textAlign: 'center' }}>
+              <h3>LDAP Connection Test</h3>
+              <p>Test LDAP connection and browse directory structure.</p>
+              {selectedConfig ? (
+                <Button 
+                  onClick={() => setShowTreeBrowser(true)}
+                  style={{ margin: '1rem' }}
+                >
+                  Browse Directory
+                </Button>
+              ) : (
+                <p style={{ color: 'var(--error, #dc2626)', margin: '1rem' }}>
+                  Please configure an LDAP connection first in the Configuration tab.
+                </p>
+              )}
             </div>
           </div>
         );
       case 'users':
+        if (showUserManager) {
+          return (
+            <div className={styles.tabContent}>
+              <LdapUserManager 
+                onClose={() => {
+                  setShowUserManager(false);
+                  loadConfigs(); // Reload configs when closing
+                }} 
+                configId={selectedConfig?.id || ''} 
+              />
+            </div>
+          );
+        }
         return (
           <div className={styles.tabContent}>
-            <div className={styles.infoMessage}>
-              LDAP User Management component would be rendered here
-              <br />
-              <small>This tab contains the LDAP user import and management interface</small>
+            <div style={{ padding: '2rem', textAlign: 'center' }}>
+              <h3>LDAP User Management</h3>
+              <p>Import and manage LDAP users in the system.</p>
+              {selectedConfig ? (
+                <Button 
+                  onClick={() => setShowUserManager(true)}
+                  style={{ margin: '1rem' }}
+                >
+                  Manage Users
+                </Button>
+              ) : (
+                <p style={{ color: 'var(--error, #dc2626)', margin: '1rem' }}>
+                  Please configure an LDAP connection first in the Configuration tab.
+                </p>
+              )}
             </div>
           </div>
         );
