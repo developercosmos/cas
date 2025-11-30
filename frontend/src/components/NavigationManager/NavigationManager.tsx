@@ -14,8 +14,6 @@ export const NavigationManager: React.FC<NavigationManagerProps> = ({
   directMenuId
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
-  const [ldapDialogOpen, setLdapDialogOpen] = useState(false);
-  const [ldapInitialTab, setLdapInitialTab] = useState<'config' | 'test' | 'users'>('config');
 
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const onClose = controlledClose || (() => setInternalOpen(false));
@@ -81,7 +79,7 @@ export const NavigationManager: React.FC<NavigationManagerProps> = ({
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
 
-  return <NavigationModal isOpen={isOpen} onClose={onClose} directMenuId={directMenuId} />;
+  return <NavigationModal isOpen={isOpen} onClose={onClose} />;
 };
 
 export default NavigationManager;
