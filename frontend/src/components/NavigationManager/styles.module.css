@@ -247,13 +247,14 @@
   align-items: flex-start;
   gap: 12px;
   padding: 16px;
-  background: #ffffff;
-  border: 1px solid var(--border-primary);
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
   border-radius: 8px;
   cursor: pointer;
   transition: all 0.2s ease;
   text-align: left;
   width: 100%;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
 }
 
 [data-theme="dark"] .moduleCard {
@@ -268,11 +269,16 @@
 }
 
 [data-theme="light"] .moduleCard:hover {
-  background: #f8fafc !important;
+  background: #e2e8f0 !important;
+  border-color: var(--accent-primary);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 [data-theme="dark"] .moduleCard:hover {
   background: #4b5563 !important;
+  border-color: var(--accent-primary);
+  transform: translateY(-1px);
 }
 
 .moduleIcon {
@@ -300,7 +306,7 @@
 .moduleDescription {
   margin: 0 0 8px 0;
   font-size: 0.875rem;
-  color: var(--text-secondary);
+  color: #475569;
   line-height: 1.4;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -310,11 +316,20 @@
 
 .modulePlugin {
   font-size: 0.75rem;
-  color: var(--text-muted);
-  background: var(--background-primary);
+  color: #64748b;
+  background: #e2e8f0;
   padding: 2px 6px;
   border-radius: 4px;
   font-family: var(--font-mono);
+}
+
+[data-theme="dark"] .moduleDescription {
+  color: #94a3b8;
+}
+
+[data-theme="dark"] .modulePlugin {
+  color: #94a3b8;
+  background: #475569;
 }
 
 .emptyState {
