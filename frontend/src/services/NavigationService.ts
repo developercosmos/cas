@@ -25,8 +25,10 @@ export interface NavigationConfig {
 
 export class NavigationApiService {
   private static getBaseUrl(): string {
+    // Use the same hostname as the current page, but with backend port
+    const hostname = window.location.hostname;
     const isDevelopment = import.meta.env.DEV;
-    return isDevelopment ? 'http://localhost:4000' : '';
+    return isDevelopment ? `http://${hostname}:4000` : '';
   }
 
   private static getHeaders(): HeadersInit {
