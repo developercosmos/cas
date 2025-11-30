@@ -14,14 +14,21 @@ export const NavigationManager: React.FC<NavigationManagerProps> = ({
   directMenuId
 }) => {
   const [internalOpen, setInternalOpen] = useState(false);
+  const [ldapDialogOpen, setLdapDialogOpen] = useState(false);
+  const [ldapInitialTab, setLdapInitialTab] = useState<'config' | 'test' | 'users'>('config');
 
   const isOpen = controlledOpen !== undefined ? controlledOpen : internalOpen;
   const onClose = controlledClose || (() => setInternalOpen(false));
 
-  // Handle direct menu execution without opening modal
-  const handleDirectMenu = async (moduleId: string) => {
+  // Handle direct menu execution when directMenuId changes
+  useEffect(() => {
+    if (directMenuId) {
+      executeDirectMenu(directMenuId);
+    }
+  }, [directMenuId]);
+
+  const executeDirectMenu = async (moduleId: string) => {
     try {
-      // Load modules first to get the direct module info
       const token = localStorage.getItem('auth_token') || 'test-token';
       
       const response = await fetch('/api/plugins/menu-navigation/modules', {
@@ -46,7 +53,6 @@ export const NavigationManager: React.FC<NavigationManagerProps> = ({
               initialTab = 'users';
             }
             
-            // Dispatch custom event to open LDAP dialog
             setLdapInitialTab(initialTab);
             setLdapDialogOpen(true);
             return;
@@ -61,23 +67,40 @@ export const NavigationManager: React.FC<NavigationManagerProps> = ({
         }
       }
     } catch (error) {
-      console.error('Error handling direct menu:', error);
+      console.error('Error executing direct menu:', error);
     }
   };
 
-  // Handle keyboard shortcut
+  // Handle keyboard shortcut for regular navigation
   const handleKeyDown = useCallback((event: KeyboardEvent) => {
-    // Ctrl+K or Cmd+K to open
-    if ((event.ctrlKey || event.metaKey) && event.key === 'k') {
+    // Ctrl+K or Cmd+K to open - only if no direct menu
+    if ((event.ctrlKey || event.metaKey) && event.key === 'k' && !directMenuId) {
       event.preventDefault();
       setInternalOpen(true);
     }
-  }, []);
+  }, [directMenuId]);
 
+  // Listen for keyboard shortcuts
   useEffect(() => {
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
   }, [handleKeyDown]);
+
+  // Render LDAP dialog if it's open
+  if (ldapDialogOpen) {
+    return (
+      <LdapDialog 
+        isOpen={ldapDialogOpen}
+        onClose={() => setLdapDialogOpen(false)}
+        initialTab={ldapInitialTab}
+      />
+    );
+  }
+
+  // Don't render navigation modal if there's a direct menu
+  if (directMenuId) {
+    return null;
+  }
 
   return <NavigationModal isOpen={isOpen} onClose={onClose} />;
 };
