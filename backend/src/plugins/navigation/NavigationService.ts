@@ -30,33 +30,13 @@ export class NavigationService {
           isActive: true
         },
         {
-          name: 'LDAP Configuration',
-          description: 'Configure LDAP authentication',
+          name: 'LDAP Management',
+          description: 'Configure LDAP authentication, manage users, and test connections',
           pluginId: 'ldap-auth',
           requiresAuth: true,
-          requiredPermissions: ['ldap.configure'],
+          requiredPermissions: ['ldap.configure', 'ldap.test', 'ldap.manage_users'],
           route: '/admin/ldap',
           sortOrder: 30,
-          isActive: true
-        },
-        {
-          name: 'LDAP Test',
-          description: 'Test LDAP connection and browse directory',
-          pluginId: 'ldap-auth',
-          requiresAuth: true,
-          requiredPermissions: ['ldap.test'],
-          route: '/admin/ldap/test',
-          sortOrder: 32,
-          isActive: true
-        },
-        {
-          name: 'LDAP Manage Users',
-          description: 'Manage LDAP user import and synchronization',
-          pluginId: 'ldap-auth',
-          requiresAuth: true,
-          requiredPermissions: ['ldap.manage_users'],
-          route: '/admin/ldap/users',
-          sortOrder: 34,
           isActive: true
         },
         {
