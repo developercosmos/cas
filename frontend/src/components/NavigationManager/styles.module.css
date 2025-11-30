@@ -25,6 +25,7 @@
   z-index: 10000;
   position: relative;
   opacity: 1;
+  user-select: none;
 }
 
 .modalHeader {
@@ -36,6 +37,39 @@
   opacity: 1;
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
+}
+
+.modalHeader:hover {
+  background: var(--background-tertiary);
+}
+
+.draggableHeader {
+  cursor: grab;
+}
+
+.draggableHeader:active {
+  cursor: grabbing;
+}
+
+.dragHandle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 4px;
+  margin-right: 8px;
+  color: var(--text-secondary);
+  cursor: grab;
+  border-radius: 2px;
+  transition: all 0.2s ease;
+}
+
+.dragHandle:hover {
+  background: var(--background-primary);
+  color: var(--text-primary);
+}
+
+.dragHandle:active {
+  cursor: grabbing;
 }
 
 .modalHeader.lightHeader {

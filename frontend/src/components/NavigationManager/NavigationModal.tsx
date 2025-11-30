@@ -14,7 +14,12 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
   const [loading, setLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'plugin' | 'sortOrder'>('sortOrder');
   const [isDarkMode, setIsDarkMode] = useState(false);
+  const [position, setPosition] = useState({ x: 0, y: 0 });
+  const [isDragging, setIsDragging] = useState(false);
+  const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
+  const [isDraggable, setIsDraggable] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+  const modalRef = useRef<HTMLDivElement>(null);
 
   // Detect dark mode
   useEffect(() => {
@@ -43,8 +48,58 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
       loadModules();
       // Focus search input
       setTimeout(() => searchInputRef.current?.focus(), 100);
+      // Center modal initially
+      setPosition({ x: 0, y: 0 });
+      setIsDraggable(true);
+    } else {
+      setIsDraggable(false);
     }
   }, [isOpen]);
+
+  // Handle mouse down on header for dragging
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!modalRef.current || !isDraggable) return;
+    
+    const rect = modalRef.current.getBoundingClientRect();
+    setDragStart({
+      x: e.clientX - rect.left,
+      y: e.clientY - rect.top
+    });
+    setIsDragging(true);
+    e.preventDefault();
+  };
+
+  // Handle mouse move for dragging
+  useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!isDragging || !modalRef.current) return;
+      
+      const newX = e.clientX - dragStart.x;
+      const newY = e.clientY - dragStart.y;
+      
+      // Constrain to viewport bounds
+      const maxX = window.innerWidth - modalRef.current.offsetWidth;
+      const maxY = window.innerHeight - modalRef.current.offsetHeight;
+      
+      setPosition({
+        x: Math.max(0, Math.min(newX, maxX)),
+        y: Math.max(0, Math.min(newY, maxY))
+      });
+    };
+
+    const handleMouseUp = () => {
+      setIsDragging(false);
+    };
+
+    if (isDragging) {
+      document.addEventListener('mousemove', handleMouseMove);
+      document.addEventListener('mouseup', handleMouseUp);
+      return () => {
+        document.removeEventListener('mousemove', handleMouseMove);
+        document.removeEventListener('mouseup', handleMouseUp);
+      };
+    }
+  }, [isDragging, dragStart]);
 
   // Load all accessible modules
   const loadModules = useCallback(async () => {
@@ -137,12 +192,40 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
   return (
     <>
       <div className={styles.modalOverlay} onClick={onClose} />
-      <div className={styles.modalContent}>
-        <div className={`${styles.modalHeader} ${isDarkMode ? styles.darkHeader : styles.lightHeader}`}>
+      <div 
+        ref={modalRef}
+        className={styles.modalContent}
+        style={{
+          position: position.x === 0 && position.y === 0 ? 'fixed' : 'fixed',
+          left: position.x === 0 && position.y === 0 ? '50%' : position.x,
+          top: position.y === 0 && position.y === 0 ? '50%' : position.y,
+          transform: position.x === 0 && position.y === 0 ? 'translate(-50%, -50%)' : 'none',
+          cursor: isDragging ? 'grabbing' : 'default'
+        }}
+      >
+        <div 
+          className={`${styles.modalHeader} ${isDarkMode ? styles.darkHeader : styles.lightHeader} ${isDraggable ? styles.draggableHeader : ''}`}
+          style={{ cursor: isDraggable ? 'grab' : 'default' }}
+          onMouseDown={handleMouseDown}
+        >
+          <div className={styles.dragHandle}>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <circle cx="4" cy="4" r="1.5" fill="currentColor" opacity="0.5"/>
+              <circle cx="8" cy="4" r="1.5" fill="currentColor" opacity="0.5"/>
+              <circle cx="12" cy="4" r="1.5" fill="currentColor" opacity="0.5"/>
+              <circle cx="4" cy="8" r="1.5" fill="currentColor" opacity="0.5"/>
+              <circle cx="8" cy="8" r="1.5" fill="currentColor" opacity="0.5"/>
+              <circle cx="12" cy="8" r="1.5" fill="currentColor" opacity="0.5"/>
+              <circle cx="4" cy="12" r="1.5" fill="currentColor" opacity="0.5"/>
+              <circle cx="8" cy="12" r="1.5" fill="currentColor" opacity="0.5"/>
+              <circle cx="12" cy="12" r="1.5" fill="currentColor" opacity="0.5"/>
+            </svg>
+          </div>
           <h2 className={styles.modalTitle}>Navigation</h2>
           <button
             className={styles.closeButton}
             onClick={onClose}
+            onMouseDown={(e) => e.stopPropagation()}
             aria-label="Close navigation"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
