@@ -1,1 +1,1 @@
-export { default } from './LdapConfig';
+export { default as LdapConfig } from './LdapConfig';

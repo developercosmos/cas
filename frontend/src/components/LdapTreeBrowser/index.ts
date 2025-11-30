@@ -1,1 +1,1 @@
-export { default } from './LdapTreeBrowser';
+export { default as LdapTreeBrowser } from './LdapTreeBrowser';

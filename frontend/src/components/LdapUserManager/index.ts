@@ -1,1 +1,1 @@
-export { default } from './LdapUserManager';
+export { default as LdapUserManager } from './LdapUserManager';
