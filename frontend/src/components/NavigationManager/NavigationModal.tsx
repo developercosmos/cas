@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { NavigationApiService, NavigationModule } from '@/services/NavigationService';
+import { NavigationModule } from '@/services/NavigationService';
 import { LdapDialog } from '@/components/LdapDialog';
 import styles from './styles.module.css';
 
@@ -9,7 +9,6 @@ interface NavigationModalProps {
 }
 
 export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClose }) => {
-  const [modules, setModules] = useState<NavigationModule[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [filteredModules, setFilteredModules] = useState<NavigationModule[]>([]);
   const [loading, setLoading] = useState(false);
@@ -23,22 +22,6 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
   const [ldapInitialTab, setLdapInitialTab] = useState<'config' | 'test' | 'users'>('config');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
-
-  // Load modules when modal opens
-  const loadModules = async () => {
-    try {
-      setLoading(true);
-      const response = await NavigationApiService.getModules();
-      if (response.success) {
-        setModules(response.data);
-        setFilteredModules(response.data);
-      }
-    } catch (error) {
-      console.error('Error loading modules:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   // Detect dark mode
   useEffect(() => {
@@ -62,7 +45,13 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
   // Load modules when modal opens
   useEffect(() => {
     if (isOpen) {
-      loadModules();
+      setLoading(true);
+      // Simulate loading for better UX
+      setTimeout(() => {
+        setFilteredModules([]); // Empty list since NavigationManager handles direct menus
+        setLoading(false);
+      }, 500);
+      
       // Focus search input
       setTimeout(() => searchInputRef.current?.focus(), 100);
       // Center modal initially
@@ -158,20 +147,9 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
     onClose();
   };
 
-  const handleSearch = async (query: string) => {
+  const handleSearch = (query: string) => {
     setSearchQuery(query);
-    
-    // If query has length, perform server-side search
-    if (query.trim().length >= 2) {
-      try {
-        const response = await NavigationApiService.searchModules(query);
-        if (response.success) {
-          setFilteredModules(response.data);
-        }
-      } catch (error) {
-        console.error('Error searching modules:', error);
-      }
-    }
+    setFilteredModules([]); // Always empty since direct menus are handled by NavigationManager
   };
 
   if (!isOpen) return null;
@@ -240,7 +218,7 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
                 ref={searchInputRef}
                 type="text"
                 className={styles.searchInput}
-                placeholder="Search modules..."
+                placeholder="Direct menus handled by NavigationManager..."
                 value={searchQuery}
                 onChange={(e) => handleSearch(e.target.value)}
               />
@@ -298,9 +276,7 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
                   <path d="M24 16V24M24 32H24.02" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
                 </svg>
                 <p>No modules found</p>
-                {searchQuery && (
-                  <p>Try a different search term</p>
-                )}
+                <p>Direct menus are handled automatically by NavigationManager</p>
               </div>
             )}
           </div>
@@ -310,7 +286,7 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
           <div className={styles.footerInfo}>
             <span>Press <kbd>Esc</kbd> to close</span>
             <span>•</span>
-            <span>Press <kbd>Ctrl+K</kbd> to open</span>
+            <span>Direct menus execute automatically</span>
           </div>
         </div>
       </div>
