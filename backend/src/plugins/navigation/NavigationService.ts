@@ -126,8 +126,10 @@ export class NavigationService {
         const userPermissions = await this.getUserPermissions(userId);
 
         const query = `
-          SELECT id, name, description, pluginId, requiresAuth, requiredPermissions,
-                 route, sortOrder, icon, isActive, createdAt, updatedAt
+          SELECT id, name, description, pluginId as "pluginId", requiresAuth as "requiresAuth", 
+                 requiredPermissions as "requiredPermissions", route as "route", 
+                 sortOrder as "sortOrder", icon as "icon", isActive as "isActive", 
+                 createdAt as "createdAt", updatedAt as "updatedAt"
           FROM plugin.navigation_modules
           WHERE isActive = true
             AND (requiresAuth = false OR requiredPermissions && $1)
@@ -139,8 +141,10 @@ export class NavigationService {
       } else {
         // Return all public modules
         const query = `
-          SELECT id, name, description, pluginId, requiresAuth, requiredPermissions,
-                 route, sortOrder, icon, isActive, createdAt, updatedAt
+          SELECT id, name, description, pluginId as "pluginId", requiresAuth as "requiresAuth", 
+                 requiredPermissions as "requiredPermissions", route as "route", 
+                 sortOrder as "sortOrder", icon as "icon", isActive as "isActive", 
+                 createdAt as "createdAt", updatedAt as "updatedAt"
           FROM plugin.navigation_modules
           WHERE isActive = true AND requiresAuth = false
           ORDER BY sortOrder ASC, name ASC
@@ -163,8 +167,10 @@ export class NavigationService {
         const userPermissions = await this.getUserPermissions(userId);
 
         const dbQuery = `
-          SELECT id, name, description, pluginId, requiresAuth, requiredPermissions,
-                 route, sortOrder, icon, isActive, createdAt, updatedAt
+          SELECT id, name, description, pluginId as "pluginId", requiresAuth as "requiresAuth", 
+                 requiredPermissions as "requiredPermissions", route as "route", 
+                 sortOrder as "sortOrder", icon as "icon", isActive as "isActive", 
+                 createdAt as "createdAt", updatedAt as "updatedAt"
           FROM plugin.navigation_modules
           WHERE isActive = true
             AND (requiresAuth = false OR requiredPermissions && $1)
@@ -176,8 +182,10 @@ export class NavigationService {
         return result || [];
       } else {
         const dbQuery = `
-          SELECT id, name, description, pluginId, requiresAuth, requiredPermissions,
-                 route, sortOrder, icon, isActive, createdAt, updatedAt
+          SELECT id, name, description, pluginId as "pluginId", requiresAuth as "requiresAuth", 
+                 requiredPermissions as "requiredPermissions", route as "route", 
+                 sortOrder as "sortOrder", icon as "icon", isActive as "isActive", 
+                 createdAt as "createdAt", updatedAt as "updatedAt"
           FROM plugin.navigation_modules
           WHERE isActive = true
             AND requiresAuth = false
