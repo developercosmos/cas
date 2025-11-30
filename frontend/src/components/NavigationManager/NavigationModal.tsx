@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { NavigationApiService, NavigationModule } from '@/services/NavigationService';
+import { LdapDialog } from '@/components/LdapDialog';
 import styles from './styles.module.css';
 
 interface NavigationModalProps {
@@ -18,6 +19,8 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
   const [isDragging, setIsDragging] = useState(false);
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 });
   const [isDraggable, setIsDraggable] = useState(false);
+  const [showLdapDialog, setShowLdapDialog] = useState(false);
+  const [ldapInitialTab, setLdapInitialTab] = useState<'config' | 'test' | 'users'>('config');
   const searchInputRef = useRef<HTMLInputElement>(null);
   const modalRef = useRef<HTMLDivElement>(null);
 
@@ -163,6 +166,23 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
   }, [isOpen, onClose]);
 
   const handleModuleClick = (module: NavigationModule) => {
+    // Handle LDAP modules specially - open dialog instead of navigation
+    if (module.pluginId === 'ldap-auth') {
+      let initialTab: 'config' | 'test' | 'users' = 'config';
+      
+      if (module.route?.includes('/test')) {
+        initialTab = 'test';
+      } else if (module.route?.includes('/users')) {
+        initialTab = 'users';
+      }
+      
+      setLdapInitialTab(initialTab);
+      setShowLdapDialog(true);
+      onClose(); // Close navigation modal
+      return;
+    }
+
+    // Handle regular modules
     if (module.route) {
       window.location.href = module.route;
     } else if (module.externalUrl) {
@@ -327,6 +347,13 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
           </div>
         </div>
       </div>
+
+      {/* LDAP Dialog */}
+      <LdapDialog 
+        isOpen={showLdapDialog}
+        onClose={() => setShowLdapDialog(false)}
+        initialTab={ldapInitialTab}
+      />
     </>
   );
 };
