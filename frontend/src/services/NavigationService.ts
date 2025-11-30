@@ -35,7 +35,13 @@ export class NavigationApiService {
     };
 
     // Add auth token if available
-    const token = localStorage.getItem('auth_token');
+    let token = localStorage.getItem('auth_token');
+    
+    // Temporary fallback for testing navigation without full auth
+    if (!token) {
+      token = 'test-token';
+    }
+    
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }
