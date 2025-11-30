@@ -29,13 +29,11 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
     const checkDarkMode = () => {
       const theme = document.documentElement.getAttribute('data-theme');
       const isDark = theme === 'dark';
-      console.log('NavigationModal - Theme detected:', theme, 'isDarkMode:', isDark);
       setIsDarkMode(isDark);
     };
 
     checkDarkMode();
     
-    // Listen for theme changes
     const observer = new MutationObserver(checkDarkMode);
     observer.observe(document.documentElement, {
       attributes: true,
@@ -104,53 +102,6 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
     }
   }, [isDragging, dragStart]);
 
-  // Load all accessible modules
-  const loadModules = useCallback(async () => {
-    setLoading(true);
-    try {
-      const response = await NavigationApiService.getModules();
-      if (response.success) {
-        setModules(response.data);
-        setFilteredModules(response.data);
-      }
-    } catch (error) {
-      console.error('Error loading navigation modules:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, []);
-
-  // Handle search and sort together to avoid infinite loop
-  useEffect(() => {
-    let result: NavigationModule[];
-    
-    // Filter first
-    if (searchQuery.trim() === '') {
-      result = [...modules];
-    } else {
-      result = modules.filter(module =>
-        module.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        module.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        module.pluginId.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-    }
-    
-    // Then sort
-    result.sort((a, b) => {
-      switch (sortBy) {
-        case 'name':
-          return a.name.localeCompare(b.name);
-        case 'plugin':
-          return a.pluginId.localeCompare(b.pluginId);
-        case 'sortOrder':
-        default:
-          return a.sortOrder - b.sortOrder;
-      }
-    });
-    
-    setFilteredModules(result);
-  }, [searchQuery, modules, sortBy]);
-
   // Handle keyboard navigation
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
@@ -164,31 +115,6 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
   }, [isOpen, onClose]);
-
-  const handleDirectMenuClick = (module: NavigationModule) => {
-    // Handle LDAP modules specially - open dialog directly
-    if (module.pluginId === 'ldap-auth') {
-      let initialTab: 'config' | 'test' | 'users' = 'config';
-      
-      if (module.route?.includes('/test')) {
-        initialTab = 'test';
-      } else if (module.route?.includes('/users')) {
-        initialTab = 'users';
-      }
-      
-      setLdapInitialTab(initialTab);
-      setShowLdapDialog(true);
-      onClose(); // Close navigation modal
-      return;
-    }
-
-    // Handle regular modules
-    if (module.route) {
-      window.location.href = module.route;
-    } else if (module.externalUrl) {
-      window.open(module.externalUrl, '_blank');
-    }
-  };
 
   const handleModuleClick = (module: NavigationModule) => {
     // Handle LDAP modules specially - open dialog instead of navigation
@@ -233,9 +159,6 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
   };
 
   if (!isOpen) return null;
-
-  // Don't render navigation modal if there's a direct menu selection
-  if (directMenuId) return null;
 
   return (
     <>
@@ -385,3 +308,5 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
     </>
   );
 };
+
+export default NavigationModal;
