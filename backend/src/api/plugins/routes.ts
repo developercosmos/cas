@@ -143,101 +143,45 @@ router.get('/', async (req, res) => {
             audit: '/api/user-access/audit'
           }
         };
+      } else if (config.pluginid === 'menu-navigation') {
+        return {
+          ...basePlugin,
+          permissions: [
+            'navigation:view',
+            'navigation:configure',
+            'navigation:manage'
+          ],
+          isSystem: true,
+          icon: '🧭',
+          capabilities: {
+            keyboardShortcuts: true,
+            search: true,
+            filtering: true,
+            userAccessControl: true,
+            customization: true
+          },
+          routes: {
+            status: '/api/plugins/menu-navigation/status',
+            modules: '/api/plugins/menu-navigation/modules',
+            search: '/api/plugins/menu-navigation/search',
+            config: '/api/plugins/menu-navigation/config'
+          }
+        };
       }
 
       return basePlugin;
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
 
     res.json({
       success: true,
       data: plugins
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to fetch plugins'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // Constitution: Load LDAP plugin routes
@@ -258,49 +202,9 @@ console.log('🔐 User Access Management plugin available: /api/user-access');
 router.get('/:id', (req, res) => {
   const plugin = pluginRegistry.get(req.params.id);
   if (!plugin) {
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     return res.status(404).json({ error: 'Plugin not found' });
   }
   res.json(plugin);
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // Plugin status endpoint - proxies to specific plugin status routes
@@ -312,6 +216,7 @@ router.get('/:id/status', async (req, res) => {
     const statusRouteMap: Record<string, string | null> = {
       'ldap-auth': '/api/plugins/ldap/status',
       'rag-retrieval': '/api/plugins/rag/status',
+      'menu-navigation': '/api/plugins/menu-navigation/status',
       'core.text-block': null // Text block doesn't have a status endpoint
     };
 
@@ -326,26 +231,22 @@ router.get('/:id/status', async (req, res) => {
           status: 'active',
           message: 'Plugin does not have detailed status endpoint'
         }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
+      });
+    }
+
+    // Check if this is a directly registered plugin (loaded in server.ts)
+    const directlyRegisteredPlugins = ['ldap-auth', 'rag-retrieval', 'menu-navigation'];
+    
+    if (directlyRegisteredPlugins.includes(id)) {
+      // For directly registered plugins, we can return basic status without forwarding
+      return res.json({
+        success: true,
+        plugin: {
+          id,
+          status: 'active',
+          message: `${id} plugin is registered and active`,
+          endpoints: statusRoute
+        }
       });
     }
 
@@ -358,26 +259,6 @@ router.get('/:id/status', async (req, res) => {
       headers: {
         'Authorization': token || ''
       }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
 
     const data = await response.json();
@@ -388,48 +269,8 @@ router.get('/:id/status', async (req, res) => {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get plugin status'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // Enable/disable plugin endpoints - saves to database
@@ -447,26 +288,6 @@ router.post('/:id/enable', authenticate, requireSystemPluginAdmin, async (req, r
       return res.status(404).json({ 
         success: false,
         message: 'Plugin not found' 
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       });
     }
 
@@ -482,74 +303,14 @@ router.post('/:id/enable', authenticate, requireSystemPluginAdmin, async (req, r
         version: plugin.pluginversion,
         status: plugin.pluginstatus
       }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     console.error(`❌ Error enabling plugin ${pluginId}:`, error);
     res.status(500).json({
       success: false,
       message: 'Failed to enable plugin'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 router.post('/:id/disable', authenticate, requireSystemPluginAdmin, async (req, res) => {
@@ -566,26 +327,6 @@ router.post('/:id/disable', authenticate, requireSystemPluginAdmin, async (req, 
       return res.status(404).json({ 
         success: false,
         message: 'Plugin not found' 
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       });
     }
 
@@ -601,74 +342,14 @@ router.post('/:id/disable', authenticate, requireSystemPluginAdmin, async (req, 
         version: plugin.pluginversion,
         status: plugin.pluginstatus
       }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     console.error(`❌ Error disabling plugin ${pluginId}:`, error);
     res.status(500).json({
       success: false,
       message: 'Failed to disable plugin'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 router.post('/', (req, res) => {
@@ -676,146 +357,26 @@ router.post('/', (req, res) => {
     const manifest: PluginManifest = req.body;
     
     if (!manifest.id || !manifest.name || !manifest.version) {
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       return res.status(400).json({ error: 'Invalid plugin manifest' });
     }
 
     if (pluginRegistry.has(manifest.id)) {
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       return res.status(409).json({ error: 'Plugin already exists' });
     }
 
     pluginRegistry.set(manifest.id, manifest);
     res.status(201).json(manifest);
   } catch (error) {
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     res.status(500).json({ error: 'Failed to register plugin' });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 router.delete('/:id', (req, res) => {
   const deleted = pluginRegistry.delete(req.params.id);
   if (!deleted) {
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     return res.status(404).json({ error: 'Plugin not found' });
   }
   res.status(204).send();
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // Helper function to get plugin source directory
@@ -895,26 +456,6 @@ function generatePluginFrontendPackageJson(pluginId: string, manifest: any): str
 function addDirectoryToArchive(archive: archiver.Archiver, dirPath: string, zipPath: string, excludePatterns: string[] = []) {
   if (!fs.existsSync(dirPath)) return;
   
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
   const entries = fs.readdirSync(dirPath, { withFileTypes: true });
   
   for (const entry of entries) {
@@ -928,26 +469,6 @@ function addDirectoryToArchive(archive: archiver.Archiver, dirPath: string, zipP
         return regex.test(entry.name);
       }
       return entry.name === pattern;
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
     
     if (shouldExclude) continue;
@@ -955,26 +476,6 @@ function addDirectoryToArchive(archive: archiver.Archiver, dirPath: string, zipP
     if (entry.isDirectory()) {
       addDirectoryToArchive(archive, fullPath, relativePath, excludePatterns);
     } else {
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       archive.file(fullPath, { name: relativePath });
     }
   }
@@ -997,26 +498,6 @@ router.get('/:id/export', authenticate, async (req: AuthRequest, res) => {
       return res.status(404).json({
         success: false,
         error: 'Plugin not found'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       });
     }
     
@@ -1100,26 +581,6 @@ router.get('/:id/export', authenticate, async (req: AuthRequest, res) => {
     };
     
     // Create ZIP archive
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     const archive = archiver('zip', { zlib: { level: 9 } });
     const filename = `${pluginId}-v${pluginConfig.pluginversion}-${Date.now()}.zip`;
     
@@ -1129,26 +590,6 @@ router.get('/:id/export', authenticate, async (req: AuthRequest, res) => {
     archive.pipe(res);
     
     // 1. Add plugin.json manifest
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     archive.append(JSON.stringify(pluginManifest, null, 2), { name: 'plugin.json' });
     
     // 2. Add backend source code (TypeScript) - for development/modification
@@ -1169,52 +610,12 @@ router.get('/:id/export', authenticate, async (req: AuthRequest, res) => {
       // Add backend package.json
       const backendPackageJson = path.join(pluginSourceDir, 'backend', 'package.json');
       if (fs.existsSync(backendPackageJson)) {
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
         archive.file(backendPackageJson, { name: 'backend/package.json' });
       }
       
       // Add backend tsconfig.json
       const backendTsconfig = path.join(pluginSourceDir, 'backend', 'tsconfig.json');
       if (fs.existsSync(backendTsconfig)) {
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
         archive.file(backendTsconfig, { name: 'backend/tsconfig.json' });
       }
       
@@ -1245,26 +646,6 @@ router.get('/:id/export', authenticate, async (req: AuthRequest, res) => {
         const sourceManifest = JSON.parse(fs.readFileSync(pluginJsonPath, 'utf-8'));
         // Merge with database config
         Object.assign(pluginManifest, sourceManifest);
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
         archive.append(JSON.stringify(pluginManifest, null, 2), { name: 'plugin.json' });
       }
     }
@@ -1286,26 +667,6 @@ router.get('/:id/export', authenticate, async (req: AuthRequest, res) => {
       for (const service of services) {
         const servicePath = path.join(frontendRoot, 'src', 'services', service);
         if (fs.existsSync(servicePath)) {
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
           archive.file(servicePath, { name: `frontend/src/services/${service}` });
           console.log(`  📄 Added frontend service: ${service}`);
         }
@@ -1313,26 +674,6 @@ router.get('/:id/export', authenticate, async (req: AuthRequest, res) => {
       
       // Add frontend package.json template for the plugin
       const frontendPackageJson = generatePluginFrontendPackageJson(pluginId, pluginManifest);
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       archive.append(frontendPackageJson, { name: 'frontend/package.json' });
     }
     
@@ -1342,181 +683,21 @@ router.get('/:id/export', authenticate, async (req: AuthRequest, res) => {
       
       // Create a minimal plugin entry point
       const embeddedCode = generateEmbeddedPluginCode(pluginId, pluginManifest);
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       archive.append(embeddedCode.indexJs, { name: 'backend/dist/index.js' });
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       archive.append(embeddedCode.routesJs, { name: 'backend/dist/routes.js' });
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       archive.append(embeddedCode.packageJson, { name: 'backend/package.json' });
       
       // Add migration SQL
       if (embeddedCode.migrationSql) {
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
         archive.append(embeddedCode.migrationSql, { name: 'backend/migrations/001_setup.sql' });
       }
       
       // Add embedded frontend components
       if (mainFrontendComponents.length === 0) {
         const embeddedFrontend = generateEmbeddedFrontendCode(pluginId, pluginManifest);
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
         archive.append(embeddedFrontend.indexTsx, { name: 'frontend/src/index.tsx' });
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
         archive.append(embeddedFrontend.componentTsx, { name: `frontend/src/components/${pluginManifest.name.replace(/\s+/g, '')}Plugin.tsx` });
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
         archive.append(embeddedFrontend.stylesCss, { name: `frontend/src/components/${pluginManifest.name.replace(/\s+/g, '')}Plugin.module.css` });
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
         archive.append(embeddedFrontend.packageJson, { name: 'frontend/package.json' });
       }
     }
@@ -1528,26 +709,6 @@ router.get('/:id/export', authenticate, async (req: AuthRequest, res) => {
         const docContent = doc.contentFormat === 'markdown' 
           ? `# ${doc.title}\n\n${doc.content}`
           : doc.content;
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
         archive.append(docContent, { name: docFilename });
       }
       
@@ -1558,51 +719,11 @@ router.get('/:id/export', authenticate, async (req: AuthRequest, res) => {
         language: doc.language,
         version: doc.version
       }));
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       archive.append(JSON.stringify(docsIndex, null, 2), { name: 'docs/index.json' });
     }
     
     // 4. Add plugin data export (configurations, not sensitive data)
     if (Object.keys(pluginData).length > 0) {
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       archive.append(JSON.stringify(pluginData, null, 2), { name: 'data/export.json' });
     }
     
@@ -1619,95 +740,15 @@ router.get('/:id/export', authenticate, async (req: AuthRequest, res) => {
         platform: process.platform
       }
     };
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     archive.append(JSON.stringify(exportMetadata, null, 2), { name: 'metadata.json' });
     
     // 6. Add README for the plugin
     const readme = generatePluginReadme(pluginManifest);
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     archive.append(readme, { name: 'README.md' });
     
     // 7. Generate checksum for integrity
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     const checksumData = JSON.stringify({ pluginManifest, exportMetadata });
     const checksum = crypto.createHash('sha256').update(checksumData).digest('hex');
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     archive.append(checksum, { name: 'checksum.sha256' });
     
     archive.finalize();
@@ -1720,49 +761,9 @@ router.get('/:id/export', authenticate, async (req: AuthRequest, res) => {
       res.status(500).json({
         success: false,
         error: error instanceof Error ? error.message : 'Failed to export plugin'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       });
     }
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // Helper to generate embedded plugin code when source is not available
@@ -1845,47 +846,7 @@ router.get('/status', (req, res) => {
     version: '${manifest.version}',
     status: 'active',
     endpoints: ${JSON.stringify(manifest.endpoints || {}, null, 2)}
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
   });
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // Configuration endpoint  
@@ -1894,47 +855,7 @@ router.get('/configure', (req, res) => {
     success: true,
     plugin: '${pluginId}',
     configSchema: ${JSON.stringify(manifest.configSchema || {}, null, 2)}
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
   });
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 module.exports = router;
@@ -2319,26 +1240,6 @@ router.post('/import', authenticate, async (req: AuthRequest, res) => {
         return res.status(400).json({
           success: false,
           error: 'Invalid plugin package: missing plugin.json manifest'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
         });
       }
       pluginManifest = JSON.parse(manifestEntry.getData().toString('utf8'));
@@ -2368,26 +1269,6 @@ router.post('/import', authenticate, async (req: AuthRequest, res) => {
               contentFormat: docMeta.format,
               language: docMeta.language || 'en',
               version: docMeta.version || '1.0.0'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
             });
           }
         }
@@ -2397,26 +1278,6 @@ router.post('/import', authenticate, async (req: AuthRequest, res) => {
       const checksumEntry = zipEntries.find(e => e.entryName === 'checksum.sha256');
       if (checksumEntry) {
         const expectedChecksum = checksumEntry.getData().toString('utf8').trim();
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
         const checksumData = JSON.stringify({ pluginManifest, exportMetadata: metadata });
         const actualChecksum = crypto.createHash('sha256').update(checksumData).digest('hex');
         if (expectedChecksum !== actualChecksum) {
@@ -2444,26 +1305,6 @@ router.post('/import', authenticate, async (req: AuthRequest, res) => {
       return res.status(400).json({
         success: false,
         error: 'Invalid plugin package: provide zipData (base64) or plugin object'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       });
     }
     
@@ -2472,26 +1313,6 @@ router.post('/import', authenticate, async (req: AuthRequest, res) => {
       return res.status(400).json({
         success: false,
         error: 'Invalid plugin package: missing plugin id or name'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       });
     }
     
@@ -2637,26 +1458,6 @@ router.post('/import', authenticate, async (req: AuthRequest, res) => {
         version: pluginData.version,
         status: pluginData.status || 'disabled'
       }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
     
   } catch (error) {
@@ -2664,48 +1465,8 @@ router.post('/import', authenticate, async (req: AuthRequest, res) => {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to import plugin'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // Public documentation routes (no authentication required)
@@ -2729,74 +1490,14 @@ router.get('/:id/docs', async (req, res) => {
     res.json({
       success: true,
       data: docs
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     console.error(`❌ Error getting documentation for plugin ${req.params.id}:`, error);
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get documentation'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 router.get('/:id/docs/:type', async (req, res) => {
@@ -2814,26 +1515,6 @@ router.get('/:id/docs/:type', async (req, res) => {
       return res.status(404).json({
         success: false,
         error: 'Plugin not found'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       });
     }
 
@@ -2847,99 +1528,19 @@ router.get('/:id/docs/:type', async (req, res) => {
       return res.status(404).json({
         success: false,
         error: 'Documentation not found'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       });
     }
 
     res.json({
       success: true,
       data: doc
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get documentation'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 
@@ -2952,26 +1553,6 @@ router.post('/:id/docs', authenticate, async (req: AuthRequest, res) => {
       return res.status(400).json({
         success: false,
         error: 'Document type, title, and content are required'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       });
     }
     
@@ -2985,26 +1566,6 @@ router.post('/:id/docs', authenticate, async (req: AuthRequest, res) => {
       return res.status(404).json({
         success: false,
         error: 'Plugin not found'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       });
     }
     
@@ -3019,98 +1580,18 @@ router.post('/:id/docs', authenticate, async (req: AuthRequest, res) => {
       isCurrent,
       orderIndex,
       metadata
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
     
     res.status(201).json({
       success: true,
       data: doc
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to create documentation'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 router.put('/:id/docs/:docId', authenticate, async (req: AuthRequest, res) => {
@@ -3126,98 +1607,18 @@ router.put('/:id/docs/:docId', authenticate, async (req: AuthRequest, res) => {
       isCurrent,
       orderIndex,
       metadata
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
     
     res.json({
       success: true,
       data: doc
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to update documentation'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 router.post('/:id/docs/:docId/current', authenticate, async (req: AuthRequest, res) => {
@@ -3229,73 +1630,13 @@ router.post('/:id/docs/:docId/current', authenticate, async (req: AuthRequest, r
     res.json({
       success: true,
       data: doc
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to set current documentation'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 router.delete('/:id/docs/:docId', authenticate, async (req: AuthRequest, res) => {
@@ -3308,26 +1649,6 @@ router.delete('/:id/docs/:docId', authenticate, async (req: AuthRequest, res) =>
       return res.status(404).json({
         success: false,
         error: 'Documentation not found'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       });
     }
     
@@ -3336,48 +1657,8 @@ router.delete('/:id/docs/:docId', authenticate, async (req: AuthRequest, res) =>
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to delete documentation'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 router.get('/:id/docs/search', authenticate, async (req: AuthRequest, res) => {
@@ -3389,26 +1670,6 @@ router.get('/:id/docs/search', authenticate, async (req: AuthRequest, res) => {
       return res.status(400).json({
         success: false,
         error: 'Search query is required'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       });
     }
     
@@ -3421,73 +1682,13 @@ router.get('/:id/docs/search', authenticate, async (req: AuthRequest, res) => {
     res.json({
       success: true,
       data: docs
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to search documentation'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 router.get('/docs/summary', authenticate, async (req: AuthRequest, res) => {
@@ -3499,73 +1700,13 @@ router.get('/docs/summary', authenticate, async (req: AuthRequest, res) => {
     res.json({
       success: true,
       data: summary
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get documentation summary'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // RBAC Management endpoints
@@ -3580,73 +1721,13 @@ router.get('/:id/permissions', authenticate, async (req: AuthRequest, res) => {
     res.json({
       success: true,
       data: permissions
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get permissions'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // Get user permissions for a plugin
@@ -3662,26 +1743,6 @@ router.get('/:id/user-permissions', authenticate, async (req: AuthRequest, res) 
       return res.status(400).json({
         success: false,
         error: 'User ID required'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
       });
     }
 
@@ -3690,73 +1751,13 @@ router.get('/:id/user-permissions', authenticate, async (req: AuthRequest, res) 
     res.json({
       success: true,
       data: permissions
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get user permissions'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // Grant permission to user
@@ -3768,26 +1769,6 @@ router.post('/:id/grant-permission', authenticate, requireSystemPluginAdmin, asy
     return res.status(400).json({
       success: false,
       error: 'User ID and permission name required'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
 
@@ -3797,73 +1778,13 @@ router.post('/:id/grant-permission', authenticate, requireSystemPluginAdmin, asy
     res.json({
       success: true,
       message: `Permission ${permissionName} granted to user ${userId}`
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to grant permission'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // Revoke permission from user
@@ -3875,26 +1796,6 @@ router.post('/:id/revoke-permission', authenticate, requireSystemPluginAdmin, as
     return res.status(400).json({
       success: false,
       error: 'User ID and permission name required'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
 
@@ -3904,73 +1805,13 @@ router.post('/:id/revoke-permission', authenticate, requireSystemPluginAdmin, as
     res.json({
       success: true,
       message: `Permission ${permissionName} revoked from user ${userId}`
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to revoke permission'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // API Registry endpoints
@@ -3985,73 +1826,13 @@ router.get('/:id/apis', authenticate, async (req: AuthRequest, res) => {
     res.json({
       success: true,
       data: apis
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get APIs'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // Communication endpoint for plugins to call other plugins
@@ -4062,26 +1843,6 @@ router.post('/communicate', authenticate, async (req: AuthRequest, res) => {
     return res.status(400).json({
       success: false,
       error: 'From plugin ID, to plugin ID, API path, and method required'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
 
@@ -4093,26 +1854,6 @@ router.post('/communicate', authenticate, async (req: AuthRequest, res) => {
       apiPath,
       method,
       data
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
     
     res.json(result);
@@ -4120,48 +1861,8 @@ router.post('/communicate', authenticate, async (req: AuthRequest, res) => {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to call plugin API'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // Get communication history for a plugin
@@ -4178,73 +1879,13 @@ router.get('/:id/communication-history', authenticate, async (req: AuthRequest, 
     res.json({
       success: true,
       data: history
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get communication history'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // Get communication statistics
@@ -4259,73 +1900,13 @@ router.get('/communication-stats', authenticate, async (req: AuthRequest, res) =
     res.json({
       success: true,
       data: stats
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get communication stats'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // RBAC endpoints for application plugins to expose detailed permissions
@@ -4341,73 +1922,13 @@ router.get('/:id/rbac/fields', authenticate, async (req: AuthRequest, res) => {
     res.json({
       success: true,
       data: fieldPermissions
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get field permissions'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // Get object permissions for a plugin
@@ -4421,73 +1942,13 @@ router.get('/:id/rbac/objects', authenticate, async (req: AuthRequest, res) => {
     res.json({
       success: true,
       data: objectPermissions
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get object permissions'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // Get data permissions for a plugin
@@ -4501,73 +1962,13 @@ router.get('/:id/rbac/data', authenticate, async (req: AuthRequest, res) => {
     res.json({
       success: true,
       data: dataPermissions
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to get data permissions'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 // Check specific permission for current user
@@ -4579,26 +1980,6 @@ router.post('/:id/rbac/check', authenticate, async (req: AuthRequest, res) => {
     return res.status(400).json({
       success: false,
       error: 'Permission name required'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
 
@@ -4617,73 +1998,13 @@ router.post('/:id/rbac/check', authenticate, async (req: AuthRequest, res) => {
         resourceId,
         userId: req.user?.id
       }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   } catch (error) {
     res.status(500).json({
       success: false,
       error: error instanceof Error ? error.message : 'Failed to check permission'
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
     });
   }
-    // Add menu navigation plugin to plugin array
-    plugins.push({
-      id: 'menu-navigation',
-      name: 'Menu Navigation System',
-      version: '1.0.0',
-      description: 'Interactive menu navigation system with keyboard shortcuts and user access control',
-      author: 'CAS Development Team',
-      status: 'active',
-      category: 'user-interface',
-      isSystem: true,
-      icon: '🧪',
-      permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
-      routes: {
-        status: '/api/plugins/menu-navigation/status',
-        modules: '/api/plugins/menu-navigation/modules',
-        search: '/api/plugins/menu-navigation/search',
-        config: '/api/plugins/menu-navigation/config',
-        addModule: '/api/plugins/menu-navigation/modules'
-      }
-    });
 });
 
 export default router;

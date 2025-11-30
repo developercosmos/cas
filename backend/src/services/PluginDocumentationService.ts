@@ -206,10 +206,10 @@ export class PluginDocumentationService {
       [pluginConfig.id, language, includeVersions]
     );
 
-    // If no documentation found, this is also an error
+    // Return empty array if no documentation found (not an error)
     if (results.length === 0) {
-      console.warn(`⚠️  No documentation found for plugin: ${pluginId} (language: ${language})`);
-      throw new Error(`No documentation available for plugin '${pluginId}'. Please seed documentation using the migration script.`);
+      console.log(`ℹ️  No documentation found for plugin: ${pluginId} (language: ${language})`);
+      return [];
     }
 
     return results.map(doc => this.mapToDocumentation(doc));

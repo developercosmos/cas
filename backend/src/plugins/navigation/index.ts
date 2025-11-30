@@ -1,5 +1,4 @@
 import { Router } from 'express';
-import { Pool } from 'pg';
 import { createRoutes } from './routes.js';
 import { NavigationService } from './NavigationService.js';
 import type { PluginContext, PluginMetadata } from './types.js';
@@ -85,7 +84,7 @@ class MenuNavigationPlugin implements Plugin {
 
     console.log(`Initializing ${this.name} v${this.version}`);
 
-    this.navigationService = new NavigationService(services.database);
+    this.navigationService = new NavigationService();
 
     await this.createDatabaseSchema(services.database);
 
@@ -251,7 +250,7 @@ class MenuNavigationPlugin implements Plugin {
   getRouter(): Router {
     if (!this.router) {
       this.router = createRoutes(
-        new NavigationService(new Pool()),
+        new NavigationService(),
         (req: any, res: any, next: any) => {
           const token = req.headers.authorization?.replace('Bearer ', '');
           if (token) {
@@ -278,6 +277,7 @@ class MenuNavigationPlugin implements Plugin {
 
 export const plugin = new MenuNavigationPlugin();
 
+// Export the plugin instance with all required methods for server.ts
 export default {
   id: plugin.id,
   name: plugin.name,
@@ -288,5 +288,12 @@ export default {
   status: 'enabled' as const,
   isSystem: true,
   routes: null,
-  plugin
+  plugin,
+  // Add the getRouter method that server.ts expects
+  getRouter: () => plugin.getRouter(),
+  // Add lifecycle methods server.ts might expect
+  initialize: (context: any) => plugin.initialize(context),
+  activate: () => plugin.activate(),
+  deactivate: () => plugin.deactivate(),
+  uninstall: () => plugin.uninstall()
 };

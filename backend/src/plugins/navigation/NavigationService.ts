@@ -1,7 +1,9 @@
+import { DatabaseService } from '../../services/DatabaseService.js';
 import type { NavigationModule, NavigationConfig } from './types';
 
 export class NavigationService {
-  constructor(private db: any) {}
+  // Always use DatabaseService directly for consistency
+  private db = DatabaseService;
 
   async initializeDefaultModules(): Promise<void> {
     try {

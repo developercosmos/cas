@@ -13,7 +13,29 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
   const [filteredModules, setFilteredModules] = useState<NavigationModule[]>([]);
   const [loading, setLoading] = useState(false);
   const [sortBy, setSortBy] = useState<'name' | 'plugin' | 'sortOrder'>('sortOrder');
+  const [isDarkMode, setIsDarkMode] = useState(false);
   const searchInputRef = useRef<HTMLInputElement>(null);
+
+  // Detect dark mode
+  useEffect(() => {
+    const checkDarkMode = () => {
+      const theme = document.documentElement.getAttribute('data-theme');
+      const isDark = theme === 'dark';
+      console.log('NavigationModal - Theme detected:', theme, 'isDarkMode:', isDark);
+      setIsDarkMode(isDark);
+    };
+
+    checkDarkMode();
+    
+    // Listen for theme changes
+    const observer = new MutationObserver(checkDarkMode);
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    });
+
+    return () => observer.disconnect();
+  }, []);
 
   // Load modules when modal opens
   useEffect(() => {
@@ -40,24 +62,23 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
     }
   }, []);
 
-  // Handle search
+  // Handle search and sort together to avoid infinite loop
   useEffect(() => {
+    let result: NavigationModule[];
+    
+    // Filter first
     if (searchQuery.trim() === '') {
-      setFilteredModules(modules);
+      result = [...modules];
     } else {
-      // Filter local modules first (for instant response)
-      const filtered = modules.filter(module =>
+      result = modules.filter(module =>
         module.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
         module.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
         module.pluginId.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      setFilteredModules(filtered);
     }
-  }, [searchQuery, modules]);
-
-  // Handle sort
-  useEffect(() => {
-    const sorted = [...filteredModules].sort((a, b) => {
+    
+    // Then sort
+    result.sort((a, b) => {
       switch (sortBy) {
         case 'name':
           return a.name.localeCompare(b.name);
@@ -68,8 +89,9 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
           return a.sortOrder - b.sortOrder;
       }
     });
-    setFilteredModules(sorted);
-  }, [sortBy, filteredModules]);
+    
+    setFilteredModules(result);
+  }, [searchQuery, modules, sortBy]);
 
   // Handle keyboard navigation
   useEffect(() => {
@@ -116,7 +138,7 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
     <>
       <div className={styles.modalOverlay} onClick={onClose} />
       <div className={styles.modalContent}>
-        <div className={styles.modalHeader}>
+        <div className={`${styles.modalHeader} ${isDarkMode ? styles.darkHeader : styles.lightHeader}`}>
           <h2 className={styles.modalTitle}>Navigation</h2>
           <button
             className={styles.closeButton}
@@ -133,9 +155,16 @@ export const NavigationModal: React.FC<NavigationModalProps> = ({ isOpen, onClos
           {/* Search Bar */}
           <div className={styles.searchContainer}>
             <div className={styles.searchInputWrapper}>
-              <svg width="20" height="20" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className={styles.searchIcon}>
-                <path d="M9 16A7 7 0 1 0 9 2A7 7 0 0 0 9 16Z" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-                <path d="M14 14L18 18" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
+              <svg 
+                width="20" 
+                height="20" 
+                viewBox="0 0 20 20" 
+                fill="none" 
+                xmlns="http://www.w3.org/2000/svg" 
+                className={styles.searchIcon}
+              >
+                <path d="M9 16A7 7 0 1 0 9 2A7 7 0 0 0 9 16Z" stroke={isDarkMode ? '#ffffff' : '#000000'} strokeWidth="2" strokeLinecap="round"/>
+                <path d="M14 14L18 18" stroke={isDarkMode ? '#ffffff' : '#000000'} strokeWidth="2" strokeLinecap="round"/>
               </svg>
               <input
                 ref={searchInputRef}

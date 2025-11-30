@@ -25,7 +25,7 @@ export interface NavigationConfig {
 
 export class NavigationApiService {
   private static getBaseUrl(): string {
-    const isDevelopment = process.env.NODE_ENV === 'development';
+    const isDevelopment = import.meta.env.DEV;
     return isDevelopment ? 'http://localhost:4000' : '';
   }
 
@@ -35,7 +35,7 @@ export class NavigationApiService {
     };
 
     // Add auth token if available
-    const token = localStorage.getItem('token');
+    const token = localStorage.getItem('auth_token');
     if (token) {
       headers['Authorization'] = `Bearer ${token}`;
     }

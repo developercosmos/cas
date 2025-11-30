@@ -47,7 +47,7 @@ export class PluginService {
       author: 'CAS Development Team',
       permissions: ['navigation:view', 'navigation:configure', 'navigation:manage'],
       entry: '/src/plugins/navigation/index.ts',
-      status: 'active',
+      status: 'active' as const,
       isSystem: true,
       createdAt: new Date(),
       updatedAt: new Date()

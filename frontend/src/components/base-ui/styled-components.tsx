@@ -122,7 +122,17 @@ export interface ButtonProps extends Omit<React.ButtonHTMLAttributes<HTMLButtonE
   rightIcon?: React.ReactNode;
 }
 
-const StyledButton = styled.button<ButtonProps>`
+// Internal styled props with $ prefix to prevent DOM forwarding
+interface StyledButtonProps {
+  $variant?: 'primary' | 'secondary' | 'ghost' | 'danger' | 'gradient';
+  $size?: 'sm' | 'md' | 'lg';
+  $fullWidth?: boolean;
+  $loading?: boolean;
+  $hasLeftIcon?: boolean;
+  $hasRightIcon?: boolean;
+}
+
+const StyledButton = styled.button<StyledButtonProps>`
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -141,7 +151,7 @@ const StyledButton = styled.button<ButtonProps>`
   position: relative;
   white-space: nowrap;
   user-select: none;
-  width: ${props => props.fullWidth ? '100%' : 'auto'};
+  width: ${props => props.$fullWidth ? '100%' : 'auto'};
   overflow: hidden;
   isolation: isolate;
 
@@ -175,7 +185,7 @@ const StyledButton = styled.button<ButtonProps>`
     border-top-color: currentColor;
     border-radius: 50%;
     animation: spin 0.6s linear infinite;
-    opacity: ${props => props.loading ? 1 : 0};
+    opacity: ${props => props.$loading ? 1 : 0};
     pointer-events: none;
     transition: opacity ${tokens.transitions.fast};
   }
@@ -199,7 +209,7 @@ const StyledButton = styled.button<ButtonProps>`
   }
 
   /* Factory.ai Primary Button - WCAG AA Compliant */
-  ${props => props.variant === 'primary' && `
+  ${props => props.$variant === 'primary' && `
     background: linear-gradient(135deg, #B45309 0%, #9A3412 100%);
     color: white;
     border-color: transparent;
@@ -244,7 +254,7 @@ const StyledButton = styled.button<ButtonProps>`
   `}
 
   /* Factory.ai Secondary Button - WCAG AA Compliant */
-  ${props => props.variant === 'secondary' && `
+  ${props => props.$variant === 'secondary' && `
     background: #f9fafb;
     color: #111827;
     border-color: #d1d5db;
@@ -290,7 +300,7 @@ const StyledButton = styled.button<ButtonProps>`
   `}
 
   /* Factory.ai Ghost Button - WCAG AA Compliant */
-  ${props => props.variant === 'ghost' && `
+  ${props => props.$variant === 'ghost' && `
     background: transparent;
     color: #374151;
     border-color: transparent;
@@ -329,7 +339,7 @@ const StyledButton = styled.button<ButtonProps>`
   `}
 
   /* Factory.ai Danger Button */
-  ${props => props.variant === 'danger' && `
+  ${props => props.$variant === 'danger' && `
     background: linear-gradient(135deg, #DC2626 0%, #EF4444 100%);
     color: white;
     border-color: transparent;
@@ -367,7 +377,7 @@ const StyledButton = styled.button<ButtonProps>`
   `}
 
   /* Factory.ai Gradient Button */
-  ${props => props.variant === 'gradient' && `
+  ${props => props.$variant === 'gradient' && `
     background: linear-gradient(135deg, ${tokens.colors.accent.primary} 0%, #8B5CF6 50%, #3B82F6 100%);
     color: white;
     border-color: transparent;
@@ -417,7 +427,7 @@ const StyledButton = styled.button<ButtonProps>`
   `}
 
   /* Size variations */
-  ${props => props.size === 'sm' && `
+  ${props => props.$size === 'sm' && `
     padding: 6px 12px;
     font-size: 13px;
     min-height: 32px;
@@ -425,7 +435,7 @@ const StyledButton = styled.button<ButtonProps>`
     gap: ${tokens.spacing.xs};
   `}
 
-  ${props => props.size === 'lg' && `
+  ${props => props.$size === 'lg' && `
     padding: 12px 24px;
     font-size: 16px;
     min-height: 48px;
@@ -433,7 +443,7 @@ const StyledButton = styled.button<ButtonProps>`
     gap: ${tokens.spacing.md};
   `}
 
-  ${props => !props.size && `
+  ${props => !props.$size && `
     padding: 8px 16px;
     font-size: 14px;
     min-height: 40px;
@@ -441,7 +451,7 @@ const StyledButton = styled.button<ButtonProps>`
   `}
 
   /* Loading state */
-  ${props => props.loading && `
+  ${props => props.$loading && `
     color: transparent;
     pointer-events: none;
     
@@ -451,12 +461,12 @@ const StyledButton = styled.button<ButtonProps>`
   `}
 
   /* Icon spacing adjustments */
-  ${props => props.leftIcon && `
-    padding-left: ${props.size === 'sm' ? '8px' : props.size === 'lg' ? '20px' : '12px'};
+  ${props => props.$hasLeftIcon && `
+    padding-left: ${props.$size === 'sm' ? '8px' : props.$size === 'lg' ? '20px' : '12px'};
   `}
 
-  ${props => props.rightIcon && `
-    padding-right: ${props.size === 'sm' ? '8px' : props.size === 'lg' ? '20px' : '12px'};
+  ${props => props.$hasRightIcon && `
+    padding-right: ${props.$size === 'sm' ? '8px' : props.$size === 'lg' ? '20px' : '12px'};
   `}
 `;
 
@@ -469,23 +479,27 @@ export const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
     rightIcon,
     children,
     disabled,
+    fullWidth,
     ...props 
-  }, ref) => (
-    <StyledButton
-      ref={ref}
-      variant={variant}
-      size={size}
-      loading={loading}
-      leftIcon={leftIcon}
-      rightIcon={rightIcon}
-      disabled={disabled || loading}
-      {...props}
-    >
-      {leftIcon && <span style={{ display: 'flex', alignItems: 'center' }}>{leftIcon}</span>}
-      {children}
-      {rightIcon && <span style={{ display: 'flex', alignItems: 'center' }}>{rightIcon}</span>}
-    </StyledButton>
-  )
+  }, ref) => {
+    return (
+      <StyledButton
+        ref={ref}
+        $variant={variant}
+        $size={size}
+        $loading={loading}
+        $hasLeftIcon={!!leftIcon}
+        $hasRightIcon={!!rightIcon}
+        $fullWidth={fullWidth}
+        disabled={disabled || loading}
+        {...props}
+      >
+        {leftIcon && <span style={{ display: 'flex', alignItems: 'center' }}>{leftIcon}</span>}
+        {children}
+        {rightIcon && <span style={{ display: 'flex', alignItems: 'center' }}>{rightIcon}</span>}
+      </StyledButton>
+    );
+  }
 );
 
 Button.displayName = 'Button';

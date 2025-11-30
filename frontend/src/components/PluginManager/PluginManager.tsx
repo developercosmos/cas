@@ -292,24 +292,35 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
       setRbacLoading(true);
       const token = localStorage.getItem('auth_token');
       if (!token) {
-        throw new Error('Authentication required');
+        alert('Authentication required. Please login again.');
+        return;
       }
 
+      console.log('Loading RBAC permissions for:', pluginId);
       const response = await fetch(`${API_BASE}/api/plugins/${pluginId}/permissions`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setSelectedPluginRbac(data.data);
-          setShowRbacModal(true);
-        }
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('RBAC permissions response:', data);
+      
+      if (data.success) {
+        setSelectedPluginRbac(data.data || []);
+        setShowRbacModal(true);
+      } else {
+        throw new Error(data.error || 'Failed to load permissions');
       }
     } catch (error) {
       console.error('Failed to load plugin permissions:', error);
+      alert('Failed to load RBAC permissions: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setRbacLoading(false);
     }
@@ -320,24 +331,35 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
       setApiLoading(true);
       const token = localStorage.getItem('auth_token');
       if (!token) {
-        throw new Error('Authentication required');
+        alert('Authentication required. Please login again.');
+        return;
       }
 
+      console.log('Loading APIs for:', pluginId);
       const response = await fetch(`${API_BASE}/api/plugins/${pluginId}/apis`, {
         headers: {
-          'Authorization': `Bearer ${token}`
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
       });
 
-      if (response.ok) {
-        const data = await response.json();
-        if (data.success) {
-          setSelectedPluginApis(data.data);
-          setShowApiModal(true);
-        }
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || `HTTP ${response.status}: ${response.statusText}`);
+      }
+
+      const data = await response.json();
+      console.log('APIs response:', data);
+      
+      if (data.success) {
+        setSelectedPluginApis(data.data || []);
+        setShowApiModal(true);
+      } else {
+        throw new Error(data.error || 'Failed to load APIs');
       }
     } catch (error) {
       console.error('Failed to load plugin APIs:', error);
+      alert('Failed to load plugin APIs: ' + (error instanceof Error ? error.message : 'Unknown error'));
     } finally {
       setApiLoading(false);
     }
@@ -2025,47 +2047,69 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
       )}
 
       {/* RBAC Modal */}
-      {showRbacModal && selectedPluginRbac && (
-        <div className={styles.overlay}>
+      {showRbacModal && (
+        <div className={styles.modalOverlay} style={{ zIndex: 2000 }}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
-              <h3>🔐 RBAC Permissions - {selectedPluginRbac[0]?.name || 'Plugin'}</h3>
+              <h3>🔐 RBAC Permissions</h3>
               <Button variant="ghost" onClick={() => setShowRbacModal(false)}>×</Button>
             </div>
             <div className={styles.modalBody}>
-              <div className={styles.permissionGroups}>
-                <h4>Field Permissions</h4>
-                {selectedPluginRbac.filter((p: any) => p.resourceType === 'field').map((perm: any, idx: number) => (
-                  <div key={idx} className={styles.permission}>
-                    <span className={styles.permName}>{perm.name}</span>
-                    <span className={styles.permDesc}>{perm.description}</span>
-                  </div>
-                ))}
-                
-                <h4>Object Permissions</h4>
-                {selectedPluginRbac.filter((p: any) => p.resourceType === 'object').map((perm: any, idx: number) => (
-                  <div key={idx} className={styles.permission}>
-                    <span className={styles.permName}>{perm.name}</span>
-                    <span className={styles.permDesc}>{perm.description}</span>
-                  </div>
-                ))}
-                
-                <h4>Data Permissions</h4>
-                {selectedPluginRbac.filter((p: any) => p.resourceType === 'data').map((perm: any, idx: number) => (
-                  <div key={idx} className={styles.permission}>
-                    <span className={styles.permName}>{perm.name}</span>
-                    <span className={styles.permDesc}>{perm.description}</span>
-                  </div>
-                ))}
-                
-                <h4>Action Permissions</h4>
-                {selectedPluginRbac.filter((p: any) => p.resourceType === 'action').map((perm: any, idx: number) => (
-                  <div key={idx} className={styles.permission}>
-                    <span className={styles.permName}>{perm.name}</span>
-                    <span className={styles.permDesc}>{perm.description}</span>
-                  </div>
-                ))}
-              </div>
+              {!selectedPluginRbac || selectedPluginRbac.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '20px' }}>
+                  No RBAC permissions defined for this plugin.
+                </p>
+              ) : (
+                <div className={styles.permissionGroups}>
+                  {selectedPluginRbac.filter((p: any) => p.resourceType === 'action').length > 0 && (
+                    <>
+                      <h4>Action Permissions</h4>
+                      {selectedPluginRbac.filter((p: any) => p.resourceType === 'action').map((perm: any, idx: number) => (
+                        <div key={idx} className={styles.permission}>
+                          <span className={styles.permName}>{perm.name}</span>
+                          <span className={styles.permDesc}>{perm.description}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                  
+                  {selectedPluginRbac.filter((p: any) => p.resourceType === 'field').length > 0 && (
+                    <>
+                      <h4>Field Permissions</h4>
+                      {selectedPluginRbac.filter((p: any) => p.resourceType === 'field').map((perm: any, idx: number) => (
+                        <div key={idx} className={styles.permission}>
+                          <span className={styles.permName}>{perm.name}</span>
+                          <span className={styles.permDesc}>{perm.description}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                  
+                  {selectedPluginRbac.filter((p: any) => p.resourceType === 'object').length > 0 && (
+                    <>
+                      <h4>Object Permissions</h4>
+                      {selectedPluginRbac.filter((p: any) => p.resourceType === 'object').map((perm: any, idx: number) => (
+                        <div key={idx} className={styles.permission}>
+                          <span className={styles.permName}>{perm.name}</span>
+                          <span className={styles.permDesc}>{perm.description}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                  
+                  {selectedPluginRbac.filter((p: any) => p.resourceType === 'data').length > 0 && (
+                    <>
+                      <h4>Data Permissions</h4>
+                      {selectedPluginRbac.filter((p: any) => p.resourceType === 'data').map((perm: any, idx: number) => (
+                        <div key={idx} className={styles.permission}>
+                          <span className={styles.permName}>{perm.name}</span>
+                          <span className={styles.permDesc}>{perm.description}</span>
+                        </div>
+                      ))}
+                    </>
+                  )}
+                </div>
+              )}
             </div>
           </div>
         </div>
@@ -2073,15 +2117,17 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
 
       {/* API Registry Modal */}
       {showApiModal && (
-        <div className={styles.overlay}>
+        <div className={styles.modalOverlay} style={{ zIndex: 2000 }}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
               <h3>🔌 API Registry</h3>
               <Button variant="ghost" onClick={() => setShowApiModal(false)}>×</Button>
             </div>
             <div className={styles.modalBody}>
-              {selectedPluginApis.length === 0 ? (
-                <p>No APIs registered for this plugin.</p>
+              {!selectedPluginApis || selectedPluginApis.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '20px' }}>
+                  No APIs registered for this plugin.
+                </p>
               ) : (
                 <div className={styles.apiList}>
                   {selectedPluginApis.map((api: any, idx: number) => (
@@ -2090,10 +2136,10 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
                       <div className={styles.apiPath}>{api.apiPath}</div>
                       <div className={styles.apiDesc}>{api.apiDescription}</div>
                       <div className={styles.apiPerms}>
-                        {api.requiredPermissions.length > 0 ? (
+                        {api.requiredPermissions && api.requiredPermissions.length > 0 ? (
                           <span>Requires: {api.requiredPermissions.join(', ')}</span>
                         ) : (
-                          <span>Public API</span>
+                          <span className={styles.publicApi}>Public API</span>
                         )}
                       </div>
                     </div>
@@ -2107,15 +2153,17 @@ const PluginManager: React.FC<PluginManagerProps> = ({ onClose }) => {
 
       {/* User Permissions Modal */}
       {showPermissionsModal && (
-        <div className={styles.overlay}>
+        <div className={styles.modalOverlay} style={{ zIndex: 2000 }}>
           <div className={styles.modal}>
             <div className={styles.modalHeader}>
               <h3>👤 My Permissions</h3>
               <Button variant="ghost" onClick={() => setShowPermissionsModal(false)}>×</Button>
             </div>
             <div className={styles.modalBody}>
-              {userPermissions.length === 0 ? (
-                <p>You have no permissions granted for this plugin.</p>
+              {!userPermissions || userPermissions.length === 0 ? (
+                <p style={{ color: 'var(--text-secondary)', textAlign: 'center', padding: '20px' }}>
+                  You have no permissions granted for this plugin.
+                </p>
               ) : (
                 <div className={styles.permissionGroups}>
                   {userPermissions.map((perm: any, idx: number) => (
