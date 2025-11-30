@@ -62,25 +62,25 @@ export class NavigationApiService {
   }
 
   static async getModules(): Promise<{ success: boolean; data: NavigationModule[]; count: number; timestamp?: string }> {
-    return this.request('/api/plugins/navigation/modules');
+    return this.request('/api/plugins/menu-navigation/modules');
   }
 
   static async searchModules(query: string): Promise<{ success: boolean; data: NavigationModule[]; count: number; query: string; timestamp?: string }> {
-    return this.request(`/api/plugins/navigation/search?q=${encodeURIComponent(query)}`);
+    return this.request(`/api/plugins/menu-navigation/search?q=${encodeURIComponent(query)}`);
   }
 
   static async getConfiguration(): Promise<{ success: boolean; data: NavigationConfig; timestamp?: string }> {
-    return this.request('/api/plugins/navigation/config');
+    return this.request('/api/plugins/menu-navigation/config');
   }
 
   static async updateConfiguration(config: Partial<NavigationConfig>): Promise<{ success: boolean; message: string; timestamp?: string }> {
-    return this.request('/api/plugins/navigation/config', {
+    return this.request('/api/plugins/menu-navigation/config', {
       method: 'PUT',
       body: JSON.stringify(config),
     });
   }
 
   static async getStatus(): Promise<{ success: boolean; plugin: any; timestamp: string }> {
-    return this.request('/api/plugins/navigation/status');
+    return this.request('/api/plugins/menu-navigation/status');
   }
 }

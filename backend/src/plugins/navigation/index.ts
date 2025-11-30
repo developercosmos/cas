@@ -257,7 +257,7 @@ class MenuNavigationPlugin implements Plugin {
             req.user = {
               id: 'test-user',
               username: 'testuser',
-              permissions: ['navigation:view', 'plugin.admin', 'user_access.admin']
+              permissions: ['navigation:view', 'navigation:manage', 'navigation:configure', 'plugin.admin', 'user_access.admin']
             };
           }
           next();

@@ -5,6 +5,8 @@ import { AuthService } from '@/services/AuthService';
 import { AccessibilityTestRunner } from '@/components/accessibility/AccessibilityTestRunner';
 import AccessibilityTestPage from '@/pages/AccessibilityTestPage';
 import UserAccessManagementPage from '@/pages/UserAccessManagementPage';
+import LdapTestPage from '@/pages/LdapTestPage';
+import LdapManageUsersPage from '@/pages/LdapManageUsersPage';
 import '@/styles/global.css';
 import { useState, useEffect } from 'react';
 
@@ -16,6 +18,8 @@ function App() {
   const [ldapEnabled, setLdapEnabled] = useState(false);
   const [showAccessibilityTest, setShowAccessibilityTest] = useState(false);
   const [showUserAccessManagement, setShowUserAccessManagement] = useState(false);
+  const [showLdapTest, setShowLdapTest] = useState(false);
+  const [showLdapManageUsers, setShowLdapManageUsers] = useState(false);
 
   // Check if LDAP plugin is enabled
   useEffect(() => {
@@ -42,6 +46,18 @@ function App() {
       checkLdapStatus();
     }
   }, [isAuthenticated]);
+
+  // Handle direct URL routes
+  useEffect(() => {
+    const currentPath = window.location.pathname;
+    
+    // Handle LDAP routes
+    if (currentPath === '/admin/ldap/test') {
+      setShowLdapTest(true);
+    } else if (currentPath === '/admin/ldap/users') {
+      setShowLdapManageUsers(true);
+    }
+  }, []);
 
   // Simple route handling
   useEffect(() => {
@@ -77,6 +93,28 @@ function App() {
       <ThemeProvider>
         <div>
           <UserAccessManagementPage />
+        </div>
+      </ThemeProvider>
+    );
+  }
+
+  // If showing LDAP Test page
+  if (showLdapTest) {
+    return (
+      <ThemeProvider>
+        <div>
+          <LdapTestPage />
+        </div>
+      </ThemeProvider>
+    );
+  }
+
+  // If showing LDAP Manage Users page
+  if (showLdapManageUsers) {
+    return (
+      <ThemeProvider>
+        <div>
+          <LdapManageUsersPage />
         </div>
       </ThemeProvider>
     );

@@ -255,11 +255,11 @@ export function createRoutes(
   router.get('/status', async (req: AuthRequest, res: Response) => {
     try {
       // Get statistics from database
-      const totalModulesResult = await (navigationService as any).db.queryOne(
+      const totalModulesResult = await navigationService.db.queryOne(
         'SELECT COUNT(*) as count FROM plugin.navigation_modules'
       );
 
-      const activeModulesResult = await (navigationService as any).db.queryOne(
+      const activeModulesResult = await navigationService.db.queryOne(
         'SELECT COUNT(*) as count FROM plugin.navigation_modules WHERE isActive = true'
       );
 

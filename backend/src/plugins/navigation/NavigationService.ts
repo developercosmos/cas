@@ -40,6 +40,26 @@ export class NavigationService {
           isActive: true
         },
         {
+          name: 'LDAP Test',
+          description: 'Test LDAP connection and browse directory',
+          pluginId: 'ldap-auth',
+          requiresAuth: true,
+          requiredPermissions: ['ldap.test'],
+          route: '/admin/ldap/test',
+          sortOrder: 32,
+          isActive: true
+        },
+        {
+          name: 'LDAP Manage Users',
+          description: 'Manage LDAP user import and synchronization',
+          pluginId: 'ldap-auth',
+          requiresAuth: true,
+          requiredPermissions: ['ldap.manage_users'],
+          route: '/admin/ldap/users',
+          sortOrder: 34,
+          isActive: true
+        },
+        {
           name: 'Dashboard',
           description: 'Main application dashboard',
           pluginId: 'system',
@@ -262,12 +282,12 @@ export class NavigationService {
       `);
 
       if (result) {
-        // For now, return basic permissions
+        // For now, return basic permissions plus LDAP permissions for testing
         // In a real implementation, this would make an HTTP call
-        return ['navigation:view']; // Default permission
+        return ['navigation:view', 'ldap.configure', 'ldap.test', 'ldap.manage_users']; // Default permissions
       }
 
-      return ['navigation:view']; // Default permission for logged-in users
+      return ['navigation:view', 'ldap.configure', 'ldap.test', 'ldap.manage_users']; // Default permissions for logged-in users
     } catch (error) {
       console.error('Error getting user permissions:', error);
       return ['navigation:view']; // Fallback permission
