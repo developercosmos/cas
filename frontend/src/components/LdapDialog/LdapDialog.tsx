@@ -11,7 +11,7 @@ interface LdapConfiguration {
   serverUrl: string;
   baseDN: string;
   bindDN: string;
-  bindPassword: string;
+  bindPassword?: string;
   searchFilter: string;
   searchAttribute: string;
   groupAttribute: string;
@@ -19,6 +19,38 @@ interface LdapConfiguration {
   port: number;
   isActive: boolean;
 }
+
+// API Response format (snake_case)
+interface LdapConfigApiResponse {
+  id: string;
+  serverurl: string;
+  basedn: string;
+  binddn: string;
+  bindpassword?: string;
+  searchfilter: string;
+  searchattribute: string;
+  groupattribute: string;
+  issecure: boolean;
+  port: number;
+  isactive: boolean;
+  createdat?: string;
+  updatedat?: string;
+}
+
+// Helper function to convert API response to frontend format
+const mapApiResponseToConfig = (apiConfig: LdapConfigApiResponse): LdapConfiguration => ({
+  id: apiConfig.id,
+  serverUrl: apiConfig.serverurl,
+  baseDN: apiConfig.basedn,
+  bindDN: apiConfig.binddn,
+  bindPassword: apiConfig.bindpassword,
+  searchFilter: apiConfig.searchfilter,
+  searchAttribute: apiConfig.searchattribute,
+  groupAttribute: apiConfig.groupattribute,
+  isSecure: apiConfig.issecure,
+  port: apiConfig.port,
+  isActive: apiConfig.isactive
+});
 
 interface LdapDialogProps {
   isOpen: boolean;
@@ -89,11 +121,22 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
           }
         });
 
-        if (response.ok) {
-          const data = await response.json();
-          setConfigs(data.data || []);
-          const activeConfig = (data.data || []).find((c: LdapConfiguration) => c.isActive);
+        if (!response.ok) {
+          console.error('Failed to load LDAP configs: HTTP', response.status);
+          return;
+        }
+
+        const data = await response.json();
+        if (data.success && Array.isArray(data.data)) {
+          // Map API response to frontend format
+          const mappedConfigs = data.data.map((apiConfig: LdapConfigApiResponse) => 
+            mapApiResponseToConfig(apiConfig)
+          );
+          setConfigs(mappedConfigs);
+          const activeConfig = mappedConfigs.find((c: LdapConfiguration) => c.isActive);
           setSelectedConfig(activeConfig || null);
+        } else {
+          console.error('Invalid API response format:', data);
         }
       } catch (error) {
         console.error('Failed to load LDAP configs:', error);
@@ -373,7 +416,7 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
                   serverurl: selectedConfig.serverUrl,
                   basedn: selectedConfig.baseDN,
                   binddn: selectedConfig.bindDN,
-                  bindpassword: selectedConfig.bindPassword,
+                  bindpassword: selectedConfig.bindPassword || '',
                   issecure: selectedConfig.isSecure,
                   port: selectedConfig.port
                 }}
