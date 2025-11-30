@@ -1,7 +1,4 @@
 import React, { useState, useEffect, useRef } from 'react';
-import LdapConfig from '@/components/LdapConfig/LdapConfig';
-import LdapTreeBrowser from '@/components/LdapTreeBrowser/LdapTreeBrowser';
-import LdapUserManager from '@/components/LdapUserManager/LdapUserManager';
 import styles from './styles.module.css';
 
 interface LdapConfigType {
@@ -123,28 +120,6 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
       return () => document.removeEventListener('keydown', handleKeyDown);
     }
   }, [isOpen, onClose]);
-
-  const loadConfigs = async () => {
-    try {
-      const token = localStorage.getItem('auth_token') || 'test-token';
-      
-      const response = await fetch('/api/ldap/configs', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        }
-      });
-
-      if (response.ok) {
-        const data = await response.json();
-        setConfigs(data.data || []);
-        const activeConfig = (data.data || []).find((c: LdapConfigType) => c.isActive);
-        setSelectedConfig(activeConfig || null);
-      }
-    } catch (error) {
-      console.error('Failed to load LDAP configs:', error);
-    }
-  };
 
   const tabs = [
     { id: 'config' as TabType, label: 'Configuration', icon: '⚙️' },
