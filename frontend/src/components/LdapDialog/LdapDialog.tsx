@@ -104,6 +104,7 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
   // LDAP State Management
   const [configs, setConfigs] = useState<LdapConfiguration[]>([]);
   const [selectedConfig, setSelectedConfig] = useState<LdapConfiguration | null>(null);
+  const [editingConfig, setEditingConfig] = useState<LdapConfiguration | null>(null);
   const [showConfigForm, setShowConfigForm] = useState(false);
   const [showTreeBrowser, setShowTreeBrowser] = useState(false);
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
@@ -142,6 +143,44 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
       } catch (error) {
         console.error('Failed to load LDAP configs:', error);
       }
+  };
+
+  const handleEditConfig = (config: LdapConfiguration) => {
+    setEditingConfig(config);
+    setShowConfigForm(true);
+  };
+
+  const handleRemoveConfig = async (config: LdapConfiguration) => {
+    const confirmMessage = `Are you sure you want to delete the LDAP configuration for "${config.serverUrl}"?\n\nThis action cannot be undone.`;
+    if (!confirm(confirmMessage)) {
+      return;
+    }
+
+    try {
+      const response = await fetch(`/api/ldap/configs/${config.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer test-token`,
+          'Content-Type': 'application/json'
+        }
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: 'Failed to delete configuration' }));
+        throw new Error(errorData.message || 'Failed to delete configuration');
+      }
+
+      const result = await response.json();
+      if (result.success) {
+        alert('✅ LDAP configuration deleted successfully!');
+        await loadConfigs(); // Reload configurations
+      } else {
+        throw new Error(result.message || 'Delete operation failed');
+      }
+    } catch (error) {
+      console.error('Failed to delete LDAP config:', error);
+      alert(`❌ Failed to delete configuration: ${error instanceof Error ? error.message : 'Unknown error'}`);
+    }
   };
 
   // Load LDAP configs when dialog opens
@@ -348,55 +387,151 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
         if (showConfigForm) {
           return (
             <div className={styles.tabContent}>
-              <LdapConfig onClose={() => {
-                setShowConfigForm(false);
-                loadConfigs(); // Reload configs when closing
-              }} />
+              <LdapConfig 
+                config={editingConfig || undefined}
+                onClose={() => {
+                  setShowConfigForm(false);
+                  setEditingConfig(null);
+                  loadConfigs(); // Reload configs when closing
+                }} 
+              />
             </div>
           );
         }
-        return (
-          <div className={styles.tabContent}>
-            <div style={{ padding: '2rem', textAlign: 'center' }}>
-              <h3>LDAP Configuration</h3>
-              <p>Manage LDAP server connections and authentication settings.</p>
-              <Button 
-                onClick={() => setShowConfigForm(true)}
-                style={{ margin: '1rem' }}
-              >
-                Configure LDAP
-              </Button>
-              {configs.length > 0 && (
-                <div style={{ marginTop: '2rem' }}>
-                  <h4>Existing Configurations</h4>
+        
+        // Show existing configurations directly, or empty state if none
+        if (configs.length > 0) {
+          return (
+            <div className={styles.tabContent}>
+              <div style={{ padding: '1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+                  <div>
+                    <h3 style={{ margin: 0, marginBottom: '0.5rem' }}>LDAP Configuration</h3>
+                    <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Manage LDAP server connections and authentication settings.</p>
+                  </div>
+                  <Button 
+                    onClick={() => setShowConfigForm(true)}
+                  >
+                    + New Configuration
+                  </Button>
+                </div>
+                
+                <div>
+                  <h4 style={{ marginBottom: '1rem' }}>Existing Configurations</h4>
                   {configs.map((config) => (
                     <div key={config.id} style={{ 
-                      padding: '1rem', 
-                      margin: '0.5rem 0', 
+                      padding: '1.25rem', 
+                      margin: '0.75rem 0', 
                       border: '1px solid var(--border-primary)',
                       borderRadius: '0.5rem',
-                      background: 'var(--bg-section)'
+                      background: 'var(--bg-section)',
+                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
                     }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <div>
-                          <strong>{config.serverUrl}</strong>
-                          <br />
-                          <small>{config.baseDN}</small>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+                        <div style={{ flex: 1 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
+                            <strong style={{ fontSize: '1.1rem' }}>{config.serverUrl}</strong>
+                            <span style={{ 
+                              padding: '0.25rem 0.5rem', 
+                              borderRadius: '0.25rem',
+                              fontSize: '0.75rem',
+                              background: config.isActive ? 'var(--success, #28a745)' : 'var(--error, #dc2626)',
+                              color: 'white',
+                              fontWeight: 'bold'
+                            }}>
+                              {config.isActive ? 'Active' : 'Inactive'}
+                            </span>
+                          </div>
+                          <div style={{ display: 'grid', gridTemplateColumns: 'auto auto', gap: '0.5rem 1rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
+                            <span><strong>Base DN:</strong> {config.baseDN}</span>
+                            <span><strong>Port:</strong> {config.port}</span>
+                            <span><strong>Bind DN:</strong> {config.bindDN}</span>
+                            <span><strong>Secure:</strong> {config.isSecure ? 'Yes' : 'No'}</span>
+                            <span style={{ gridColumn: '1 / -1' }}><strong>Search Filter:</strong> <code style={{ background: 'var(--bg-secondary)', padding: '0.125rem 0.25rem', borderRadius: '0.25rem' }}>{config.searchFilter}</code></span>
+                            <span style={{ gridColumn: '1 / -1' }}><strong>Search Attribute:</strong> <code style={{ background: 'var(--bg-secondary)', padding: '0.125rem 0.25rem', borderRadius: '0.25rem' }}>{config.searchAttribute}</code></span>
+                          </div>
                         </div>
-                        <div style={{ 
-                          padding: '0.25rem 0.5rem', 
-                          borderRadius: '0.25rem',
-                          fontSize: '0.75rem',
-                          background: config.isActive ? 'var(--success, #28a745)' : 'var(--error, #dc2626)',
-                          color: 'white'
-                        }}>
-                          {config.isActive ? 'Active' : 'Inactive'}
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginLeft: '1rem' }}>
+                          <button
+                            onClick={() => handleEditConfig(config)}
+                            style={{
+                              padding: '0.5rem 1rem',
+                              fontSize: '0.875rem',
+                              border: '1px solid var(--accent-color, #f97316)',
+                              borderRadius: '0.25rem',
+                              background: 'transparent',
+                              color: 'var(--accent-color, #f97316)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'var(--accent-color, #f97316)';
+                              e.currentTarget.style.color = 'white';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'transparent';
+                              e.currentTarget.style.color = 'var(--accent-color, #f97316)';
+                            }}
+                            title="Edit configuration"
+                          >
+                            ✏️ Edit
+                          </button>
+                          
+                          <button
+                            onClick={() => handleRemoveConfig(config)}
+                            style={{
+                              padding: '0.5rem 1rem',
+                              fontSize: '0.875rem',
+                              border: '1px solid var(--error, #dc2626)',
+                              borderRadius: '0.25rem',
+                              background: 'transparent',
+                              color: 'var(--error, #dc2626)',
+                              cursor: 'pointer',
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: '0.25rem',
+                              transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                              e.currentTarget.style.background = 'var(--error, #dc2626)';
+                              e.currentTarget.style.color = 'white';
+                            }}
+                            onMouseLeave={(e) => {
+                              e.currentTarget.style.background = 'transparent';
+                              e.currentTarget.style.color = 'var(--error, #dc2626)';
+                            }}
+                            title="Delete configuration"
+                          >
+                            🗑️ Delete
+                          </button>
                         </div>
                       </div>
                     </div>
                   ))}
                 </div>
-              )}
+              </div>
+            </div>
+          );
+        }
+        
+        // Empty state when no configurations exist
+        return (
+          <div className={styles.tabContent}>
+            <div style={{ padding: '2rem', textAlign: 'center' }}>
+              <h3>LDAP Configuration</h3>
+              <p style={{ marginBottom: '1.5rem', color: 'var(--text-secondary)' }}>
+                No LDAP configurations found. Create your first LDAP server connection to enable directory integration.
+              </p>
+              <Button 
+                onClick={() => setShowConfigForm(true)}
+                style={{ margin: '1rem' }}
+              >
+                + Create LDAP Configuration
+              </Button>
             </div>
           </div>
         );

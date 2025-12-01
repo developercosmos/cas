@@ -50,9 +50,10 @@ const mapApiResponseToConfig = (apiConfig: LdapConfigApiResponse): LdapConfigura
 
 interface LdapConfigProps {
   onClose: () => void;
+  config?: LdapConfiguration;
 }
 
-const LdapConfig: React.FC<LdapConfigProps> = ({ onClose }) => {
+const LdapConfig: React.FC<LdapConfigProps> = ({ onClose, config }) => {
   const [configs, setConfigs] = useState<LdapConfiguration[]>([]);
   const [showForm, setShowForm] = useState(false);
   const [editingConfig, setEditingConfig] = useState<LdapConfiguration | null>(null);
@@ -74,8 +75,25 @@ const LdapConfig: React.FC<LdapConfigProps> = ({ onClose }) => {
   });
 
   useEffect(() => {
-    loadConfigs();
-  }, []);
+    if (config) {
+      // If editing, populate form with existing config data
+      setFormData({
+        serverUrl: config.serverUrl,
+        baseDN: config.baseDN,
+        bindDN: config.bindDN,
+        bindPassword: config.bindPassword || '',
+        searchFilter: config.searchFilter,
+        searchAttribute: config.searchAttribute,
+        groupAttribute: config.groupAttribute,
+        isSecure: config.isSecure,
+        port: config.port
+      });
+      setEditingConfig(config);
+      setShowForm(true);
+    } else {
+      loadConfigs();
+    }
+  }, [config]);
 
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
