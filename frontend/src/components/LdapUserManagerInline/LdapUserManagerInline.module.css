@@ -494,43 +494,55 @@
 
 .userTable {
   width: 100%;
-  border-collapse: collapse;
+  border-collapse: separate;
+  border-spacing: 0;
   background: var(--bg-primary);
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05), 0 1px 2px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(0, 0, 0, 0.05);
 }
 
 .userTable th {
-  background: var(--accent-primary);
-  color: white;
-  padding: 8px 12px;
+  background: linear-gradient(180deg, rgba(0, 0, 0, 0.01) 0%, rgba(0, 0, 0, 0.02) 100%);
+  color: var(--text-secondary);
+  padding: 12px 16px;
   text-align: left;
-  font-weight: 600;
-  font-size: 12px;
-  border-bottom: 2px solid var(--accent-primary);
+  font-weight: 500;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .userTable td {
-  padding: 6px 12px;
-  border-bottom: 1px solid var(--border-color);
-  font-size: 12px;
+  padding: 14px 16px;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+  font-size: 13px;
   vertical-align: middle;
   white-space: nowrap;
   text-overflow: ellipsis;
   overflow: hidden;
   max-width: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  color: var(--text-primary);
+  transition: background-color 0.15s ease;
 }
 
 .userTableRow:hover {
-  background: var(--background-tertiary);
+  background: rgba(0, 0, 0, 0.015);
 }
 
 .userTableRow:hover td {
   background: transparent;
+}
+
+[data-theme="dark"] .userTableRow:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
 [data-theme="dark"] .userTable {
@@ -552,9 +564,9 @@
 
 /* Table column specific styles */
 .checkboxColumn {
-  width: 40px !important;
+  width: 48px !important;
   text-align: center !important;
-  padding: 6px 12px !important;
+  padding: 14px 16px !important;
   vertical-align: middle !important;
   background: var(--bg-primary) !important;
   position: relative !important;
@@ -562,15 +574,34 @@
 
 /* Table checkbox styling */
 .checkbox {
-  width: 14px !important;
-  height: 14px !important;
+  width: 16px !important;
+  height: 16px !important;
   cursor: pointer;
   accent-color: var(--accent-primary);
-  border: 1px solid var(--accent-primary) !important;
-  border-radius: 2px !important;
+  border: 1px solid rgba(0, 0, 0, 0.15) !important;
+  border-radius: 3px !important;
   position: relative !important;
   z-index: 10 !important;
   background: white !important;
+  transition: all 0.2s ease;
+}
+
+.checkbox:hover {
+  border-color: var(--accent-primary) !important;
+}
+
+.checkbox:checked {
+  background-color: var(--accent-primary) !important;
+  border-color: var(--accent-primary) !important;
+}
+
+[data-theme="dark"] .checkbox {
+  background: var(--bg-secondary) !important;
+  border-color: rgba(255, 255, 255, 0.15) !important;
+}
+
+[data-theme="dark"] .checkbox:hover {
+  border-color: var(--accent-primary) !important;
 }
 
 .userTable input[type="checkbox"] {
@@ -585,26 +616,33 @@
 }
 
 .photoColumn {
-  width: 40px;
+  width: 48px;
   text-align: center;
 }
 
 .actionsColumn {
-  width: 100px;
+  width: 120px;
   text-align: center;
 }
 
 /* Table photo styles */
 .userPhotoTable {
-  width: 28px;
-  height: 28px;
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
   overflow: hidden;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 1px solid var(--accent-primary);
+  border: 1px solid rgba(0, 0, 0, 0.08);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+  transition: all 0.2s ease;
+}
+
+.userPhotoTable:hover {
+  border-color: var(--accent-primary);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
 .userPhotoImg {
@@ -629,59 +667,80 @@
 
 /* Table cell content styles */
 .usernameCell {
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-primary);
-  min-width: 120px;
+  min-width: 140px;
+  font-size: 13px;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .displayNameCell {
   color: var(--text-secondary);
-  min-width: 140px;
+  min-width: 160px;
+  font-size: 13px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .emailCell {
   color: var(--text-secondary);
-  min-width: 180px;
+  min-width: 200px;
+  font-size: 13px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .titleCell {
   color: var(--text-secondary);
-  min-width: 150px;
+  min-width: 160px;
+  font-size: 13px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 .departmentCell {
   color: var(--text-secondary);
-  min-width: 120px;
+  min-width: 140px;
+  font-size: 13px;
+  font-weight: 400;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
 }
 
 /* Responsive table styles */
 @media (max-width: 768px) {
   .userTable th {
-    font-size: 11px;
-    padding: 6px 8px;
+    font-size: 10px;
+    padding: 8px 12px;
+    letter-spacing: 0.3px;
   }
   
   .userTable td {
-    font-size: 11px;
-    padding: 4px 8px;
+    font-size: 12px;
+    padding: 10px 12px;
   }
   
   .userPhotoTable {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
   }
   
   .checkboxColumn {
-    width: 35px !important;
-    padding: 4px 8px !important;
+    width: 40px !important;
+    padding: 10px 12px !important;
   }
   
   .photoColumn {
-    width: 35px;
+    width: 40px;
   }
   
   .checkbox {
-    width: 12px !important;
-    height: 12px !important;
+    width: 14px !important;
+    height: 14px !important;
   }
+  
+  .usernameCell { min-width: 120px; }
+  .displayNameCell { min-width: 140px; }
+  .emailCell { min-width: 160px; }
+  .titleCell { min-width: 140px; }
+  .departmentCell { min-width: 120px; }
 }
