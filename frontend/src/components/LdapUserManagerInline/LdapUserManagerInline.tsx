@@ -349,7 +349,11 @@ const LdapUserManagerInline: React.FC<LdapUserManagerInlineProps> = ({ configId 
                     checked={selectedUsers.has(user.username)}
                     onChange={() => handleSelectUser(user.username)}
                     className={styles.checkbox}
+                    title={`Select ${user.username}`}
                   />
+                )}
+                {activeTab === 'imported' && (
+                  <span style={{color: 'var(--text-secondary)'}}>—</span>
                 )}
               </td>
 
