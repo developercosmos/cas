@@ -306,7 +306,16 @@ const LdapUserManagerInline: React.FC<LdapUserManagerInlineProps> = ({ configId 
           <table className={styles.userTable}>
             <thead>
               <tr>
-                {activeTab === 'available' && <th className={styles.checkboxColumn}></th>}
+                <th className={styles.checkboxColumn}>
+                  {activeTab === 'available' && (
+                    <input
+                      type="checkbox"
+                      checked={selectedUsers.size === filteredUsers.length && filteredUsers.length > 0}
+                      onChange={handleSelectAll}
+                      title="Select All"
+                    />
+                  )}
+                </th>
                 <th className={styles.photoColumn}></th>
                 <th>Username</th>
                 <th>Display Name</th>
@@ -333,16 +342,16 @@ const LdapUserManagerInline: React.FC<LdapUserManagerInlineProps> = ({ configId 
 
           return (
             <tr key={user.username} className={styles.userTableRow}>
-              {activeTab === 'available' && (
-                <td className={styles.checkboxColumn}>
+              <td className={styles.checkboxColumn}>
+                {activeTab === 'available' && (
                   <input
                     type="checkbox"
                     checked={selectedUsers.has(user.username)}
                     onChange={() => handleSelectUser(user.username)}
                     className={styles.checkbox}
                   />
-                </td>
-              )}
+                )}
+              </td>
 
               <td className={styles.photoColumn}>
                 <div className={styles.userPhotoTable}>

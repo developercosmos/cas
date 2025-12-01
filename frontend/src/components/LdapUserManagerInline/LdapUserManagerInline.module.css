@@ -545,8 +545,20 @@
 
 /* Table column specific styles */
 .checkboxColumn {
-  width: 40px;
+  width: 50px;
   text-align: center;
+}
+
+/* Table checkbox styling */
+.userTable input[type="checkbox"] {
+  width: 16px;
+  height: 16px;
+  cursor: pointer;
+  accent-color: var(--accent-primary);
+}
+
+.userTable th input[type="checkbox"] {
+  margin: 0;
 }
 
 .photoColumn {
