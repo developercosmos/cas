@@ -17,13 +17,15 @@
   border: 2px solid var(--accent-primary);
   border-radius: 6px;
   width: 90%;
-  max-width: 800px;
-  max-height: 85vh;
+  max-width: 900px;
+  max-height: 80vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 20px 25px -5px rgba(0, 0, 0, 0.2);
+  z-index: 10101;
   position: relative;
   opacity: 1;
+  user-select: none;
 }
 
 [data-theme="dark"] .modal {
@@ -37,14 +39,13 @@
   justify-content: space-between;
   padding: 5px 24px;
   border-bottom: 2px solid var(--accent-primary);
-  background: #f8fafc;
+  opacity: 1;
   border-top-left-radius: 4px;
   border-top-right-radius: 4px;
 }
 
 [data-theme="dark"] .header {
-  background: #374151;
-  border-color: #4b5563;
+  border-color: var(--accent-primary);
 }
 
 .header:hover {
@@ -64,41 +65,53 @@
   margin: 0;
   font-size: 1.25rem;
   font-weight: 600;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .closeButton {
-  background: var(--background-primary);
-  border: 1px solid var(--border-primary);
-  color: var(--text-secondary);
+  background: transparent;
+  border: none;
+  color: #6b7280;
   cursor: pointer;
-  padding: 6px;
+  padding: 4px;
   border-radius: 4px;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
-  width: 28px;
-  height: 28px;
-  font-size: 20px;
+  transition: all 0.15s ease;
+  width: 20px;
+  height: 20px;
+  font-size: 14px;
   line-height: 1;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 .closeButton:hover {
-  background: #ef4444;
-  border-color: #dc2626;
-  color: #fff;
+  background: #f3f4f6;
+  color: #111827;
+}
+
+[data-theme="dark"] .closeButton {
+  color: #9ca3af;
+}
+
+[data-theme="dark"] .closeButton:hover {
+  background: #374151;
+  color: #f9fafb;
 }
 
 .content {
   flex: 1;
-  padding: 20px 24px;
+  padding: 24px;
   overflow-y: auto;
-  background: #ffffff;
-  color: var(--text-primary);
+  background: #f9fafb;
+  color: #111827;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
 }
 
 [data-theme="dark"] .content {
-  background: #1f2937;
+  background: #111827;
+  color: #f9fafb;
 }
 
 .actions {
@@ -108,41 +121,55 @@
 }
 
 .addButton {
-  background: var(--accent-primary);
+  background: #f97316;
   color: white;
-  border: 1px solid transparent;
-  padding: 6px 16px;
-  border-radius: 6px;
+  border: 1px solid #f97316;
+  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
   cursor: pointer;
   font-weight: 500;
-  font-size: 14px;
-  min-height: 31px;
-  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-height: 2.5rem;
+  transition: all 0.15s ease;
+  outline: none;
 }
 
 .addButton:hover {
-  background: var(--accent-hover);
+  background: #ea580c;
+  border-color: #ea580c;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(230, 126, 34, 0.3);
+  box-shadow: 0 4px 6px -1px rgba(249, 115, 22, 0.1), 0 2px 4px -1px rgba(249, 115, 22, 0.06);
+}
+
+.addButton:active {
+  transform: translateY(0);
 }
 
 .importButton {
   background: #10b981;
   color: white;
-  border: 1px solid transparent;
-  padding: 6px 16px;
-  border-radius: 6px;
+  border: 1px solid #10b981;
+  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
   cursor: pointer;
   font-weight: 500;
-  font-size: 14px;
-  min-height: 31px;
-  transition: all 0.2s ease;
+  font-size: 0.875rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  min-height: 2.5rem;
+  transition: all 0.15s ease;
+  outline: none;
 }
 
 .importButton:hover:not(:disabled) {
   background: #059669;
+  border-color: #059669;
   transform: translateY(-1px);
-  box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+  box-shadow: 0 4px 6px -1px rgba(16, 185, 129, 0.1), 0 2px 4px -1px rgba(16, 185, 129, 0.06);
+}
+
+.importButton:active:not(:disabled) {
+  transform: translateY(0);
 }
 
 .importButton:disabled {
@@ -287,8 +314,15 @@
 }
 
 .form h3 {
-  color: var(--text-primary);
+  color: #111827;
   margin-bottom: 1.5rem;
+  font-size: 1.5rem;
+  font-weight: 700;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+[data-theme="dark"] .form h3 {
+  color: #f9fafb;
 }
 
 .formGrid {
@@ -306,7 +340,13 @@
 .formGroup label {
   margin-bottom: 0.5rem;
   font-weight: 500;
-  color: var(--text-primary);
+  color: #111827;
+  font-size: 0.875rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+[data-theme="dark"] .formGroup label {
+  color: #f9fafb;
 }
 
 .formActions {
@@ -367,10 +407,63 @@
 }
 
 .errorText {
-  color: var(--danger-color, #dc3545);
-  font-size: 12px;
+  color: #ef4444;
+  font-size: 0.75rem;
   margin-top: 4px;
   font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+}
+
+[data-theme="dark"] .errorText {
+  color: #f87171;
+}
+
+/* Factory.ai input styling */
+.formGroup :global(input),
+.formGroup :global(textarea) {
+  background: white;
+  border: 1px solid #e5e7eb;
+  border-radius: 0.5rem;
+  padding: 0.625rem 0.875rem;
+  font-size: 0.875rem;
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  color: #111827;
+  transition: all 0.15s ease;
+  outline: none;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.formGroup :global(input:focus),
+.formGroup :global(textarea:focus) {
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+.formGroup :global(input:disabled),
+.formGroup :global(textarea:disabled) {
+  background: #f9fafb;
+  color: #6b7280;
+  cursor: not-allowed;
+}
+
+[data-theme="dark"] .formGroup :global(input),
+[data-theme="dark"] .formGroup :global(textarea) {
+  background: #374151;
+  border-color: #4b5563;
+  color: #f9fafb;
+}
+
+[data-theme="dark"] .formGroup :global(input:focus),
+[data-theme="dark"] .formGroup :global(textarea:focus) {
+  border-color: #f97316;
+  box-shadow: 0 0 0 3px rgba(249, 115, 22, 0.1);
+}
+
+[data-theme="dark"] .formGroup :global(input:disabled),
+[data-theme="dark"] .formGroup :global(textarea:disabled) {
+  background: #1f2937;
+  color: #6b7280;
 }
 
 @media (max-width: 768px) {
