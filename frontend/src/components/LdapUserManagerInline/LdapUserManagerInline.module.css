@@ -504,18 +504,25 @@
 .userTable th {
   background: var(--accent-primary);
   color: white;
-  padding: 12px 16px;
+  padding: 8px 12px;
   text-align: left;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 12px;
   border-bottom: 2px solid var(--accent-primary);
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
 }
 
 .userTable td {
-  padding: 12px 16px;
+  padding: 6px 12px;
   border-bottom: 1px solid var(--border-color);
-  font-size: 14px;
+  font-size: 12px;
   vertical-align: middle;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  overflow: hidden;
+  max-width: 0;
 }
 
 .userTableRow:hover {
@@ -545,9 +552,9 @@
 
 /* Table column specific styles */
 .checkboxColumn {
-  width: 60px !important;
+  width: 40px !important;
   text-align: center !important;
-  padding: 12px 16px !important;
+  padding: 6px 12px !important;
   vertical-align: middle !important;
   background: var(--bg-primary) !important;
   position: relative !important;
@@ -555,12 +562,12 @@
 
 /* Table checkbox styling */
 .checkbox {
-  width: 18px !important;
-  height: 18px !important;
+  width: 14px !important;
+  height: 14px !important;
   cursor: pointer;
   accent-color: var(--accent-primary);
-  border: 2px solid var(--accent-primary) !important;
-  border-radius: 3px !important;
+  border: 1px solid var(--accent-primary) !important;
+  border-radius: 2px !important;
   position: relative !important;
   z-index: 10 !important;
   background: white !important;
@@ -578,26 +585,26 @@
 }
 
 .photoColumn {
-  width: 60px;
+  width: 40px;
   text-align: center;
 }
 
 .actionsColumn {
-  width: 120px;
+  width: 100px;
   text-align: center;
 }
 
 /* Table photo styles */
 .userPhotoTable {
-  width: 40px;
-  height: 40px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   overflow: hidden;
   position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
-  border: 2px solid var(--accent-primary);
+  border: 1px solid var(--accent-primary);
 }
 
 .userPhotoImg {
@@ -616,7 +623,7 @@
   background: linear-gradient(135deg, #8b5cf6, #7c3aed);
   color: white;
   font-weight: 600;
-  font-size: 14px;
+  font-size: 10px;
   border-radius: 50%;
 }
 
@@ -624,43 +631,57 @@
 .usernameCell {
   font-weight: 600;
   color: var(--text-primary);
+  min-width: 120px;
 }
 
 .displayNameCell {
   color: var(--text-secondary);
+  min-width: 140px;
 }
 
 .emailCell {
   color: var(--text-secondary);
-  font-size: 13px;
+  min-width: 180px;
 }
 
 .titleCell {
   color: var(--text-secondary);
+  min-width: 150px;
 }
 
 .departmentCell {
   color: var(--text-secondary);
+  min-width: 120px;
 }
 
 /* Responsive table styles */
 @media (max-width: 768px) {
-  .userTable {
-    font-size: 12px;
+  .userTable th {
+    font-size: 11px;
+    padding: 6px 8px;
   }
   
-  .userTable th,
   .userTable td {
-    padding: 8px 12px;
+    font-size: 11px;
+    padding: 4px 8px;
   }
   
   .userPhotoTable {
-    width: 32px;
-    height: 32px;
+    width: 24px;
+    height: 24px;
   }
   
-  .checkboxColumn,
+  .checkboxColumn {
+    width: 35px !important;
+    padding: 4px 8px !important;
+  }
+  
   .photoColumn {
-    width: auto;
+    width: 35px;
+  }
+  
+  .checkbox {
+    width: 12px !important;
+    height: 12px !important;
   }
 }
