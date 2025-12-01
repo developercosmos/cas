@@ -505,10 +505,33 @@ export class LdapService {
         const jpegPhoto = getAttr('jpegPhoto')[0];
         const photo = thumbnailPhoto || jpegPhoto;
         
-        // Convert photo buffer to base64 if present
+        // Convert photo to base64 if present
         let photoBase64 = null;
-        if (photo && Buffer.isBuffer(photo)) {
-          photoBase64 = `data:image/jpeg;base64,${photo.toString('base64')}`;
+        if (photo) {
+          try {
+            // Handle different photo data types
+            if (Buffer.isBuffer(photo)) {
+              // Direct buffer
+              photoBase64 = `data:image/jpeg;base64,${photo.toString('base64')}`;
+            } else if (typeof photo === 'string') {
+              // Already a string - might be base64 or need encoding
+              if (photo.startsWith('data:image')) {
+                photoBase64 = photo;
+              } else {
+                // Assume it's raw data that needs encoding
+                photoBase64 = `data:image/jpeg;base64,${Buffer.from(photo, 'binary').toString('base64')}`;
+              }
+            } else if (photo.buffer) {
+              // Buffer-like object
+              photoBase64 = `data:image/jpeg;base64,${Buffer.from(photo.buffer).toString('base64')}`;
+            } else if (Array.isArray(photo)) {
+              // Array of bytes
+              photoBase64 = `data:image/jpeg;base64,${Buffer.from(photo).toString('base64')}`;
+            }
+            console.log(`📸 Photo processed for user ${username}: ${photoBase64 ? 'Success' : 'Failed'}`);
+          } catch (photoError) {
+            console.error(`Failed to process photo for user ${username}:`, photoError);
+          }
         }
 
         return {
