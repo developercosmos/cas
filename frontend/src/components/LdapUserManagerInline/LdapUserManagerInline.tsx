@@ -67,6 +67,15 @@ const LdapUserManagerInline: React.FC<LdapUserManagerInlineProps> = ({ configId 
       if (ldapResponse.ok) {
         const ldapData = await ldapResponse.json();
         if (ldapData.success) {
+          console.log('📋 LDAP Users received:', ldapData.users?.length, 'users');
+          if (ldapData.users && ldapData.users.length > 0) {
+            console.log('📸 Sample user photo data:', {
+              username: ldapData.users[0].username,
+              hasPhoto: !!ldapData.users[0].photo,
+              photoType: typeof ldapData.users[0].photo,
+              photoStart: ldapData.users[0].photo?.substring(0, 50)
+            });
+          }
           setLdapUsers(ldapData.users || []);
         } else {
           console.warn('LDAP users fetch returned success:false', ldapData);
@@ -312,12 +321,29 @@ const LdapUserManagerInline: React.FC<LdapUserManagerInlineProps> = ({ configId 
               <div className={styles.userPhotoContainer}>
                 <div className={styles.userPhoto}>
                   {user.photo ? (
-                    <img src={user.photo} alt={user.displayName || user.username} />
-                  ) : (
-                    <div className={styles.userPhotoPlaceholder}>
-                      {displayInitials}
-                    </div>
-                  )}
+                    <img 
+                      src={user.photo} 
+                      alt={user.displayName || user.username}
+                      onError={(e) => {
+                        console.error('Image failed to load for user:', user.username, 'Photo data:', user.photo?.substring(0, 100));
+                        // Hide broken image and show placeholder
+                        e.currentTarget.style.display = 'none';
+                        const placeholder = e.currentTarget.nextElementSibling;
+                        if (placeholder) {
+                          (placeholder as HTMLElement).style.display = 'flex';
+                        }
+                      }}
+                      onLoad={() => {
+                        console.log('✅ Image loaded successfully for user:', user.username);
+                      }}
+                    />
+                  ) : null}
+                  <div 
+                    className={styles.userPhotoPlaceholder}
+                    style={{ display: user.photo ? 'none' : 'flex' }}
+                  >
+                    {displayInitials}
+                  </div>
                 </div>
               </div>
 
