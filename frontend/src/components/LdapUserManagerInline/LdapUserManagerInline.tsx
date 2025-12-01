@@ -34,6 +34,7 @@ const LdapUserManagerInline: React.FC<LdapUserManagerInlineProps> = ({ configId 
   const [searchTerm, setSearchTerm] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'available' | 'imported'>('available');
+  const [viewMode, setViewMode] = useState<'cards' | 'table'>('cards');
 
   useEffect(() => {
     if (configId) {
@@ -254,6 +255,14 @@ const LdapUserManagerInline: React.FC<LdapUserManagerInlineProps> = ({ configId 
           className={styles.searchInput}
         />
 
+        <button
+          onClick={() => setViewMode(viewMode === 'cards' ? 'table' : 'cards')}
+          className={styles.viewToggle}
+          title={`Switch to ${viewMode === 'cards' ? 'table' : 'card'} view`}
+        >
+          {viewMode === 'cards' ? '📋 Table' : '🎴 Cards'}
+        </button>
+
         {activeTab === 'available' && (
           <div className={styles.actions}>
             <button
@@ -282,7 +291,7 @@ const LdapUserManagerInline: React.FC<LdapUserManagerInlineProps> = ({ configId 
         </button>
       </div>
 
-      <div className={styles.userList}>
+      <div className={`${styles.userList} ${viewMode === 'table' ? styles.tableView : ''}`}>
         {loading && <div className={styles.loading}>Loading users...</div>}
 
         {!loading && filteredUsers.length === 0 && (
@@ -293,7 +302,117 @@ const LdapUserManagerInline: React.FC<LdapUserManagerInlineProps> = ({ configId 
           </div>
         )}
 
-        {!loading && filteredUsers.map((user) => {
+        {viewMode === 'table' && !loading && filteredUsers.length > 0 && (
+          <table className={styles.userTable}>
+            <thead>
+              <tr>
+                {activeTab === 'available' && <th className={styles.checkboxColumn}></th>}
+                <th className={styles.photoColumn}></th>
+                <th>Username</th>
+                <th>Display Name</th>
+                <th>Email</th>
+                <th>Title</th>
+                <th>Department</th>
+                {activeTab === 'imported' && <th className={styles.actionsColumn}>Actions</th>}
+              </tr>
+            </thead>
+            <tbody>
+              {filteredUsers.map((user) => {
+          // Generate initials for placeholder
+          const getInitials = (name: string) => {
+            const parts = name.split(' ');
+            if (parts.length >= 2) {
+              return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+            }
+            return name.substring(0, 2).toUpperCase();
+          };
+
+          const displayInitials = user.displayName 
+            ? getInitials(user.displayName)
+            : user.username.substring(0, 2).toUpperCase();
+
+          return (
+            <tr key={user.username} className={styles.userTableRow}>
+              {activeTab === 'available' && (
+                <td className={styles.checkboxColumn}>
+                  <input
+                    type="checkbox"
+                    checked={selectedUsers.has(user.username)}
+                    onChange={() => handleSelectUser(user.username)}
+                    className={styles.checkbox}
+                  />
+                </td>
+              )}
+
+              <td className={styles.photoColumn}>
+                <div className={styles.userPhotoTable}>
+                  {user.photo ? (
+                    <img 
+                      src={user.photo} 
+                      alt={user.displayName || user.username}
+                      className={styles.userPhotoImg}
+                      onError={(e) => {
+                        console.error('Image failed to load for user:', user.username, 'Photo data:', user.photo?.substring(0, 100));
+                        e.currentTarget.style.display = 'none';
+                        const placeholder = e.currentTarget.nextElementSibling;
+                        if (placeholder) {
+                          (placeholder as HTMLElement).style.display = 'flex';
+                        }
+                      }}
+                      onLoad={() => {
+                        console.log('✅ Image loaded successfully for user:', user.username);
+                      }}
+                    />
+                  ) : null}
+                  <div 
+                    className={styles.userPhotoPlaceholderTable}
+                    style={{ display: user.photo ? 'none' : 'flex' }}
+                  >
+                    {displayInitials}
+                  </div>
+                </div>
+              </td>
+
+              <td className={styles.usernameCell}>
+                <span className={styles.username}>{user.username}</span>
+              </td>
+
+              <td className={styles.displayNameCell}>
+                {user.displayName || '-'}
+              </td>
+
+              <td className={styles.emailCell}>
+                <span className={styles.email}>{user.email}</span>
+              </td>
+
+              <td className={styles.titleCell}>
+                {user.title || '-'}
+              </td>
+
+              <td className={styles.departmentCell}>
+                {user.department || '-'}
+              </td>
+
+              {activeTab === 'imported' && user.userId && (
+                <td className={styles.actionsColumn}>
+                  <button
+                    onClick={() => handleRemoveUser(user.userId!, user.username)}
+                    disabled={loading}
+                    className={styles.removeButton}
+                    title="Remove user from application"
+                  >
+                    🗑️ Remove
+                  </button>
+                </td>
+              )}
+            </tr>
+          );
+              })}
+            </tbody>
+          </table>
+        )}
+
+        {viewMode === 'cards' && !loading && filteredUsers.map((user) => {
           // Generate initials for placeholder
           const getInitials = (name: string) => {
             const parts = name.split(' ');
