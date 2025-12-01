@@ -404,8 +404,7 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
           return (
             <div className={styles.tabContent} style={{ 
               background: isDarkMode ? '#111827' : '#f9fafb', 
-              padding: '2rem',
-              minHeight: '100%'
+              padding: '2rem'
             }}>
               <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
                 <div style={{ 
@@ -646,8 +645,7 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
         return (
           <div className={styles.tabContent} style={{ 
             background: isDarkMode ? '#111827' : '#f9fafb', 
-            padding: '2rem',
-            minHeight: '100%'
+            padding: '2rem'
           }}>
             <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
               <div style={{ marginBottom: '3rem' }}>
