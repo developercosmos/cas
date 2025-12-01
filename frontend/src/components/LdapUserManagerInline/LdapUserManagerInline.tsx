@@ -284,57 +284,80 @@ const LdapUserManagerInline: React.FC<LdapUserManagerInlineProps> = ({ configId 
           </div>
         )}
 
-        {!loading && filteredUsers.map((user) => (
-          <div key={user.username} className={styles.userCard}>
-            {activeTab === 'available' && (
-              <input
-                type="checkbox"
-                checked={selectedUsers.has(user.username)}
-                onChange={() => handleSelectUser(user.username)}
-                className={styles.checkbox}
-              />
-            )}
+        {!loading && filteredUsers.map((user) => {
+          // Generate initials for placeholder
+          const getInitials = (name: string) => {
+            const parts = name.split(' ');
+            if (parts.length >= 2) {
+              return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+            }
+            return name.substring(0, 2).toUpperCase();
+          };
 
-            {user.photo && (
-              <div className={styles.userPhoto}>
-                <img src={user.photo} alt={user.displayName || user.username} />
-              </div>
-            )}
+          const displayInitials = user.displayName 
+            ? getInitials(user.displayName)
+            : user.username.substring(0, 2).toUpperCase();
 
-            <div className={styles.userInfo}>
-              <div className={styles.userHeader}>
-                <span className={styles.username}>{user.username}</span>
-                {user.displayName && (
-                  <span className={styles.displayName}>• {user.displayName}</span>
-                )}
-              </div>
-              
-              <div className={styles.userDetails}>
-                {user.title && (
-                  <span className={styles.title}>💼 {user.title}</span>
-                )}
-                {user.department && (
-                  <span className={styles.department}>🏢 {user.department}</span>
-                )}
+          return (
+            <div key={user.username} className={styles.userCard}>
+              {activeTab === 'available' && (
+                <input
+                  type="checkbox"
+                  checked={selectedUsers.has(user.username)}
+                  onChange={() => handleSelectUser(user.username)}
+                  className={styles.checkbox}
+                />
+              )}
+
+              <div className={styles.userPhotoContainer}>
+                <div className={styles.userPhoto}>
+                  {user.photo ? (
+                    <img src={user.photo} alt={user.displayName || user.username} />
+                  ) : (
+                    <div className={styles.userPhotoPlaceholder}>
+                      {displayInitials}
+                    </div>
+                  )}
+                </div>
               </div>
 
-              <div className={styles.userDetails}>
-                <span className={styles.email}>📧 {user.email}</span>
+              <div className={styles.userInfo}>
+                <div className={styles.userHeader}>
+                  <span className={styles.username}>{user.username}</span>
+                  {user.displayName && (
+                    <span className={styles.displayName}>{user.displayName}</span>
+                  )}
+                </div>
+                
+                {(user.title || user.department) && (
+                  <div className={styles.userDetails}>
+                    {user.title && (
+                      <span className={styles.title}>💼 {user.title}</span>
+                    )}
+                    {user.department && (
+                      <span className={styles.department}>🏢 {user.department}</span>
+                    )}
+                  </div>
+                )}
+
+                <div className={styles.userDetails}>
+                  <span className={styles.email}>📧 {user.email}</span>
+                </div>
               </div>
+
+              {activeTab === 'imported' && user.userId && (
+                <button
+                  onClick={() => handleRemoveUser(user.userId!, user.username)}
+                  disabled={loading}
+                  className={styles.removeButton}
+                  title="Remove user from application"
+                >
+                  🗑️ Remove
+                </button>
+              )}
             </div>
-
-            {activeTab === 'imported' && user.userId && (
-              <button
-                onClick={() => handleRemoveUser(user.userId!, user.username)}
-                disabled={loading}
-                className={styles.removeButton}
-                title="Remove user from application"
-              >
-                🗑️ Remove
-              </button>
-            )}
-          </div>
-        ))}
+          );
+        })}
       </div>
 
       <div className={styles.stats}>

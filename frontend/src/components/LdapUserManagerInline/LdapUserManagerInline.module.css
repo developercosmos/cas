@@ -206,9 +206,14 @@
   overflow-y: auto;
   min-height: 300px;
   max-height: 400px;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+  gap: 1rem;
+  align-content: start;
 }
 
 .loading, .empty {
+  grid-column: 1 / -1;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -219,14 +224,15 @@
 
 .userCard {
   display: flex;
-  gap: 1rem;
-  padding: 1rem;
+  flex-direction: column;
+  gap: 0.75rem;
+  padding: 1.25rem;
   border: 1px solid #e2e8f0;
-  border-radius: 6px;
-  margin-bottom: 0.75rem;
+  border-radius: 8px;
   background: #f8fafc;
   transition: all 0.2s ease;
-  align-items: center;
+  position: relative;
+  min-height: 200px;
 }
 
 [data-theme="dark"] .userCard {
@@ -236,30 +242,47 @@
 
 .userCard:hover {
   border-color: var(--accent-primary);
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  transform: translateY(-2px);
 }
 
 [data-theme="dark"] .userCard:hover {
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
 }
 
 .checkbox {
+  position: absolute;
+  top: 12px;
+  left: 12px;
   width: 20px;
   height: 20px;
   cursor: pointer;
-  flex-shrink: 0;
+  z-index: 1;
+  accent-color: var(--accent-primary);
+}
+
+.userPhotoContainer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-top: 1rem;
 }
 
 .userPhoto {
-  width: 64px;
-  height: 64px;
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   overflow: hidden;
-  flex-shrink: 0;
-  background: var(--bg-secondary);
+  border: 3px solid var(--accent-primary);
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-shrink: 0;
+}
+
+[data-theme="dark"] .userPhoto {
+  border-color: var(--accent-primary);
 }
 
 .userPhoto img {
@@ -268,54 +291,73 @@
   object-fit: cover;
 }
 
+.userPhotoPlaceholder {
+  color: white;
+  font-size: 2rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
 .userInfo {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  text-align: center;
 }
 
 .userHeader {
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 0.5rem;
-  flex-wrap: wrap;
+  gap: 0.25rem;
 }
 
 .username {
   font-weight: 700;
   color: var(--text-primary);
-  font-size: 1.1rem;
+  font-size: 1.125rem;
+  word-break: break-word;
 }
 
 .displayName {
   color: var(--text-secondary);
-  font-size: 1rem;
+  font-size: 0.875rem;
   font-weight: 400;
-  margin-left: 0.5rem;
-}
-
-.title {
-  color: var(--text-primary);
-  font-size: 0.95rem;
-  font-weight: 500;
-  margin-right: 1rem;
-}
-
-.department {
-  color: var(--text-secondary);
-  font-size: 0.95rem;
 }
 
 .userDetails {
   display: flex;
-  gap: 1rem;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 0.5rem;
+  align-items: center;
+}
+
+.title {
+  color: var(--text-primary);
+  font-size: 0.875rem;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.department {
+  color: var(--text-secondary);
+  font-size: 0.875rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .email {
   color: var(--text-secondary);
-  font-size: 0.9rem;
+  font-size: 0.8rem;
+  word-break: break-all;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+  justify-content: center;
 }
 
 .removeButton {
@@ -325,11 +367,13 @@
   border: 1px solid transparent;
   border-radius: 6px;
   cursor: pointer;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   min-height: 31px;
   transition: all 0.2s ease;
   white-space: nowrap;
+  margin-top: auto;
+  align-self: center;
 }
 
 .removeButton:hover:not(:disabled) {
@@ -341,6 +385,34 @@
 .removeButton:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 1400px) {
+  .userList {
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  }
+}
+
+@media (max-width: 900px) {
+  .userList {
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  }
+  
+  .userPhoto {
+    width: 64px;
+    height: 64px;
+  }
+  
+  .userPhotoPlaceholder {
+    font-size: 1.5rem;
+  }
+}
+
+@media (max-width: 600px) {
+  .userList {
+    grid-template-columns: 1fr;
+  }
 }
 
 .stats {
