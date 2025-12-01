@@ -402,79 +402,198 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
         // Show existing configurations directly, or empty state if none
         if (configs.length > 0) {
           return (
-            <div className={styles.tabContent}>
-              <div style={{ padding: '1.5rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div className={styles.tabContent} style={{ 
+              background: isDarkMode ? '#111827' : '#f9fafb', 
+              padding: '2rem',
+              minHeight: '100%'
+            }}>
+              <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
+                <div style={{ 
+                  display: 'flex', 
+                  justifyContent: 'space-between', 
+                  alignItems: 'center', 
+                  marginBottom: '2rem',
+                  gap: '1rem'
+                }}>
                   <div>
-                    <h3 style={{ margin: 0, marginBottom: '0.5rem' }}>LDAP Configuration</h3>
-                    <p style={{ margin: 0, color: 'var(--text-secondary)' }}>Manage LDAP server connections and authentication settings.</p>
+                    <h3 style={{ 
+                      margin: 0, 
+                      marginBottom: '0.5rem', 
+                      fontSize: '1.875rem',
+                      fontWeight: 700,
+                      color: isDarkMode ? '#f9fafb' : '#111827',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                    }}>
+                      LDAP Configuration
+                    </h3>
+                    <p style={{ 
+                      margin: 0, 
+                      color: isDarkMode ? '#d1d5db' : '#6b7280',
+                      fontSize: '1rem',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                      lineHeight: '1.5'
+                    }}>
+                      Manage LDAP server connections and authentication settings.
+                    </p>
                   </div>
                   <Button 
                     onClick={() => setShowConfigForm(true)}
+                    style={{
+                      padding: '0.625rem 1.25rem',
+                      fontSize: '0.875rem',
+                      fontWeight: 500,
+                      borderRadius: '0.5rem',
+                      background: '#f97316',
+                      color: 'white',
+                      border: 'none',
+                      cursor: 'pointer',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                      whiteSpace: 'nowrap'
+                    }}
                   >
                     + New Configuration
                   </Button>
                 </div>
                 
                 <div>
-                  <h4 style={{ marginBottom: '1rem' }}>Existing Configurations</h4>
+                  <h4 style={{ 
+                    marginBottom: '1.5rem',
+                    fontSize: '1.25rem',
+                    fontWeight: 600,
+                    color: isDarkMode ? '#f9fafb' : '#111827',
+                    fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                  }}>
+                    Existing Configurations
+                  </h4>
                   {configs.map((config) => (
                     <div key={config.id} style={{ 
-                      padding: '1.25rem', 
-                      margin: '0.75rem 0', 
-                      border: '1px solid var(--border-primary)',
-                      borderRadius: '0.5rem',
-                      background: 'var(--bg-section)',
-                      boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)'
+                      padding: '1.5rem', 
+                      margin: '0', 
+                      marginBottom: '1rem',
+                      border: isDarkMode ? '1px solid #374151' : '1px solid #e5e7eb',
+                      borderRadius: '0.75rem',
+                      background: isDarkMode ? '#1f2937' : 'white',
+                      boxShadow: isDarkMode 
+                        ? '0 1px 3px 0 rgba(0, 0, 0, 0.3), 0 1px 2px 0 rgba(0, 0, 0, 0.2)'
+                        : '0 1px 3px 0 rgba(0, 0, 0, 0.1), 0 1px 2px 0 rgba(0, 0, 0, 0.06)',
+                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
                     }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                         <div style={{ flex: 1 }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                            <strong style={{ fontSize: '1.1rem' }}>{config.serverUrl}</strong>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '1rem' }}>
+                            <strong style={{ 
+                              fontSize: '1.125rem', 
+                              fontWeight: 600,
+                              color: isDarkMode ? '#f9fafb' : '#111827',
+                              fontFamily: 'inherit'
+                            }}>
+                              {config.serverUrl}
+                            </strong>
                             <span style={{ 
-                              padding: '0.25rem 0.5rem', 
-                              borderRadius: '0.25rem',
+                              padding: '0.25rem 0.75rem', 
+                              borderRadius: '9999px',
                               fontSize: '0.75rem',
-                              background: config.isActive ? 'var(--success, #28a745)' : 'var(--error, #dc2626)',
+                              fontWeight: 500,
+                              background: config.isActive ? '#10b981' : '#ef4444',
                               color: 'white',
-                              fontWeight: 'bold'
+                              fontFamily: 'inherit',
+                              letterSpacing: '0.025em'
                             }}>
                               {config.isActive ? 'Active' : 'Inactive'}
                             </span>
                           </div>
-                          <div style={{ display: 'grid', gridTemplateColumns: 'auto auto', gap: '0.5rem 1rem', fontSize: '0.9rem', color: 'var(--text-secondary)' }}>
-                            <span><strong>Base DN:</strong> {config.baseDN}</span>
-                            <span><strong>Port:</strong> {config.port}</span>
-                            <span><strong>Bind DN:</strong> {config.bindDN}</span>
-                            <span><strong>Secure:</strong> {config.isSecure ? 'Yes' : 'No'}</span>
-                            <span style={{ gridColumn: '1 / -1' }}><strong>Search Filter:</strong> <code style={{ background: 'var(--bg-secondary)', padding: '0.125rem 0.25rem', borderRadius: '0.25rem' }}>{config.searchFilter}</code></span>
-                            <span style={{ gridColumn: '1 / -1' }}><strong>Search Attribute:</strong> <code style={{ background: 'var(--bg-secondary)', padding: '0.125rem 0.25rem', borderRadius: '0.25rem' }}>{config.searchAttribute}</code></span>
+                          <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: 'auto auto', 
+                            gap: '0.75rem 1.5rem', 
+                            fontSize: '0.875rem',
+                            lineHeight: '1.5',
+                            color: isDarkMode ? '#d1d5db' : '#6b7280',
+                            fontFamily: 'inherit'
+                          }}>
+                            <span style={{ color: isDarkMode ? '#f9fafb' : '#111827', fontWeight: 500 }}>Base DN:</span>
+                            <span>{config.baseDN}</span>
+                            <span style={{ color: isDarkMode ? '#f9fafb' : '#111827', fontWeight: 500 }}>Port:</span>
+                            <span>{config.port}</span>
+                            <span style={{ color: isDarkMode ? '#f9fafb' : '#111827', fontWeight: 500 }}>Bind DN:</span>
+                            <span>{config.bindDN}</span>
+                            <span style={{ color: isDarkMode ? '#f9fafb' : '#111827', fontWeight: 500 }}>Secure:</span>
+                            <span>{config.isSecure ? 'Yes' : 'No'}</span>
+                            <span style={{ 
+                              color: isDarkMode ? '#f9fafb' : '#111827', 
+                              fontWeight: 500,
+                              gridColumn: '1 / -1',
+                              marginTop: '0.5rem'
+                            }}>Search Filter:</span>
+                            <span style={{ 
+                              gridColumn: '1 / -1',
+                              fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
+                              fontSize: '0.8125rem',
+                              background: isDarkMode ? '#374151' : '#f9fafb',
+                              padding: '0.5rem 0.75rem',
+                              borderRadius: '0.5rem',
+                              border: isDarkMode ? '1px solid #4b5563' : '1px solid #e5e7eb',
+                              color: isDarkMode ? '#e5e7eb' : '#374151',
+                              marginTop: '0.25rem'
+                            }}>
+                              {config.searchFilter}
+                            </span>
+                            <span style={{ 
+                              color: isDarkMode ? '#f9fafb' : '#111827', 
+                              fontWeight: 500,
+                              gridColumn: '1 / -1',
+                              marginTop: '0.5rem'
+                            }}>Search Attribute:</span>
+                            <span style={{ 
+                              gridColumn: '1 / -1',
+                              fontFamily: 'ui-monospace, SFMono-Regular, "SF Mono", Consolas, "Liberation Mono", Menlo, monospace',
+                              fontSize: '0.8125rem',
+                              background: isDarkMode ? '#374151' : '#f9fafb',
+                              padding: '0.5rem 0.75rem',
+                              borderRadius: '0.5rem',
+                              border: isDarkMode ? '1px solid #4b5563' : '1px solid #e5e7eb',
+                              color: isDarkMode ? '#e5e7eb' : '#374151',
+                              marginTop: '0.25rem'
+                            }}>
+                              {config.searchAttribute}
+                            </span>
                           </div>
                         </div>
                         
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', marginLeft: '1rem' }}>
+                        <div style={{ 
+                          display: 'flex', 
+                          flexDirection: 'column', 
+                          gap: '0.5rem', 
+                          marginLeft: '1.5rem',
+                          flexShrink: 0
+                        }}>
                           <button
                             onClick={() => handleEditConfig(config)}
                             style={{
-                              padding: '0.5rem 1rem',
+                              padding: '0.625rem 1rem',
                               fontSize: '0.875rem',
-                              border: '1px solid var(--accent-color, #f97316)',
-                              borderRadius: '0.25rem',
-                              background: 'transparent',
-                              color: 'var(--accent-color, #f97316)',
+                              fontWeight: 500,
+                              border: '1px solid #f97316',
+                              borderRadius: '0.5rem',
+                              background: 'white',
+                              color: '#f97316',
                               cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '0.25rem',
-                              transition: 'all 0.2s ease'
+                              gap: '0.5rem',
+                              transition: 'all 0.15s ease',
+                              fontFamily: 'inherit',
+                              whiteSpace: 'nowrap'
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.background = 'var(--accent-color, #f97316)';
+                              e.currentTarget.style.background = '#f97316';
                               e.currentTarget.style.color = 'white';
+                              e.currentTarget.style.borderColor = '#ea580c';
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.background = 'transparent';
-                              e.currentTarget.style.color = 'var(--accent-color, #f97316)';
+                              e.currentTarget.style.background = 'white';
+                              e.currentTarget.style.color = '#f97316';
+                              e.currentTarget.style.borderColor = '#f97316';
                             }}
                             title="Edit configuration"
                           >
@@ -484,25 +603,30 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
                           <button
                             onClick={() => handleRemoveConfig(config)}
                             style={{
-                              padding: '0.5rem 1rem',
+                              padding: '0.625rem 1rem',
                               fontSize: '0.875rem',
-                              border: '1px solid var(--error, #dc2626)',
-                              borderRadius: '0.25rem',
-                              background: 'transparent',
-                              color: 'var(--error, #dc2626)',
+                              fontWeight: 500,
+                              border: '1px solid #ef4444',
+                              borderRadius: '0.5rem',
+                              background: 'white',
+                              color: '#ef4444',
                               cursor: 'pointer',
                               display: 'flex',
                               alignItems: 'center',
-                              gap: '0.25rem',
-                              transition: 'all 0.2s ease'
+                              gap: '0.5rem',
+                              transition: 'all 0.15s ease',
+                              fontFamily: 'inherit',
+                              whiteSpace: 'nowrap'
                             }}
                             onMouseEnter={(e) => {
-                              e.currentTarget.style.background = 'var(--error, #dc2626)';
+                              e.currentTarget.style.background = '#ef4444';
                               e.currentTarget.style.color = 'white';
+                              e.currentTarget.style.borderColor = '#dc2626';
                             }}
                             onMouseLeave={(e) => {
-                              e.currentTarget.style.background = 'transparent';
-                              e.currentTarget.style.color = 'var(--error, #dc2626)';
+                              e.currentTarget.style.background = 'white';
+                              e.currentTarget.style.color = '#ef4444';
+                              e.currentTarget.style.borderColor = '#ef4444';
                             }}
                             title="Delete configuration"
                           >
@@ -520,15 +644,50 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
         
         // Empty state when no configurations exist
         return (
-          <div className={styles.tabContent}>
-            <div style={{ padding: '2rem', textAlign: 'center' }}>
-              <h3>LDAP Configuration</h3>
-              <p style={{ marginBottom: '1.5rem', color: 'var(--text-secondary)' }}>
-                No LDAP configurations found. Create your first LDAP server connection to enable directory integration.
-              </p>
+          <div className={styles.tabContent} style={{ 
+            background: isDarkMode ? '#111827' : '#f9fafb', 
+            padding: '2rem',
+            minHeight: '100%'
+          }}>
+            <div style={{ maxWidth: '800px', margin: '0 auto', textAlign: 'center' }}>
+              <div style={{ marginBottom: '3rem' }}>
+                <h3 style={{ 
+                  margin: 0, 
+                  marginBottom: '1rem', 
+                  fontSize: '1.875rem',
+                  fontWeight: 700,
+                  color: isDarkMode ? '#f9fafb' : '#111827',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                }}>
+                  LDAP Configuration
+                </h3>
+                <p style={{ 
+                  margin: 0, 
+                  color: isDarkMode ? '#d1d5db' : '#6b7280',
+                  fontSize: '1rem',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
+                  lineHeight: '1.5',
+                  maxWidth: '500px',
+                  marginLeft: 'auto',
+                  marginRight: 'auto'
+                }}>
+                  No LDAP configurations found. Create your first LDAP server connection to enable directory integration.
+                </p>
+              </div>
+              
               <Button 
                 onClick={() => setShowConfigForm(true)}
-                style={{ margin: '1rem' }}
+                style={{
+                  padding: '0.75rem 1.5rem',
+                  fontSize: '1rem',
+                  fontWeight: 500,
+                  borderRadius: '0.5rem',
+                  background: '#f97316',
+                  color: 'white',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
+                }}
               >
                 + Create LDAP Configuration
               </Button>
