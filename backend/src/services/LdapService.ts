@@ -73,7 +73,40 @@ export class LdapService {
         }
 
         res.on('searchEntry', (entry: any) => {
-          entries.push(entry.pojo);
+          // Get pojo for text attributes
+          const pojo = entry.pojo;
+          
+          // Extract photo buffer directly from raw entry before pojo conversion
+          // ldapjs .pojo converts binary to corrupted strings
+          const thumbnailPhotoAttr = entry.attributes?.find((a: any) => a.type === 'thumbnailPhoto');
+          const jpegPhotoAttr = entry.attributes?.find((a: any) => a.type === 'jpegPhoto');
+          
+          // Get raw buffer from attribute (try different properties based on ldapjs version)
+          const getBuffer = (attr: any): Buffer | null => {
+            if (!attr) return null;
+            // Try buffers property
+            if (attr.buffers && attr.buffers.length > 0 && Buffer.isBuffer(attr.buffers[0])) {
+              return attr.buffers[0];
+            }
+            // Try _vals property
+            if (attr._vals && attr._vals.length > 0 && Buffer.isBuffer(attr._vals[0])) {
+              return attr._vals[0];
+            }
+            // Try vals property
+            if (attr.vals && attr.vals.length > 0 && Buffer.isBuffer(attr.vals[0])) {
+              return attr.vals[0];
+            }
+            return null;
+          };
+          
+          const photoBuffer = getBuffer(thumbnailPhotoAttr) || getBuffer(jpegPhotoAttr);
+          
+          // Add photo buffer directly to pojo if found
+          if (photoBuffer) {
+            pojo._photoBuffer = photoBuffer;
+          }
+          
+          entries.push(pojo);
         });
 
         res.on('error', (err: any) => {
@@ -500,10 +533,23 @@ export class LdapService {
         const department = getAttr('department')[0];
         const title = getAttr('title')[0];
         
-        // Get photo - try thumbnailPhoto first, then jpegPhoto
-        const thumbnailPhoto = getAttr('thumbnailPhoto')[0];
-        const jpegPhoto = getAttr('jpegPhoto')[0];
-        const photo = thumbnailPhoto || jpegPhoto;
+        // Get photo - first check for pre-extracted buffer, then fallback to string
+        // The _photoBuffer is extracted from raw ldapjs entry before pojo conversion
+        let photo: Buffer | string | null = null;
+        
+        if (entry._photoBuffer && Buffer.isBuffer(entry._photoBuffer)) {
+          // Use pre-extracted buffer (best quality, no UTF-8 corruption)
+          photo = entry._photoBuffer;
+          console.log(`📸 Using pre-extracted buffer for ${username} (${entry._photoBuffer.length} bytes)`);
+        } else {
+          // Fallback to pojo values (may be corrupted string)
+          const thumbnailPhoto = getAttr('thumbnailPhoto')[0];
+          const jpegPhoto = getAttr('jpegPhoto')[0];
+          photo = thumbnailPhoto || jpegPhoto;
+          if (photo) {
+            console.log(`📸 Using pojo string for ${username} (fallback, may be corrupted)`);
+          }
+        }
         
         // Convert photo to base64 if present
         let photoBase64 = null;
@@ -540,15 +586,25 @@ export class LdapService {
                 // Check if it's already base64 (alphanumeric + / + =)
                 const isBase64 = /^[A-Za-z0-9+/=]+$/.test(photo.substring(0, 100));
                 
+                // Log first few char codes to debug encoding
+                const firstChars = photo.substring(0, 10).split('').map(c => c.charCodeAt(0));
+                console.log(`📸 Photo string first 10 char codes:`, firstChars);
+                
                 if (isBase64) {
                   // Already base64 encoded - use directly
                   photoBase64 = `data:image/jpeg;base64,${photo}`;
                   console.log(`📸 Photo was already base64 string (${photo.length} chars)`);
                 } else {
-                  // Binary string - convert to buffer first
-                  const buf = Buffer.from(photo, 'latin1');
+                  // Binary string from LDAP - need to extract raw bytes
+                  // JPEG magic bytes are 0xFF 0xD8 0xFF (255, 216, 255)
+                  // Convert string to byte array properly
+                  const bytes = new Uint8Array(photo.length);
+                  for (let i = 0; i < photo.length; i++) {
+                    bytes[i] = photo.charCodeAt(i);
+                  }
+                  const buf = Buffer.from(bytes);
                   photoBase64 = `data:image/jpeg;base64,${buf.toString('base64')}`;
-                  console.log(`📸 Photo converted from binary string (${photo.length} chars)`);
+                  console.log(`📸 Photo converted from binary string (${photo.length} chars), first bytes: [${bytes[0]}, ${bytes[1]}, ${bytes[2]}]`);
                 }
               }
             } else if (photo.buffer && photo.buffer instanceof ArrayBuffer) {
