@@ -1,11 +1,11 @@
 .modalOverlay {
   position: fixed;
-  top: 60px; /* Start below header to allow clicking logo */
+  top: 0;
   left: 0;
   right: 0;
   bottom: 0;
   background: transparent;
-  z-index: 9999;
+  z-index: 10100;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -16,10 +16,13 @@
   background: #ffffff;
   border: 2px solid var(--accent-primary);
   border-radius: 6px;
+  width: 90%;
+  max-width: 1200px;
+  max-height: 80vh;
   display: flex;
   flex-direction: column;
   box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5), 0 20px 25px -5px rgba(0, 0, 0, 0.2);
-  z-index: 10000;
+  z-index: 10101;
   position: relative;
   opacity: 1;
   user-select: none;
@@ -240,8 +243,9 @@
 
 .modalBody {
   flex: 1;
-  padding: 24px;
+  padding: 20px 24px;
   overflow-y: auto;
+  min-height: 400px;
   background: #ffffff;
 }
 
@@ -312,9 +316,8 @@
 /* Responsive design */
 @media (max-width: 768px) {
   .modalContent {
-    width: 98%;
-    max-width: none;
-    height: 95vh;
+    width: 95%;
+    max-height: 90vh;
   }
 
   .tabsContainer {

@@ -547,7 +547,7 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
         className={`${styles.modalContent} ${isMinimized ? styles.minimized : ''}`}
         style={{
           position: 'fixed',
-          left: isMinimized ? 10 : position.x,
+          left: isMinimized ? 300 : position.x,
           top: isMinimized ? 'auto' : position.y,
           bottom: isMinimized ? 10 : 'auto',
           width: isMinimized ? 280 : size.width,
