@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import LdapConfig from '../LdapConfig/LdapConfig';
 import LdapTreeBrowser from '../LdapTreeBrowser/LdapTreeBrowser';
-import LdapUserManager from '../LdapUserManager/LdapUserManager';
+import LdapUserManagerInline from '../LdapUserManagerInline/LdapUserManagerInline';
 import { Button } from '../base-ui/styled-components';
 import styles from './styles.module.css';
 
@@ -108,7 +108,6 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
   const [showTreeBrowser, setShowTreeBrowser] = useState(false);
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [tempPassword, setTempPassword] = useState('');
-  const [showUserManager, setShowUserManager] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [preMinimizeState, setPreMinimizeState] = useState<{ position: { x: number; y: number }; size: { width: number; height: number } } | null>(null);
   const modalRef = useRef<HTMLDivElement>(null);
@@ -499,37 +498,9 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
           </div>
         );
       case 'users':
-        if (showUserManager) {
-          return (
-            <div className={styles.tabContent}>
-              <LdapUserManager 
-                onClose={() => {
-                  setShowUserManager(false);
-                  loadConfigs(); // Reload configs when closing
-                }} 
-                configId={selectedConfig?.id || ''} 
-              />
-            </div>
-          );
-        }
         return (
           <div className={styles.tabContent}>
-            <div style={{ padding: '2rem', textAlign: 'center' }}>
-              <h3>LDAP User Management</h3>
-              <p>Import and manage LDAP users in the system.</p>
-              {selectedConfig ? (
-                <Button 
-                  onClick={() => setShowUserManager(true)}
-                  style={{ margin: '1rem' }}
-                >
-                  Manage Users
-                </Button>
-              ) : (
-                <p style={{ color: 'var(--error, #dc2626)', margin: '1rem' }}>
-                  Please configure an LDAP connection first in the Configuration tab.
-                </p>
-              )}
-            </div>
+            <LdapUserManagerInline configId={selectedConfig?.id || ''} />
           </div>
         );
       default:
