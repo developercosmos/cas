@@ -753,14 +753,16 @@ const SwitchTrack = styled.span<{ $size?: string }>`
   transition: all ${tokens.transitions.fast};
   position: relative;
 
-  ${SwitchRoot}[data-state='checked'] & {
+  &[data-checked='true'] {
     background-color: ${tokens.colors.accent.primary};
   }
 
-  ${SwitchRoot}:hover & {
-    background-color: ${SwitchRoot}[data-state='checked']
-      ? ${tokens.colors.accent.hover}
-      : ${tokens.colors.border.subtle};
+  &:hover {
+    background-color: ${tokens.colors.border.subtle};
+  }
+
+  &:hover[data-checked='true'] {
+    background-color: ${tokens.colors.accent.hover};
   }
 `;
 
@@ -780,7 +782,7 @@ export const Switch: React.FC<SwitchProps> = ({
       id={id}
       $size={size}
     >
-      <SwitchTrack $size={size}>
+      <SwitchTrack $size={size} data-checked={checked ? 'true' : 'false'}>
         <SwitchThumb $size={size} />
       </SwitchTrack>
       {label}
