@@ -120,52 +120,72 @@
   margin-bottom: 1.5rem;
 }
 
-/* Form action buttons - match parent dialog */
+/* Form action buttons - unified styling */
 .formActions :global(button) {
-  background: var(--background-primary);
-  border: 1px solid var(--border-primary);
-  color: var(--text-secondary);
+  background: white;
+  border: 1px solid #e5e7eb;
+  color: #111827;
   cursor: pointer;
-  padding: 6px;
-  border-radius: 4px;
+  padding: 0.625rem 1rem;
+  border-radius: 0.5rem;
   display: flex;
   align-items: center;
   justify-content: center;
-  transition: all 0.2s ease;
-  font-size: 14px;
+  transition: all 0.15s ease;
+  font-size: 0.875rem;
   font-weight: 500;
   font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
-  min-height: 28px;
+  min-height: 2.5rem;
   white-space: nowrap;
+  outline: none;
 }
 
 .formActions :global(button:hover) {
   background: #f3f4f6;
   border-color: #d1d5db;
   color: #111827;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
 }
 
-.formActions :global(button[type="submit"]:hover) {
+.formActions :global(button:active) {
+  transform: translateY(0);
+}
+
+.formActions :global(button[type="submit"]) {
   background: #f97316;
   border-color: #f97316;
   color: white;
 }
 
-[data-theme="dark"] .formActions :global(button) {
-  background: var(--background-primary);
-  border-color: var(--border-primary);
-  color: var(--text-secondary);
+.formActions :global(button[type="submit"]:hover) {
+  background: #ea580c;
+  border-color: #ea580c;
+  color: white;
 }
 
-[data-theme="dark"] .formActions :global(button:hover) {
+[data-theme="dark"] .formActions :global(button) {
   background: #374151;
-  border-color: #6b7280;
+  border-color: #4b5563;
   color: #f9fafb;
 }
 
-[data-theme="dark"] .formActions :global(button[type="submit"]:hover) {
+[data-theme="dark"] .formActions :global(button:hover) {
+  background: #4b5563;
+  border-color: #6b7280;
+  color: #f9fafb;
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+[data-theme="dark"] .formActions :global(button[type="submit"]) {
   background: #f97316;
   border-color: #f97316;
+  color: white;
+}
+
+[data-theme="dark"] .formActions :global(button[type="submit"]:hover) {
+  background: #ea580c;
+  border-color: #ea580c;
   color: white;
 }
 
