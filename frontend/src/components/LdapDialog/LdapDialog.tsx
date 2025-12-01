@@ -106,6 +106,8 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
   const [selectedConfig, setSelectedConfig] = useState<LdapConfiguration | null>(null);
   const [showConfigForm, setShowConfigForm] = useState(false);
   const [showTreeBrowser, setShowTreeBrowser] = useState(false);
+  const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
+  const [tempPassword, setTempPassword] = useState('');
   const [showUserManager, setShowUserManager] = useState(false);
   const [isMinimized, setIsMinimized] = useState(false);
   const [preMinimizeState, setPreMinimizeState] = useState<{ position: { x: number; y: number }; size: { width: number; height: number } } | null>(null);
@@ -400,12 +402,63 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
           </div>
         );
       case 'test':
+        if (showPasswordPrompt && selectedConfig) {
+          return (
+            <div className={styles.tabContent}>
+              <div style={{ padding: '2rem', maxWidth: '400px', margin: '0 auto' }}>
+                <h3>LDAP Authentication Required</h3>
+                <p>Enter the LDAP bind password to browse the directory:</p>
+                <div style={{ margin: '1rem 0' }}>
+                  <label style={{ display: 'block', marginBottom: '0.5rem', fontWeight: 'bold' }}>
+                    Bind Password:
+                  </label>
+                  <input
+                    type="password"
+                    value={tempPassword}
+                    onChange={(e) => setTempPassword(e.target.value)}
+                    placeholder="Enter LDAP bind password"
+                    style={{
+                      width: '100%',
+                      padding: '0.75rem',
+                      border: '1px solid var(--border-color, #ccc)',
+                      borderRadius: '4px',
+                      fontSize: '1rem'
+                    }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center' }}>
+                  <Button
+                    onClick={() => {
+                      setShowPasswordPrompt(false);
+                      setTempPassword('');
+                    }}
+                  >
+                    Cancel
+                  </Button>
+                  <Button
+                    onClick={() => {
+                      if (tempPassword.trim()) {
+                        setShowPasswordPrompt(false);
+                        setShowTreeBrowser(true);
+                      }
+                    }}
+                    disabled={!tempPassword.trim()}
+                  >
+                    Connect
+                  </Button>
+                </div>
+              </div>
+            </div>
+          );
+        }
+        
         if (showTreeBrowser && selectedConfig) {
           return (
             <div className={styles.tabContent}>
               <LdapTreeBrowser
                 onClose={() => {
                   setShowTreeBrowser(false);
+                  setTempPassword('');
                   loadConfigs(); // Reload configs when closing
                 }}
                 onSelect={(dn: string) => {
@@ -416,7 +469,7 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
                   serverurl: selectedConfig.serverUrl,
                   basedn: selectedConfig.baseDN,
                   binddn: selectedConfig.bindDN,
-                  bindpassword: selectedConfig.bindPassword || '',
+                  bindpassword: tempPassword,
                   issecure: selectedConfig.isSecure,
                   port: selectedConfig.port
                 }}
@@ -424,6 +477,7 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
             </div>
           );
         }
+        
         return (
           <div className={styles.tabContent}>
             <div style={{ padding: '2rem', textAlign: 'center' }}>
@@ -431,7 +485,7 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
               <p>Test LDAP connection and browse directory structure.</p>
               {selectedConfig ? (
                 <Button 
-                  onClick={() => setShowTreeBrowser(true)}
+                  onClick={() => setShowPasswordPrompt(true)}
                   style={{ margin: '1rem' }}
                 >
                   Browse Directory
