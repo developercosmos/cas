@@ -421,7 +421,7 @@ const LdapConfig: React.FC<LdapConfigProps> = ({ onClose, config }) => {
 
           {showForm && (
             <div className={styles.form}>
-              <h3>{editingConfig ? 'Edit' : 'Add'} LDAP Configuration</h3>
+
               <form onSubmit={handleSubmit}>
                 <div className={styles.formGrid}>
                   <div className={styles.formGroup}>
