@@ -509,28 +509,66 @@ export class LdapService {
         let photoBase64 = null;
         if (photo) {
           try {
+            // Debug: Log photo type and structure
+            const photoType = Object.prototype.toString.call(photo);
+            const isBuffer = Buffer.isBuffer(photo);
+            const hasBuffer = photo && typeof photo === 'object' && 'buffer' in photo;
+            
+            console.log(`📸 Photo debug for ${username}:`, {
+              type: typeof photo,
+              constructor: photo.constructor?.name,
+              isBuffer,
+              hasBuffer,
+              isArray: Array.isArray(photo),
+              isString: typeof photo === 'string',
+              photoType,
+              length: photo.length || (photo.buffer ? photo.buffer.byteLength : 0)
+            });
+            
             // Handle different photo data types
             if (Buffer.isBuffer(photo)) {
-              // Direct buffer
+              // Direct buffer - most common for ldapjs
               photoBase64 = `data:image/jpeg;base64,${photo.toString('base64')}`;
+              console.log(`📸 Photo converted from Buffer (${photo.length} bytes)`);
             } else if (typeof photo === 'string') {
-              // Already a string - might be base64 or need encoding
+              // String data
               if (photo.startsWith('data:image')) {
+                // Already a data URI
                 photoBase64 = photo;
+                console.log(`📸 Photo already data URI`);
               } else {
-                // Assume it's raw data that needs encoding
-                photoBase64 = `data:image/jpeg;base64,${Buffer.from(photo, 'binary').toString('base64')}`;
+                // Binary string - convert to buffer first
+                const buf = Buffer.from(photo, 'latin1'); // Use latin1 for binary strings
+                photoBase64 = `data:image/jpeg;base64,${buf.toString('base64')}`;
+                console.log(`📸 Photo converted from string (${photo.length} chars)`);
               }
-            } else if (photo.buffer) {
-              // Buffer-like object
-              photoBase64 = `data:image/jpeg;base64,${Buffer.from(photo.buffer).toString('base64')}`;
+            } else if (photo.buffer && photo.buffer instanceof ArrayBuffer) {
+              // TypedArray (Uint8Array, etc)
+              const buf = Buffer.from(photo.buffer, photo.byteOffset, photo.byteLength);
+              photoBase64 = `data:image/jpeg;base64,${buf.toString('base64')}`;
+              console.log(`📸 Photo converted from TypedArray (${photo.byteLength} bytes)`);
             } else if (Array.isArray(photo)) {
-              // Array of bytes
+              // Plain array of bytes
               photoBase64 = `data:image/jpeg;base64,${Buffer.from(photo).toString('base64')}`;
+              console.log(`📸 Photo converted from Array (${photo.length} items)`);
+            } else if (typeof photo === 'object') {
+              // Generic object - try to get raw buffer
+              console.log(`📸 Photo is object, keys:`, Object.keys(photo).slice(0, 10));
+              if (photo.data) {
+                // Has .data property
+                const buf = Buffer.from(photo.data);
+                photoBase64 = `data:image/jpeg;base64,${buf.toString('base64')}`;
+                console.log(`📸 Photo converted from photo.data`);
+              }
             }
-            console.log(`📸 Photo processed for user ${username}: ${photoBase64 ? 'Success' : 'Failed'}`);
+            
+            if (photoBase64) {
+              console.log(`✅ Photo processed for user ${username}: Success (${photoBase64.length} chars, starts with: ${photoBase64.substring(0, 50)})`);
+            } else {
+              console.warn(`⚠️ Photo processing failed for user ${username}: Unknown format`);
+            }
           } catch (photoError) {
-            console.error(`Failed to process photo for user ${username}:`, photoError);
+            console.error(`❌ Failed to process photo for user ${username}:`, photoError);
           }
         }
 
