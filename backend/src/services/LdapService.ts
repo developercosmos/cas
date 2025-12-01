@@ -537,10 +537,19 @@ export class LdapService {
                 photoBase64 = photo;
                 console.log(`📸 Photo already data URI`);
               } else {
-                // Binary string - convert to buffer first
-                const buf = Buffer.from(photo, 'latin1'); // Use latin1 for binary strings
-                photoBase64 = `data:image/jpeg;base64,${buf.toString('base64')}`;
-                console.log(`📸 Photo converted from string (${photo.length} chars)`);
+                // Check if it's already base64 (alphanumeric + / + =)
+                const isBase64 = /^[A-Za-z0-9+/=]+$/.test(photo.substring(0, 100));
+                
+                if (isBase64) {
+                  // Already base64 encoded - use directly
+                  photoBase64 = `data:image/jpeg;base64,${photo}`;
+                  console.log(`📸 Photo was already base64 string (${photo.length} chars)`);
+                } else {
+                  // Binary string - convert to buffer first
+                  const buf = Buffer.from(photo, 'latin1');
+                  photoBase64 = `data:image/jpeg;base64,${buf.toString('base64')}`;
+                  console.log(`📸 Photo converted from binary string (${photo.length} chars)`);
+                }
               }
             } else if (photo.buffer && photo.buffer instanceof ArrayBuffer) {
               // TypedArray (Uint8Array, etc)
