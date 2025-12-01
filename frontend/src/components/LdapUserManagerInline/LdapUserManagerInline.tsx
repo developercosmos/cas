@@ -91,6 +91,15 @@ const LdapUserManagerInline: React.FC<LdapUserManagerInlineProps> = ({ configId 
       if (importedResponse.ok) {
         const importedData = await importedResponse.json();
         if (importedData.success) {
+          console.log('📋 Imported Users received:', importedData.users?.length, 'users');
+          if (importedData.users && importedData.users.length > 0) {
+            console.log('📸 Sample imported user photo data:', {
+              username: importedData.users[0].username,
+              hasPhoto: !!importedData.users[0].photo,
+              photoType: typeof importedData.users[0].photo,
+              photoStart: importedData.users[0].photo?.substring(0, 50)
+            });
+          }
           setImportedUsers(importedData.users || []);
         }
       }
@@ -307,22 +316,22 @@ const LdapUserManagerInline: React.FC<LdapUserManagerInlineProps> = ({ configId 
             <thead>
               <tr>
                 <th className={styles.checkboxColumn}>
-                  {activeTab === 'available' && (
-                    <input
-                      type="checkbox"
-                      checked={selectedUsers.size === filteredUsers.length && filteredUsers.length > 0}
-                      onChange={handleSelectAll}
-                      title="Select All"
-                    />
-                  )}
+                  <input
+                    type="checkbox"
+                    checked={activeTab === 'available' ? (selectedUsers.size === filteredUsers.length && filteredUsers.length > 0) : false}
+                    onChange={handleSelectAll}
+                    disabled={activeTab === 'imported'}
+                    title={activeTab === 'available' ? 'Select All' : ''}
+                    style={activeTab === 'imported' ? { opacity: 0.3, cursor: 'not-allowed' } : {}}
+                  />
                 </th>
                 <th className={styles.photoColumn}></th>
-                <th>Username</th>
-                <th>Display Name</th>
-                <th>Email</th>
-                <th>Title</th>
-                <th>Department</th>
-                {activeTab === 'imported' && <th className={styles.actionsColumn}>Actions</th>}
+                <th className={styles.usernameColumn}>Username</th>
+                <th className={styles.displayNameColumn}>Display Name</th>
+                <th className={styles.emailColumn}>Email</th>
+                <th className={styles.titleColumn}>Title</th>
+                <th className={styles.departmentColumn}>Department</th>
+                <th className={styles.actionsColumn}>{activeTab === 'imported' ? 'Actions' : ''}</th>
               </tr>
             </thead>
             <tbody>
@@ -343,18 +352,14 @@ const LdapUserManagerInline: React.FC<LdapUserManagerInlineProps> = ({ configId 
           return (
             <tr key={user.username} className={styles.userTableRow}>
               <td className={styles.checkboxColumn}>
-                {activeTab === 'available' && (
-                  <input
-                    type="checkbox"
-                    checked={selectedUsers.has(user.username)}
-                    onChange={() => handleSelectUser(user.username)}
-                    className={styles.checkbox}
-                    title={`Select ${user.username}`}
-                  />
-                )}
-                {activeTab === 'imported' && (
-                  <span style={{color: 'var(--text-secondary)'}}>—</span>
-                )}
+                <input
+                  type="checkbox"
+                  checked={activeTab === 'available' ? selectedUsers.has(user.username) : false}
+                  onChange={() => activeTab === 'available' && handleSelectUser(user.username)}
+                  disabled={activeTab === 'imported'}
+                  title={activeTab === 'available' ? `Select ${user.username}` : ''}
+                  style={activeTab === 'imported' ? { opacity: 0.3, cursor: 'not-allowed' } : {}}
+                />
               </td>
 
               <td className={styles.photoColumn}>
@@ -386,38 +391,43 @@ const LdapUserManagerInline: React.FC<LdapUserManagerInlineProps> = ({ configId 
                 </div>
               </td>
 
-              <td className={styles.usernameCell}>
-                <span className={styles.username}>{user.username}</span>
+              <td className={`${styles.usernameColumn} ${styles.usernameCell}`}>
+                {user.username}
               </td>
 
-              <td className={styles.displayNameCell}>
+              <td className={`${styles.displayNameColumn} ${styles.displayNameCell}`}>
                 {user.displayName || '-'}
               </td>
 
-              <td className={styles.emailCell}>
-                <span className={styles.email}>{user.email}</span>
+              <td className={`${styles.emailColumn} ${styles.emailCell}`}>
+                {user.email}
               </td>
 
-              <td className={styles.titleCell}>
+              <td className={`${styles.titleColumn} ${styles.titleCell}`}>
                 {user.title || '-'}
               </td>
 
-              <td className={styles.departmentCell}>
+              <td className={`${styles.departmentColumn} ${styles.departmentCell}`}>
                 {user.department || '-'}
               </td>
 
-              {activeTab === 'imported' && user.userId && (
-                <td className={styles.actionsColumn}>
+              <td className={styles.actionsColumn}>
+                {activeTab === 'imported' && user.userId ? (
                   <button
                     onClick={() => handleRemoveUser(user.userId!, user.username)}
                     disabled={loading}
-                    className={styles.removeButton}
+                    className={styles.trashButton}
                     title="Remove user from application"
                   >
-                    🗑️ Remove
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6"></polyline>
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                      <line x1="10" y1="11" x2="10" y2="17"></line>
+                      <line x1="14" y1="11" x2="14" y2="17"></line>
+                    </svg>
                   </button>
-                </td>
-              )}
+                ) : null}
+              </td>
             </tr>
           );
               })}
@@ -507,10 +517,15 @@ const LdapUserManagerInline: React.FC<LdapUserManagerInlineProps> = ({ configId 
                 <button
                   onClick={() => handleRemoveUser(user.userId!, user.username)}
                   disabled={loading}
-                  className={styles.removeButton}
+                  className={styles.trashButton}
                   title="Remove user from application"
                 >
-                  🗑️ Remove
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <polyline points="3 6 5 6 21 6"></polyline>
+                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                    <line x1="10" y1="11" x2="10" y2="17"></line>
+                    <line x1="14" y1="11" x2="14" y2="17"></line>
+                  </svg>
                 </button>
               )}
             </div>

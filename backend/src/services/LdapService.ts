@@ -785,13 +785,19 @@ export class LdapService {
         const department = getAttr('department')[0];
         const title = getAttr('title')[0];
         
-        // Get photo
-        const thumbnailPhoto = getAttr('thumbnailPhoto')[0];
-        const jpegPhoto = getAttr('jpegPhoto')[0];
-        const photo = thumbnailPhoto || jpegPhoto;
+        // Get photo - use pre-extracted buffer if available
         let photoBase64 = null;
-        if (photo && Buffer.isBuffer(photo)) {
-          photoBase64 = `data:image/jpeg;base64,${photo.toString('base64')}`;
+        if (entry._photoBuffer && Buffer.isBuffer(entry._photoBuffer)) {
+          photoBase64 = `data:image/jpeg;base64,${entry._photoBuffer.toString('base64')}`;
+          console.log(`📸 Photo extracted for ${username} (${entry._photoBuffer.length} bytes)`);
+        } else {
+          const thumbnailPhoto = getAttr('thumbnailPhoto')[0];
+          const jpegPhoto = getAttr('jpegPhoto')[0];
+          const photo = thumbnailPhoto || jpegPhoto;
+          if (photo && Buffer.isBuffer(photo)) {
+            photoBase64 = `data:image/jpeg;base64,${photo.toString('base64')}`;
+            console.log(`📸 Photo extracted from attr for ${username}`);
+          }
         }
 
         // Check if user exists
