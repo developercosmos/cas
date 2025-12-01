@@ -41,3 +41,4 @@ token.txt
 cookies.txt
 *.token
 *.jwt
+backup_*.tar.gz
