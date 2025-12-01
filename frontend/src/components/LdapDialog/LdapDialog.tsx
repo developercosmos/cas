@@ -409,32 +409,11 @@ export const LdapDialog: React.FC<LdapDialogProps> = ({ isOpen, onClose, initial
               <div style={{ maxWidth: '1200px', margin: '0 auto' }}>
                 <div style={{ 
                   display: 'flex', 
-                  justifyContent: 'space-between', 
+                  justifyContent: 'flex-end', 
                   alignItems: 'center', 
-                  marginBottom: '2rem',
+                  marginBottom: '1.5rem',
                   gap: '1rem'
                 }}>
-                  <div>
-                    <h3 style={{ 
-                      margin: 0, 
-                      marginBottom: '0.5rem', 
-                      fontSize: '1.875rem',
-                      fontWeight: 700,
-                      color: isDarkMode ? '#f9fafb' : '#111827',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif'
-                    }}>
-                      LDAP Configuration
-                    </h3>
-                    <p style={{ 
-                      margin: 0, 
-                      color: isDarkMode ? '#d1d5db' : '#6b7280',
-                      fontSize: '1rem',
-                      fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
-                      lineHeight: '1.5'
-                    }}>
-                      Manage LDAP server connections and authentication settings.
-                    </p>
-                  </div>
                   <Button 
                     onClick={() => setShowConfigForm(true)}
                     style={{
